@@ -2,26 +2,25 @@ import { useQuery } from '@tanstack/react-query';
 
 import { api } from '../http';
 import { queryKeys } from '../queryKeys';
-import type { GradeType, Term } from '../types';
+import type { GradeType, ID, Term } from '../types';
 
 /**
- * Périodes et catégories de notes.
+ * Référentiels de l'établissement : périodes et catégories de notes.
  *
- * ⚠️ **Ces deux routes n'existent pas encore côté backend.** Presque tous les
- * écrans ont besoin d'un `term_id` (`/classes/:id`, `/admin/dashboard`,
- * `/children/:id`…) et la saisie d'une note exige un `gradeTypeId` ; aucun
- * endpoint ne permet aujourd'hui de les découvrir. Les chemins ci-dessous sont
- * ceux que l'on attend — `GET /terms` et `GET /grade-types` — pour que le
- * branchement se réduise à leur ajout côté API.
- *
- * En attendant, ces requêtes échouent en 404 et les écrans concernés affichent
- * leur état d'erreur.
+ * `term_id` est obligatoire sur la plupart des écrans de consultation et
+ * `gradeTypeId` sur toute saisie de note ; ces deux listes conditionnent donc
+ * l'affichage du reste. Elles changent au plus une fois par année scolaire :
+ * on les garde longtemps en cache.
  */
 
+const REFERENTIAL_STALE_TIME = 30 * 60 * 1000;
+
+/** `GET /terms` — triées de la plus ancienne à la plus récente. */
 export function fetchTerms(): Promise<Term[]> {
   return api.get<Term[]>('/terms');
 }
 
+/** `GET /grade-types` — triées par position, réservé à l'équipe pédagogique. */
 export function fetchGradeTypes(): Promise<GradeType[]> {
   return api.get<GradeType[]>('/grade-types');
 }
@@ -30,8 +29,7 @@ export function useTerms() {
   return useQuery({
     queryKey: queryKeys.terms.all,
     queryFn: fetchTerms,
-    // Un référentiel ne change pas pendant une session de travail.
-    staleTime: 30 * 60 * 1000,
+    staleTime: REFERENTIAL_STALE_TIME,
   });
 }
 
@@ -39,6 +37,43 @@ export function useGradeTypes() {
   return useQuery({
     queryKey: queryKeys.gradeTypes.all,
     queryFn: fetchGradeTypes,
-    staleTime: 30 * 60 * 1000,
+    staleTime: REFERENTIAL_STALE_TIME,
   });
+}
+
+/**
+ * Période à sélectionner par défaut.
+ *
+ * Hors année scolaire (grandes vacances), aucune période n'est « en cours » :
+ * on retombe sur la dernière connue plutôt que de laisser l'écran sans
+ * sélection, ce qui bloquerait toute consultation.
+ */
+export function defaultTerm(terms: Term[] | undefined): Term | undefined {
+  if (!terms?.length) return undefined;
+  return terms.find((term) => term.isCurrent) ?? terms[terms.length - 1];
+}
+
+/**
+ * Périodes + période sélectionnée par défaut, en une seule dépendance.
+ *
+ * Presque tous les écrans ont besoin des deux ; les séparer obligeait chacun à
+ * réécrire la règle de repli.
+ */
+export function useTermsWithDefault(): {
+  terms: Term[];
+  currentTermId: ID | undefined;
+  isLoading: boolean;
+  isError: boolean;
+  error: unknown;
+  refetch: () => void;
+} {
+  const query = useTerms();
+  return {
+    terms: query.data ?? [],
+    currentTermId: defaultTerm(query.data)?.id,
+    isLoading: query.isPending,
+    isError: query.isError,
+    error: query.error,
+    refetch: () => void query.refetch(),
+  };
 }
