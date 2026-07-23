@@ -204,8 +204,32 @@
 
 .grid-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  /*
+   * 300 px et non 260 : en dessous, une carte portant trois actions
+   * (« Voir le détail », « Renommer », « Archiver ») ne peut plus les tenir
+   * sur une ligne, les libellés étant en `white-space: nowrap`.
+   */
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--gutter-desktop);
+}
+
+/**
+ * Barre d'actions en pied de carte.
+ *
+ * Les boutons passent à la ligne plutôt que de déborder : la largeur d'une
+ * carte dépend de celle de la fenêtre, on ne peut pas garantir qu'ils
+ * tiendront tous côte à côte.
+ */
+.card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.card-actions .ui-btn {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .grid-split {
@@ -224,6 +248,9 @@
 
 .cell-actions {
   display: flex;
+  /* Certaines lignes portent trois actions : elles passent à la ligne plutôt
+     que d'élargir indéfiniment le tableau. */
+  flex-wrap: wrap;
   gap: var(--space-2);
   justify-content: flex-end;
 }
