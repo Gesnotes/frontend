@@ -555,3 +555,48 @@
 .ui-toast--success .ui-toast__dot { background: var(--secondary-fixed-dim); color: var(--on-secondary-fixed); }
 .ui-toast--error .ui-toast__dot { background: var(--error-container); color: var(--on-error-container); }
 .ui-toast--info .ui-toast__dot { background: var(--primary-fixed-dim); color: var(--on-primary-fixed); }
+
+/* ============ Invite de mise à jour PWA ============ */
+.pwa-prompt {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--space-6) + 72px);
+  transform: translateX(-50%);
+  z-index: 95;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  max-width: min(92vw, 560px);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--inverse-surface);
+  color: var(--inverse-on-surface);
+  box-shadow: var(--elevation-2);
+  font-size: var(--body-md-size);
+  animation: gn-toast-in var(--motion-base) ease;
+}
+
+.pwa-prompt .ui-btn--ghost {
+  color: var(--inverse-primary);
+}
+
+.pwa-prompt .ui-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--on-primary);
+}
+
+/* ============ Bandeau hors connexion ============ */
+.offline-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-4);
+  background: var(--tertiary-container);
+  color: var(--on-tertiary);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+}

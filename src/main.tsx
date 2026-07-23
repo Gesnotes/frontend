@@ -6,6 +6,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import { createQueryClient } from './api';
 import { AuthProvider } from './auth/AuthProvider';
+import { UpdatePrompt } from './pwa/UpdatePrompt';
 import { ToastProvider } from './ui';
 import './index.css';
 
@@ -18,6 +19,7 @@ createRoot(document.getElementById('root')!).render(
         <AuthProvider>
           <ToastProvider>
             <App />
+            <UpdatePrompt />
           </ToastProvider>
         </AuthProvider>
       </BrowserRouter>

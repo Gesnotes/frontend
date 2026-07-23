@@ -29,6 +29,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
+    /**
+     * Le jeton push identifie l'appareil, pas le compte : le laisser
+     * enregistré ferait continuer d'arriver les notes des enfants d'un parent
+     * sur un téléphone qu'il vient de rendre.
+     *
+     * Import dynamique : le SDK Firebase ne doit pas entrer dans le bundle
+     * initial d'un administrateur, qui n'a aucune notification.
+     */
+    try {
+      const { disablePush } = await import('../push/push');
+      await disablePush();
+    } catch {
+      // Notifications non configurées, ou déjà retirées : la déconnexion
+      // reste prioritaire et ne doit jamais échouer pour cette raison.
+    }
+
     await authApi.logout();
     queryClient.clear();
   }, [queryClient]);

@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 import { ChildProvider } from '../context/ChildProvider';
 import { TermProvider } from '../context/TermProvider';
+import { OfflineBar } from '../pwa/OfflineBar';
 import { paths } from '../routes/paths';
 
 const items = [
@@ -17,6 +18,7 @@ export function ParentShell() {
     <TermProvider>
       <ChildProvider>
         <div className="parent">
+          <OfflineBar />
           <Outlet />
 
           <nav className="parent__nav" aria-label="Navigation">
