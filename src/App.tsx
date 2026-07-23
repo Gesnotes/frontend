@@ -8,7 +8,9 @@ import NotFoundPage from './pages/NotFoundPage';
 import BulletinPage from './pages/admin/BulletinPage';
 import ClassDetailPage from './pages/admin/ClassDetailPage';
 import ClassesPage from './pages/admin/ClassesPage';
+import ArchivesPage from './pages/admin/ArchivesPage';
 import DashboardPage from './pages/admin/DashboardPage';
+import PeriodsPage from './pages/admin/PeriodsPage';
 import StudentsPage from './pages/admin/StudentsPage';
 import SubjectsPage from './pages/admin/SubjectsPage';
 import TeachersPage from './pages/admin/TeachersPage';
@@ -69,6 +71,8 @@ export default function App() {
             <Route path="matieres" element={<SubjectsPage />} />
             <Route path="enseignants" element={<TeachersPage />} />
             <Route path="eleves" element={<StudentsPage />} />
+            <Route path="periodes" element={<PeriodsPage />} />
+            <Route path="archives" element={<ArchivesPage />} />
             <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Route>

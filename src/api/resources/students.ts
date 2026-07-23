@@ -153,3 +153,8 @@ export function useDetachParent() {
     onSuccess: invalidate,
   });
 }
+
+export function useRestoreStudent() {
+  const invalidate = useInvalidateStudents();
+  return useMutation({ mutationFn: restoreStudent, onSuccess: invalidate });
+}

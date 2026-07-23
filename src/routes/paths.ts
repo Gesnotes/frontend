@@ -15,6 +15,8 @@ export const paths = {
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
+    periods: '/admin/periodes',
+    archives: '/admin/archives',
   },
 
   teacher: {

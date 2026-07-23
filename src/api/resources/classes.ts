@@ -103,3 +103,8 @@ export function useDeleteClass() {
     onSuccess: invalidate,
   });
 }
+
+export function useRestoreClass() {
+  const invalidate = useInvalidateClasses();
+  return useMutation({ mutationFn: restoreClass, onSuccess: invalidate });
+}

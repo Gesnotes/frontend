@@ -6,6 +6,7 @@ import { useTermContext } from '../../context/term-context';
 import { formatCount, formatPercent, plural } from '../../lib/format';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
+import { InstallCard } from '../../pwa/InstallCard';
 import { gradeEntryPath } from '../../routes/paths';
 import { Button, Card, Chip, EmptyState, ProgressBar, Skeleton } from '../../ui';
 
@@ -21,23 +22,27 @@ export default function TeacherDashboardPage() {
         actions={<TermSelect />}
       />
       <PageContent>
-        <QueryBoundary query={assignments} loading={<CardsSkeleton />}>
-          {(items) =>
-            items.length === 0 ? (
-              <EmptyState
-                icon="▦"
-                title="Aucune classe affectée"
-                description="Votre administration ne vous a pas encore affecté de classe ni de matière. Sans affectation, la saisie de notes n'est pas possible."
-              />
-            ) : (
-              <div className="grid-cards">
-                {items.map((item) => (
-                  <AssignmentCard key={item.assignmentId} item={item} />
-                ))}
-              </div>
-            )
-          }
-        </QueryBoundary>
+        <div className="page-stack">
+          <InstallCard compact />
+
+          <QueryBoundary query={assignments} loading={<CardsSkeleton />}>
+            {(items) =>
+              items.length === 0 ? (
+                <EmptyState
+                  icon="▦"
+                  title="Aucune classe affectée"
+                  description="Votre administration ne vous a pas encore affecté de classe ni de matière. Sans affectation, la saisie de notes n'est pas possible."
+                />
+              ) : (
+                <div className="grid-cards">
+                  {items.map((item) => (
+                    <AssignmentCard key={item.assignmentId} item={item} />
+                  ))}
+                </div>
+              )
+            }
+          </QueryBoundary>
+        </div>
       </PageContent>
     </>
   );

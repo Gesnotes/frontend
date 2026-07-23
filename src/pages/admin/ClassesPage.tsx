@@ -20,6 +20,7 @@ export default function ClassesPage() {
 
   const classes = classesApi.useClasses(termId);
   const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<ClassListItem | null>(null);
   const [toDelete, setToDelete] = useState<ClassListItem | null>(null);
   const deleteClass = classesApi.useDeleteClass();
 
@@ -73,6 +74,7 @@ export default function ClassesPage() {
                     item={item}
                     hasTerm={termId !== undefined}
                     onOpen={() => navigate(paths.admin.classDetail(item.id))}
+                    onEdit={() => setEditing(item)}
                     onArchive={() => setToDelete(item)}
                   />
                 ))}
@@ -92,6 +94,16 @@ export default function ClassesPage() {
         }}
       />
 
+      <EditClassModal
+        key={editing?.id ?? 'none'}
+        item={editing}
+        onClose={() => setEditing(null)}
+        onSaved={(name) => {
+          setEditing(null);
+          toast.success(`${name} enregistrée`);
+        }}
+      />
+
       <ConfirmDialog
         open={toDelete !== null}
         title={`Archiver ${toDelete?.name ?? ''} ?`}
@@ -106,8 +118,14 @@ export default function ClassesPage() {
 }
 
 function ClassCard({
-  item, hasTerm, onOpen, onArchive,
-}: { item: ClassListItem; hasTerm: boolean; onOpen: () => void; onArchive: () => void }) {
+  item, hasTerm, onOpen, onEdit, onArchive,
+}: {
+  item: ClassListItem;
+  hasTerm: boolean;
+  onOpen: () => void;
+  onEdit: () => void;
+  onArchive: () => void;
+}) {
   return (
     <Card padded>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
@@ -141,9 +159,74 @@ function ClassCard({
 
       <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
         <Button size="sm" variant="tonal" onClick={onOpen}>Voir le détail</Button>
+        <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
         <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
       </div>
     </Card>
+  );
+}
+
+/**
+ * Renommage d'une classe.
+ *
+ * Le niveau est modifiable mais ne rejoue pas les coefficients déjà posés :
+ * il sert de gabarit à la création, pas de règle permanente.
+ */
+function EditClassModal({
+  item, onClose, onSaved,
+}: { item: ClassListItem | null; onClose: () => void; onSaved: (name: string) => void }) {
+  const update = classesApi.useUpdateClass();
+  const [name, setName] = useState(item?.name ?? '');
+  const [level, setLevel] = useState(item?.level ?? '');
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
+    if (!item) return;
+    setError(null);
+    try {
+      await update.mutateAsync({ id: item.id, name: name.trim(), level: level.trim() });
+      onSaved(name.trim());
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  return (
+    <Modal
+      open={item !== null}
+      onClose={onClose}
+      title="Modifier la classe"
+      footer={
+        <ModalActions
+          onCancel={onClose}
+          onConfirm={() => void submit()}
+          confirmLabel="Enregistrer"
+          loading={update.isPending}
+        />
+      }
+    >
+      <form onSubmit={submit} className="page-stack" style={{ gap: 'var(--space-4)' }}>
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        <TextField
+          label="Nom de la classe"
+          maxLength={50}
+          required
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+        />
+
+        <TextField
+          label="Niveau"
+          maxLength={20}
+          required
+          hint="Changer le niveau ne modifie pas les coefficients déjà définis pour cette classe."
+          value={level}
+          onChange={(e) => setLevel(e.target.value)}
+        />
+      </form>
+    </Modal>
   );
 }
 
