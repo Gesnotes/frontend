@@ -11,6 +11,7 @@ import {
   Avatar, Button, Card, Chip, DataTable, EmptyState, ProgressBar, Skeleton, StatTile,
   gradeTone, type Column,
 } from '../../ui';
+import { ClassSubjectsPanel } from './ClassSubjectsPanel';
 import { TermRequired } from './TermRequired';
 
 export default function ClassDetailPage() {
@@ -124,6 +125,8 @@ function ClassBody({ data }: { data: ClassDetail }) {
           value={`${formatGrade(stats.meilleure)} · ${formatGrade(stats.plusFaible)}`}
         />
       </div>
+
+      <ClassSubjectsPanel classId={data.classId} />
 
       <DataTable
         caption={`Élèves de ${data.className}, classés par moyenne`}
