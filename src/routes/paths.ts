@@ -31,6 +31,7 @@ export const paths = {
     child: (id: number | string) => `/parent/enfants/${id}`,
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
+    notifications: '/parent/alertes',
   },
 } as const;
 
