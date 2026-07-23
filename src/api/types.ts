@@ -343,6 +343,42 @@ export type CreateGradeResult = {
   avertissementDoublon: boolean;
 };
 
+// -------------------------------------------------------- Saisie en lot
+
+export type GradeBatchEntry = {
+  studentId: ID;
+  /** `null` supprime la note de cet élève pour l'évaluation visée. */
+  value: number | null;
+  comment?: string | null;
+};
+
+/**
+ * Corps de `PUT /teachers/me/grades`.
+ *
+ * Le quadruplet identifie une évaluation ; l'opération est idempotente, donc
+ * réémettre le même lot après une coupure réseau ne crée aucun doublon.
+ */
+export type GradeBatchPayload = {
+  classId: ID;
+  subjectId: ID;
+  gradeTypeId: ID;
+  termId: ID;
+  maxValue?: number;
+  entries: GradeBatchEntry[];
+};
+
+/** Motifs pour lesquels le backend laisse un élève de côté. */
+export type GradeBatchSkipReason = 'eleve_hors_classe' | 'notes_multiples';
+
+export type GradeBatchResult = {
+  created: number;
+  updated: number;
+  deleted: number;
+  /** Entrées identiques à l'existant : le lot a déjà été appliqué. */
+  unchanged: number;
+  skipped: { studentId: ID; reason: GradeBatchSkipReason }[];
+};
+
 // ------------------------------------------------------- Espace enseignant
 
 /** Élément de `GET /teachers/me/classes` : une affectation classe × matière. */
