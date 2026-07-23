@@ -1,31 +1,4 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-
-* { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
-body {
-  font-family: Inter, system-ui, sans-serif;
-  color: #0b1c30;
-  background: #eef1f8;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: #1e40af; text-decoration: none; }
-a:hover { color: #00288e; }
-button { font-family: inherit; cursor: pointer; }
-input, select, textarea { font-family: inherit; }
-
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: #c4c5d5; border-radius: 8px; }
-
-@keyframes gn-shimmer { 0% { background-position: -400px 0; } 100% { background-position: 400px 0; } }
-@keyframes gn-toast-in { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes gn-modal-in { from { opacity: 0; transform: translateY(16px) scale(.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-@keyframes gn-fade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes gn-notif-in { from { opacity: 0; transform: translateY(-24px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes gn-spin { to { transform: rotate(360deg); } }
-
-.gn-shim {
-  background: linear-gradient(90deg, #e9edf5 25%, #f4f6fb 50%, #e9edf5 75%);
-  background-size: 800px 100%;
-  animation: gn-shimmer 1.3s infinite linear;
-  border-radius: 8px;
-}
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/ui.css';
