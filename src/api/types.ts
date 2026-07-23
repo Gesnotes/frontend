@@ -61,16 +61,14 @@ export type SubjectRef = { id: ID; name: string };
 export type TermRef = { id: ID; label: string };
 export type PersonRef = { id: ID; firstName: string | null; lastName: string | null };
 
-/**
- * Période scolaire.
- *
- * ⚠️ Aucune route ne les expose aujourd'hui (cf. `api/resources/terms.ts`).
- */
+/** Période scolaire (`GET /terms`). */
 export type Term = {
   id: ID;
   label: string;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
+  /** Période contenant la date du jour. Au plus une l'est. */
+  isCurrent: boolean;
 };
 
 /** Catégorie de note : interrogation (poids 1), devoir (2), composition (3). */
