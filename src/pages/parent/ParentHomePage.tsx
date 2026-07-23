@@ -6,6 +6,7 @@ import { useAuth } from '../../auth/auth-context';
 import { useChildContext } from '../../context/child-context';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade, plural } from '../../lib/format';
+import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
 import { Card, Chip, EmptyState, Skeleton, gradeTone, toneColor } from '../../ui';
 import { ChildRequired } from './ChildRequired';
@@ -31,6 +32,8 @@ export default function ParentHomePage() {
           </Link>
         ) : null}
       </header>
+
+      <InstallCard compact />
 
       <ChildRequired>
         <ChildBanner child={child} />

@@ -5,6 +5,7 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
+import { CoefficientsModal } from './CoefficientsModal';
 import {
   Alert, Button, Card, Chip, ConfirmDialog, DataTable, EmptyState, Modal, ModalActions,
   Skeleton, TextField, useToast, type Column,
@@ -18,6 +19,7 @@ export default function SubjectsPage() {
   const [editing, setEditing] = useState<Subject | null>(null);
   const [creating, setCreating] = useState(false);
   const [toArchive, setToArchive] = useState<Subject | null>(null);
+  const [coefficientsFor, setCoefficientsFor] = useState<Subject | null>(null);
 
   const list = subjects.data ?? [];
 
@@ -78,6 +80,9 @@ export default function SubjectsPage() {
       align: 'numeric',
       render: (subject) => (
         <div className="cell-actions">
+          <Button size="sm" variant="secondary" onClick={() => setCoefficientsFor(subject)}>
+            Coefficients
+          </Button>
           <Button size="sm" variant="tonal" onClick={() => setEditing(subject)}>Modifier</Button>
           <Button size="sm" variant="danger" onClick={() => setToArchive(subject)}>Archiver</Button>
         </div>
@@ -130,6 +135,12 @@ export default function SubjectsPage() {
           setEditing(null);
           toast.success(`${name} enregistrée`);
         }}
+      />
+
+      <CoefficientsModal
+        key={coefficientsFor?.id ?? 'none'}
+        subject={coefficientsFor}
+        onClose={() => setCoefficientsFor(null)}
       />
 
       <ConfirmDialog

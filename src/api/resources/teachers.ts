@@ -84,3 +84,8 @@ export function useDeleteTeacher() {
 export function useResendInvitation() {
   return useMutation({ mutationFn: resendInvitation });
 }
+
+export function useRestoreTeacher() {
+  const invalidate = useInvalidateTeachers();
+  return useMutation({ mutationFn: restoreTeacher, onSuccess: invalidate });
+}

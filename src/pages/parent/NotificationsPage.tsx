@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/auth-context';
 import { formatDate } from '../../lib/format';
 import { onForegroundMessage } from '../../push/push';
 import { usePush } from '../../push/usePush';
+import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
 import { Alert, Button, Card, EmptyState, Skeleton, useToast } from '../../ui';
 
@@ -59,6 +60,8 @@ export default function NotificationsPage() {
           <p className="parent__greeting">Notifications de nouvelles notes</p>
         </div>
       </header>
+
+      <InstallCard />
 
       <PushControl push={push} onDevicesChanged={() => void devices.refetch()} />
 

@@ -71,6 +71,18 @@ export type Term = {
   isCurrent: boolean;
 };
 
+/**
+ * Création ou modification d'une période.
+ *
+ * Les deux dates vont de pair : le backend refuse une période bornée d'un seul
+ * côté, faute de quoi `isCurrent` serait incalculable.
+ */
+export type TermPayload = {
+  label: string;
+  startDate: IsoDate | null;
+  endDate: IsoDate | null;
+};
+
 /** Catégorie de note : interrogation (poids 1), devoir (2), composition (3). */
 export type GradeType = {
   id: ID;

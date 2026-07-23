@@ -71,3 +71,46 @@ export function useDeleteSubject() {
     onSuccess: invalidate,
   });
 }
+
+export function useRestoreSubject() {
+  const invalidate = useInvalidateSubjects();
+  return useMutation({ mutationFn: restoreSubject, onSuccess: invalidate });
+}
+
+/**
+ * Coefficient d'une matière dans une classe donnée.
+ *
+ * Toucher un coefficient recalcule toutes les moyennes de la classe : les
+ * bulletins et les espaces parents doivent être invalidés avec.
+ */
+function useInvalidateCoefficients() {
+  const queryClient = useQueryClient();
+  return () => {
+    for (const key of [
+      queryKeys.subjects.all,
+      queryKeys.classes.all,
+      queryKeys.dashboard.all,
+      queryKeys.children.all,
+      queryKeys.parentMe.all,
+    ]) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+  };
+}
+
+export function useSetSubjectCoefficient() {
+  const invalidate = useInvalidateCoefficients();
+  return useMutation({
+    mutationFn: ({ id, classId, coefficient }: { id: ID; classId: ID; coefficient: number }) =>
+      setSubjectCoefficient(id, classId, coefficient),
+    onSuccess: invalidate,
+  });
+}
+
+export function useRemoveSubjectCoefficient() {
+  const invalidate = useInvalidateCoefficients();
+  return useMutation({
+    mutationFn: ({ id, classId }: { id: ID; classId: ID }) => removeSubjectCoefficient(id, classId),
+    onSuccess: invalidate,
+  });
+}

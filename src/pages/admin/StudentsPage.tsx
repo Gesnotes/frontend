@@ -8,8 +8,9 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
+import { DeleteStudentDialog } from './DeleteStudentDialog';
 import {
-  Alert, Avatar, Button, Card, Chip, ConfirmDialog, DataTable, EmptyState, Modal, ModalActions,
+  Alert, Avatar, Button, Card, Chip, DataTable, EmptyState, Modal, ModalActions,
   SelectField, Skeleton, TextField, useToast, type Column,
 } from '../../ui';
 
@@ -28,22 +29,10 @@ export default function StudentsPage() {
   const [editing, setEditing] = useState<Student | null>(null);
   const [linking, setLinking] = useState<Student | null>(null);
   const [toArchive, setToArchive] = useState<Student | null>(null);
-  const archive = studentsApi.useDeleteStudent();
 
   const total = students.data?.total ?? 0;
   const pageSize = students.data?.pageSize ?? 1;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
-
-  async function confirmArchive() {
-    if (!toArchive) return;
-    try {
-      await archive.mutateAsync({ id: toArchive.id });
-      toast.success('Élève archivé');
-      setToArchive(null);
-    } catch (cause) {
-      toast.error(errorMessage(cause));
-    }
-  }
 
   const columns: Column<Student>[] = [
     {
@@ -85,7 +74,7 @@ export default function StudentsPage() {
             {student.parents.length === 0 ? 'Associer un parent' : 'Gérer les parents'}
           </Button>
           <Button size="sm" variant="tonal" onClick={() => setEditing(student)}>Modifier</Button>
-          <Button size="sm" variant="danger" onClick={() => setToArchive(student)}>Archiver</Button>
+          <Button size="sm" variant="danger" onClick={() => setToArchive(student)}>Supprimer</Button>
         </div>
       ),
     },
@@ -192,14 +181,10 @@ export default function StudentsPage() {
         onClose={() => setLinking(null)}
       />
 
-      <ConfirmDialog
-        open={toArchive !== null}
-        title="Archiver cet élève ?"
-        description="L'élève sort des effectifs et des bulletins à venir. Ses notes sont conservées et il peut être restauré."
-        confirmLabel="Archiver"
-        loading={archive.isPending}
-        onCancel={() => setToArchive(null)}
-        onConfirm={() => void confirmArchive()}
+      <DeleteStudentDialog
+        key={toArchive?.id ?? 'none'}
+        student={toArchive}
+        onClose={() => setToArchive(null)}
       />
     </>
   );
