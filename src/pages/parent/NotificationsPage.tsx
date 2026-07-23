@@ -1,22 +1,46 @@
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+
 import { errorMessage, parentApi, type Device } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useAuth } from '../../auth/auth-context';
 import { formatDate } from '../../lib/format';
+import { onForegroundMessage } from '../../push/push';
+import { usePush } from '../../push/usePush';
+import { paths } from '../../routes/paths';
 import { Alert, Button, Card, EmptyState, Skeleton, useToast } from '../../ui';
 
 /**
- * Appareils recevant les notifications push.
+ * Notifications de l'appareil.
  *
- * L'enregistrement d'un nouvel appareil réclame un jeton FCM, donc la
- * configuration web Firebase et un service worker ; tant qu'ils ne sont pas
- * fournis, cet écran gère ce qui est possible sans eux : lister les appareils
- * déjà enregistrés et en retirer un (téléphone perdu ou remplacé).
+ * Le jeton FCM identifie **ce navigateur**, pas le compte : activer sur le
+ * téléphone n'active pas sur l'ordinateur, et la liste ci-dessous permet de
+ * retirer un appareil qu'on n'a plus.
  */
 export default function NotificationsPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const { logout } = useAuth();
+
+  const push = usePush();
   const devices = parentApi.useDevices();
   const remove = parentApi.useRemoveDevice();
+
+  /**
+   * Message reçu application ouverte : FCM n'affiche alors rien de lui-même.
+   * Sans ce relais, un parent en train de consulter l'écran ne verrait pas
+   * passer la note qui vient d'arriver.
+   */
+  useEffect(() => {
+    let unsubscribe: (() => void) | undefined;
+    void onForegroundMessage((message) => {
+      toast.info(message.body || message.title);
+      if (message.gradeId) navigate(paths.parent.grade(message.gradeId));
+    }).then((fn) => {
+      unsubscribe = fn;
+    });
+    return () => unsubscribe?.();
+  }, [toast, navigate]);
 
   async function unregister(device: Device) {
     try {
@@ -32,53 +56,122 @@ export default function NotificationsPage() {
       <header className="parent__topbar">
         <div>
           <p className="parent__name">Alertes</p>
-          <p className="parent__greeting">Appareils recevant les notifications</p>
+          <p className="parent__greeting">Notifications de nouvelles notes</p>
         </div>
       </header>
 
-      <Alert tone="info">
-        Vous recevez une notification à chaque nouvelle note. Retirez un appareil que vous
-        n'utilisez plus pour cesser d'y être alerté.
-      </Alert>
+      <PushControl push={push} onDevicesChanged={() => void devices.refetch()} />
 
-      <QueryBoundary query={devices} loading={<Skeleton height={140} radius="var(--radius-lg)" />}>
-        {(items) =>
-          items.length === 0 ? (
-            <EmptyState
-              icon="◔"
-              title="Aucun appareil enregistré"
-              description="Aucun téléphone ne reçoit vos notifications pour le moment. Consultez cet espace régulièrement pour suivre les nouvelles notes."
-            />
-          ) : (
-            <div className="parent__cards">
-              {items.map((device) => (
-                <Card key={device.id} padded>
-                  <div className="parent__row" style={{ padding: 0 }}>
-                    <span className="parent__row-body">
-                      <span className="parent__row-title">Appareil {device.id}</span>
-                      <span className="parent__row-meta">
-                        Enregistré le {formatDate(device.createdAt)}
+      <section>
+        <h2 className="parent__section-title" style={{ marginBottom: 'var(--space-3)' }}>
+          Appareils enregistrés
+        </h2>
+
+        <QueryBoundary query={devices} loading={<Skeleton height={120} radius="var(--radius-lg)" />}>
+          {(items) =>
+            items.length === 0 ? (
+              <EmptyState
+                icon="◔"
+                title="Aucun appareil"
+                description="Activez les notifications ci-dessus pour être prévenu dès qu'une note est saisie."
+              />
+            ) : (
+              <div className="parent__cards">
+                {items.map((device) => (
+                  <Card key={device.id} padded>
+                    <div className="parent__row" style={{ padding: 0 }}>
+                      <span className="parent__row-body">
+                        <span className="parent__row-title">Appareil {device.id}</span>
+                        <span className="parent__row-meta">
+                          Enregistré le {formatDate(device.createdAt)}
+                        </span>
                       </span>
-                    </span>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={remove.isPending}
-                      onClick={() => void unregister(device)}
-                    >
-                      Retirer
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          )
-        }
-      </QueryBoundary>
+                      <Button
+                        size="sm"
+                        variant="danger"
+                        loading={remove.isPending}
+                        onClick={() => void unregister(device)}
+                      >
+                        Retirer
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            )
+          }
+        </QueryBoundary>
+      </section>
 
       <Button variant="secondary" block onClick={() => void logout()}>
         Se déconnecter
       </Button>
     </main>
+  );
+}
+
+function PushControl({
+  push, onDevicesChanged,
+}: { push: ReturnType<typeof usePush>; onDevicesChanged: () => void }) {
+  const { state, busy, error, enable, disable } = push;
+
+  if (state === 'non-configure') {
+    return (
+      <Alert tone="info">
+        Les notifications ne sont pas configurées sur cette installation. Consultez cet espace
+        régulièrement pour suivre les nouvelles notes.
+      </Alert>
+    );
+  }
+
+  if (state === 'non-supporte') {
+    return (
+      <Alert tone="info">
+        Ce navigateur ne gère pas les notifications. Sur iPhone, ajoutez d'abord Gesnotes à
+        l'écran d'accueil depuis Safari.
+      </Alert>
+    );
+  }
+
+  if (state === 'refuse') {
+    return (
+      <Alert tone="danger">
+        Les notifications sont bloquées pour ce site. Réautorisez-les dans les réglages de votre
+        navigateur, puis revenez sur cette page.
+      </Alert>
+    );
+  }
+
+  return (
+    <Card padded>
+      <p className="parent__row-title">
+        {state === 'actif' ? 'Notifications activées' : 'Activer les notifications'}
+      </p>
+      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-2)' }}>
+        {state === 'actif'
+          ? 'Vous êtes prévenu sur cet appareil dès qu’un enseignant saisit une note.'
+          : 'Recevez une alerte dès qu’une note est saisie, sans avoir à ouvrir l’application.'}
+      </p>
+
+      {error ? (
+        <div style={{ marginTop: 'var(--space-3)' }}>
+          <Alert tone="danger">{error}</Alert>
+        </div>
+      ) : null}
+
+      <Button
+        block
+        style={{ marginTop: 'var(--space-4)' }}
+        variant={state === 'actif' ? 'secondary' : 'primary'}
+        loading={busy}
+        onClick={async () => {
+          if (state === 'actif') await disable();
+          else await enable();
+          onDevicesChanged();
+        }}
+      >
+        {state === 'actif' ? 'Désactiver sur cet appareil' : 'Activer les notifications'}
+      </Button>
+    </Card>
   );
 }

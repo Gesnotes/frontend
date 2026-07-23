@@ -2,6 +2,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 
 import { useAuth } from '../auth/auth-context';
 import { TermProvider } from '../context/TermProvider';
+import { OfflineBar } from '../pwa/OfflineBar';
 import { Avatar, BrandMark } from '../ui';
 import { navFor, spaceLabel } from './nav';
 
@@ -56,6 +57,7 @@ export function AppShell() {
         </aside>
 
         <div className="shell__main">
+          <OfflineBar />
           <Outlet />
         </div>
       </div>
