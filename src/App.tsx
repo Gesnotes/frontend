@@ -1,28 +1,20 @@
-import { color, gradient, shadow } from './theme';
+import { BrandMark } from './ui';
 
+/** Écran d'attente — remplacé par le routeur applicatif dans la suite du chantier. */
 export default function App() {
   return (
-    <div
+    <main
       style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        gap: 14,
+        minHeight: '100%',
+        display: 'grid',
+        placeContent: 'center',
+        justifyItems: 'center',
+        gap: 'var(--space-3)',
       }}
     >
-      <div
-        style={{
-          width: 56, height: 56, borderRadius: 16, background: gradient.brand,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontWeight: 800, fontSize: 26, color: '#fff', boxShadow: shadow.brand,
-        }}
-      >
-        G
-      </div>
-      <div style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-.02em' }}>Gesnotes</div>
-      <div style={{ color: color.inkSoft, fontSize: 14 }}>Le suivi scolaire, en toute confiance</div>
-    </div>
+      <BrandMark size={56} />
+      <h1 className="t-headline-lg">Gesnotes</h1>
+      <p className="t-body-md t-muted">Le suivi scolaire, en toute confiance</p>
+    </main>
   );
 }
