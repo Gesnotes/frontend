@@ -157,7 +157,7 @@ function ClassCard({
         </p>
       ) : null}
 
-      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+      <div className="card-actions">
         <Button size="sm" variant="tonal" onClick={onOpen}>Voir le détail</Button>
         <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
         <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
