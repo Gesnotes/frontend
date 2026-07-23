@@ -5,6 +5,22 @@ export function initials(name: string): string {
 }
 
 /** Prénom seul, pour les salutations. */
-export function firstName(name: string): string {
+export function firstNameOf(name: string): string {
   return name.replace(/^(M\.|Mme|Mlle|Dr)\s+/i, '').trim().split(/\s+/)[0] ?? name;
+}
+
+/**
+ * Nom affichable d'une personne renvoyée par l'API.
+ *
+ * `firstName` et `lastName` sont nullables sur `User` : un compte enseignant
+ * créé par invitation n'a pas encore d'identité renseignée. Le repli évite
+ * d'afficher une ligne vide dans une liste.
+ */
+export function personName(
+  person: { firstName?: string | null; lastName?: string | null } | null | undefined,
+  fallback = 'Compte sans nom',
+): string {
+  if (!person) return fallback;
+  const name = [person.firstName, person.lastName].filter(Boolean).join(' ').trim();
+  return name || fallback;
 }
