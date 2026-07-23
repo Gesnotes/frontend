@@ -12,6 +12,9 @@ import DashboardPage from './pages/admin/DashboardPage';
 import StudentsPage from './pages/admin/StudentsPage';
 import SubjectsPage from './pages/admin/SubjectsPage';
 import TeachersPage from './pages/admin/TeachersPage';
+import GradeEntryPage from './pages/teacher/GradeEntryPage';
+import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
+import TeacherHistoryPage from './pages/teacher/TeacherHistoryPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
@@ -65,7 +68,12 @@ export default function App() {
         </Route>
 
         <Route element={<RequireRole allow={['teacher']} />}>
-          <Route path={`${paths.teacher.root}/*`} element={<UnderConstruction space="enseignant" />} />
+          <Route path={paths.teacher.root} element={<AppShell />}>
+            <Route index element={<TeacherDashboardPage />} />
+            <Route path="saisie" element={<GradeEntryPage />} />
+            <Route path="historique" element={<TeacherHistoryPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
 
         <Route element={<RequireRole allow={['parent']} />}>
