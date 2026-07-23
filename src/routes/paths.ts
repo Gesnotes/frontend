@@ -34,6 +34,17 @@ export const paths = {
   },
 } as const;
 
+/**
+ * Saisie des notes pour un couple classe × matière.
+ *
+ * Le contexte vit dans l'URL plutôt que dans un état local : un enseignant
+ * qui recharge la page, ou qui met la saisie d'une classe en favori, doit
+ * retrouver la même grille.
+ */
+export function gradeEntryPath(classId: number, subjectId: number): string {
+  return `${paths.teacher.gradeEntry}?classe=${classId}&matiere=${subjectId}`;
+}
+
 /** Écran d'accueil d'un rôle après connexion. */
 export function homePathFor(role: Role): string {
   if (role === 'admin') return paths.admin.root;
