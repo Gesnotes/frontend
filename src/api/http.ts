@@ -17,7 +17,11 @@ type RequestOptions = {
 };
 
 export function buildUrl(path: string, query?: Query): string {
-  const url = new URL(`${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`);
+  const full = `${API_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  // `API_BASE_URL` vaut `/api` par défaut : une base relative n'est pas une
+  // URL valide pour `new URL`, il lui faut l'origine de la page.
+  const url = new URL(full, window.location.origin);
+
   for (const [key, value] of Object.entries(query ?? {})) {
     if (value === undefined || value === null || value === '') continue;
     url.searchParams.set(key, String(value));
