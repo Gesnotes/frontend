@@ -2,8 +2,16 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 
 import { useAuth } from './auth/auth-context';
 import { RedirectIfAuthenticated, RequireAuth, RequireRole } from './auth/guards';
+import { AppShell } from './layouts/AppShell';
 import NotFoundPage from './pages/NotFoundPage';
 import UnderConstruction from './pages/UnderConstruction';
+import BulletinPage from './pages/admin/BulletinPage';
+import ClassDetailPage from './pages/admin/ClassDetailPage';
+import ClassesPage from './pages/admin/ClassesPage';
+import DashboardPage from './pages/admin/DashboardPage';
+import StudentsPage from './pages/admin/StudentsPage';
+import SubjectsPage from './pages/admin/SubjectsPage';
+import TeachersPage from './pages/admin/TeachersPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
@@ -44,7 +52,16 @@ export default function App() {
       {/* --- Espaces authentifiés --- */}
       <Route element={<RequireAuth />}>
         <Route element={<RequireRole allow={['admin']} />}>
-          <Route path={`${paths.admin.root}/*`} element={<UnderConstruction space="administration" />} />
+          <Route path={paths.admin.root} element={<AppShell />}>
+            <Route index element={<DashboardPage />} />
+            <Route path="classes" element={<ClassesPage />} />
+            <Route path="classes/:classId" element={<ClassDetailPage />} />
+            <Route path="classes/:classId/bulletin" element={<BulletinPage />} />
+            <Route path="matieres" element={<SubjectsPage />} />
+            <Route path="enseignants" element={<TeachersPage />} />
+            <Route path="eleves" element={<StudentsPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
 
         <Route element={<RequireRole allow={['teacher']} />}>
