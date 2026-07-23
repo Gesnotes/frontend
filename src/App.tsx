@@ -3,8 +3,8 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { useAuth } from './auth/auth-context';
 import { RedirectIfAuthenticated, RequireAuth, RequireRole } from './auth/guards';
 import { AppShell } from './layouts/AppShell';
+import { ParentShell } from './layouts/ParentShell';
 import NotFoundPage from './pages/NotFoundPage';
-import UnderConstruction from './pages/UnderConstruction';
 import BulletinPage from './pages/admin/BulletinPage';
 import ClassDetailPage from './pages/admin/ClassDetailPage';
 import ClassesPage from './pages/admin/ClassesPage';
@@ -12,6 +12,12 @@ import DashboardPage from './pages/admin/DashboardPage';
 import StudentsPage from './pages/admin/StudentsPage';
 import SubjectsPage from './pages/admin/SubjectsPage';
 import TeachersPage from './pages/admin/TeachersPage';
+import ChildDetailPage from './pages/parent/ChildDetailPage';
+import ChildrenPage from './pages/parent/ChildrenPage';
+import GradeDetailPage from './pages/parent/GradeDetailPage';
+import GradesHistoryPage from './pages/parent/GradesHistoryPage';
+import NotificationsPage from './pages/parent/NotificationsPage';
+import ParentHomePage from './pages/parent/ParentHomePage';
 import GradeEntryPage from './pages/teacher/GradeEntryPage';
 import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
 import TeacherHistoryPage from './pages/teacher/TeacherHistoryPage';
@@ -77,7 +83,15 @@ export default function App() {
         </Route>
 
         <Route element={<RequireRole allow={['parent']} />}>
-          <Route path={`${paths.parent.root}/*`} element={<UnderConstruction space="parent" />} />
+          <Route path={paths.parent.root} element={<ParentShell />}>
+            <Route index element={<ParentHomePage />} />
+            <Route path="enfants" element={<ChildrenPage />} />
+            <Route path="enfants/:childId" element={<ChildDetailPage />} />
+            <Route path="notes" element={<GradesHistoryPage />} />
+            <Route path="notes/:gradeId" element={<GradeDetailPage />} />
+            <Route path="alertes" element={<NotificationsPage />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Route>
         </Route>
       </Route>
 
