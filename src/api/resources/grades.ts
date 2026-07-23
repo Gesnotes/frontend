@@ -6,6 +6,8 @@ import type {
   CreateGradePayload,
   CreateGradeResult,
   Grade,
+  GradeBatchPayload,
+  GradeBatchResult,
   GradingTableRow,
   ID,
   ParentGrade,
@@ -51,6 +53,16 @@ export function fetchGrade(id: ID): Promise<ParentGrade> {
 
 export function createGrade(payload: CreateGradePayload): Promise<CreateGradeResult> {
   return api.post<CreateGradeResult>('/grades', payload);
+}
+
+/**
+ * `PUT /teachers/me/grades` — enregistre une évaluation entière.
+ *
+ * Idempotent : réémettre le même lot ne crée pas de doublon, il constate que
+ * rien n'a changé. C'est ce qui rend la file d'attente hors connexion sûre.
+ */
+export function saveGradeBatch(payload: GradeBatchPayload): Promise<GradeBatchResult> {
+  return api.put<GradeBatchResult>('/teachers/me/grades', payload);
 }
 
 export function updateGrade(id: ID, payload: UpdateGradePayload): Promise<Grade> {
@@ -128,6 +140,11 @@ export function useUpdateGrade() {
     mutationFn: ({ id, ...payload }: UpdateGradePayload & { id: ID }) => updateGrade(id, payload),
     onSuccess: invalidate,
   });
+}
+
+export function useSaveGradeBatch() {
+  const invalidate = useInvalidateGrades();
+  return useMutation({ mutationFn: saveGradeBatch, onSuccess: invalidate });
 }
 
 export function useDeleteGrade() {
