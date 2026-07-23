@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useQueryClient } from '@tanstack/react-query';
 
 import { authApi, sessionStore, type Session } from '../api';
+import { setMonitoringUser } from '../monitoring/monitoring';
 import { AuthContext, fullNameOf, type AuthContextValue } from './auth-context';
 
 /**
@@ -16,6 +17,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
 
   useEffect(() => sessionStore.subscribe(setSession), []);
+
+  /**
+   * Contexte de supervision : identifiant et rôle seulement.
+   *
+   * Assez pour reproduire un incident — « ça plante pour les enseignants,
+   * jamais pour les parents » — sans transporter de donnée nominative.
+   */
+  useEffect(() => {
+    setMonitoringUser(session ? { id: session.user.id, role: session.user.role } : null);
+  }, [session]);
 
   const login = useCallback(
     async (identifier: string, password: string) => {
