@@ -3,8 +3,31 @@ import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import babel from '@rolldown/plugin-babel';
 import { VitePWA } from 'vite-plugin-pwa';
 
+/**
+ * Cible du proxy de développement.
+ *
+ * Le navigateur appelle `/api/...` sur sa propre origine, Vite relaie vers le
+ * backend. On évite ainsi le préflight CORS, et surtout l'application reste
+ * joignable depuis un téléphone ou un tunnel HTTPS — impossible avec un
+ * `http://localhost:3000` codé dans le bundle, seul moyen d'essayer la PWA et
+ * les notifications sur un vrai appareil.
+ */
+const API_TARGET = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000';
+
 // https://vite.dev/config/
 export default defineConfig({
+  server: {
+    // Écoute sur toutes les interfaces : nécessaire pour ouvrir l'application
+    // depuis un téléphone du même réseau.
+    host: true,
+    proxy: {
+      '/api': {
+        target: API_TARGET,
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
+    },
+  },
   plugins: [
     react(),
     babel({ presets: [reactCompilerPreset()] }),

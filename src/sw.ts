@@ -56,7 +56,9 @@ registerRoute(
  * afficher.
  */
 registerRoute(
-  ({ url }) => url.pathname === '/terms' || url.pathname === '/grade-types',
+  // Le préfixe `/api` est celui du proxy ; le suffixe couvre aussi une API
+  // servie sur son propre domaine.
+  ({ url }) => /\/(terms|grade-types)$/.test(url.pathname),
   new NetworkFirst({ cacheName: 'gesnotes-referentiels', networkTimeoutSeconds: 5 }),
 );
 
