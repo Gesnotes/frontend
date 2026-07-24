@@ -32,8 +32,9 @@ export function CreateEvaluationDialog({
 
   const activeTypeId = gradeTypeId ?? gradeTypes.data?.[0]?.id;
   const max = Number(maxValue);
-  // Le barème est stocké en Decimal(5,2) côté serveur : borné à 999.
-  const maxValid = max > 0 && max <= 999;
+  const maxValid = max > 0 && max <= 100;
+  const baremeError =
+    maxValue !== '' && !maxValid ? 'Le barème doit être compris entre 1 et 100.' : undefined;
   const canSubmit = label.trim().length > 0 && activeTypeId !== undefined && maxValid;
 
   async function submit() {
@@ -96,25 +97,23 @@ export function CreateEvaluationDialog({
           </select>
         </label>
 
-        <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'flex-start' }}>
           <TextField
             label="Date (facultatif)"
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <label className="ui-field" style={{ maxWidth: 120 }}>
-            <span className="ui-field__label">Barème</span>
-            <input
-              className="ui-input"
-              type="number"
-              min={1}
-              max={999}
-              step={1}
-              value={maxValue}
-              onChange={(e) => setMaxValue(e.target.value)}
-            />
-          </label>
+          <TextField
+            label="Barème"
+            type="number"
+            min={1}
+            max={100}
+            step={1}
+            value={maxValue}
+            onChange={(e) => setMaxValue(e.target.value)}
+            error={baremeError}
+          />
         </div>
       </div>
     </Modal>
