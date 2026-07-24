@@ -1,0 +1,280 @@
+/**
+ * Espace enseignant — mobile d'abord.
+ *
+ * Même parti que l'espace parent : colonne unique, navigation basse au pouce,
+ * bornée sur grand écran plutôt qu'étirée. Pensé pour un téléphone, car tous
+ * les enseignants n'ont pas d'ordinateur.
+ */
+
+.tshell {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--background);
+}
+
+/* ---------------- Barre du haut ---------------- */
+
+.tshell__top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--margin-mobile);
+  background: var(--surface-container-lowest);
+  border-bottom: 1px solid var(--surface-container-high);
+}
+
+.tshell__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.tshell__brand-name {
+  font-size: var(--body-lg-size);
+  font-weight: 700;
+}
+
+.tshell__top-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Le sélecteur de période doit pouvoir rétrécir dans la barre étroite d'un
+   téléphone plutôt que de pousser la marque hors de l'écran. */
+.tshell__top-actions .ui-field {
+  min-width: 0;
+}
+
+.tshell__top-actions .ui-select {
+  min-width: 120px;
+}
+
+.tshell__logout {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface-variant);
+  font-size: 18px;
+  line-height: 1;
+}
+
+.tshell__logout:hover {
+  background: var(--surface-container-low);
+  color: var(--on-surface);
+}
+
+/* ---------------- Corps ---------------- */
+
+.tshell__body {
+  flex: 1;
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--margin-mobile) 96px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+/* En-tête d'écran interne (titre + sous-titre), léger, sous la barre du haut. */
+.tshell__page-title {
+  font-size: var(--title-md-size);
+  line-height: var(--title-md-line);
+  font-weight: var(--title-md-weight);
+}
+
+.tshell__page-subtitle {
+  margin-top: 2px;
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+/* Cartes empilées, une par ligne : lecture au pouce sur téléphone. */
+.tcards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ---------------- Sélection (classe, évaluation) ---------------- */
+
+/* Grande cible tactile : toute la carte est cliquable. */
+.tpick {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  text-align: left;
+  padding: var(--space-4);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
+}
+
+.tpick:active {
+  background: var(--surface-container-low);
+}
+
+.tpick__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tpick__title {
+  font-size: var(--body-lg-size);
+  font-weight: 600;
+}
+
+.tpick__meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+.tpick__chevron {
+  flex-shrink: 0;
+  font-size: 22px;
+  color: var(--outline-variant);
+}
+
+/* ---------------- Saisie d'une évaluation ---------------- */
+
+.tsaisie-back {
+  align-self: flex-start;
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: var(--primary-container);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+}
+
+.tsaisie-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.tsaisie-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.tsaisie-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tsaisie-flag {
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+  color: var(--primary-container);
+}
+
+.tsaisie-note {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+/* Champ note large et haut : saisissable au pouce sans zoomer. */
+.tsaisie-input {
+  width: 84px;
+  text-align: center;
+  font-size: var(--body-lg-size);
+  font-weight: 700;
+}
+
+.tsaisie-max {
+  font-size: var(--body-md-size);
+  color: var(--on-surface-variant);
+}
+
+.tsaisie-add-comment {
+  margin-top: var(--space-2);
+  padding: 4px 0;
+  background: none;
+  border: none;
+  color: var(--on-surface-variant);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+}
+
+/* Barre d'enregistrement collée au-dessus de la navigation basse. */
+.tsaisie-bar {
+  position: sticky;
+  bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  margin: 0 calc(-1 * var(--margin-mobile));
+  background: var(--surface-container-lowest);
+  border-top: 1px solid var(--surface-container-high);
+}
+
+/* ---------------- Navigation basse ---------------- */
+
+.tshell__nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface-container-lowest);
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.tshell__nav-link {
+  flex: 1;
+  max-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  border-radius: var(--radius);
+  color: var(--outline);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+}
+
+.tshell__nav-link.is-active {
+  color: var(--primary-container);
+  background: var(--surface-container-low);
+}
+
+.tshell__nav-icon {
+  font-size: 19px;
+  line-height: 1;
+}

@@ -1,0 +1,260 @@
+/**
+ * Espace parent — mobile d'abord.
+ *
+ * `DESIGN.md` demande une colonne unique, 16 px de marges latérales et un
+ * rythme vertical généreux entre modules pour réduire la charge cognitive.
+ * Sur grand écran, la colonne reste bornée plutôt que de s'étirer : ces
+ * écrans sont pensés pour un téléphone.
+ */
+
+.parent {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  background: var(--background);
+}
+
+.parent__body {
+  flex: 1;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-5) var(--margin-mobile) 96px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-8);
+}
+
+.parent__topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.parent__greeting {
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+.parent__name {
+  font-size: var(--title-md-size);
+  line-height: var(--title-md-line);
+  font-weight: var(--title-md-weight);
+}
+
+.parent__back {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius-full);
+  background: var(--surface-container-lowest);
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ---------------- Carte de moyenne ---------------- */
+
+.parent__hero {
+  padding: var(--space-6);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, var(--primary-container), var(--surface-tint));
+  color: var(--on-primary);
+  box-shadow: var(--elevation-2);
+}
+
+.parent__hero-label {
+  font-size: var(--label-sm-size);
+  opacity: 0.85;
+}
+
+.parent__hero-value {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.parent__hero-number {
+  font-size: var(--display-lg-size);
+  line-height: 1;
+  font-weight: var(--display-lg-weight);
+  letter-spacing: var(--display-lg-tracking);
+}
+
+.parent__hero-max {
+  font-size: var(--body-lg-size);
+  opacity: 0.8;
+}
+
+.parent__hero-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin-top: var(--space-3);
+  padding: 5px 10px;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.18);
+  font-size: var(--body-md-size);
+}
+
+/* ---------------- Listes de matières et de notes ---------------- */
+
+.parent__section-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+}
+
+.parent__section-title {
+  font-size: var(--body-lg-size);
+  font-weight: 700;
+}
+
+.parent__cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.parent__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  text-align: left;
+}
+
+.parent__row-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  font-size: var(--body-lg-size);
+  font-weight: 800;
+}
+
+.parent__row-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.parent__row-title {
+  font-size: var(--body-lg-size);
+  font-weight: 600;
+}
+
+.parent__row-meta {
+  margin-top: 2px;
+  font-size: var(--label-sm-size);
+  color: var(--outline);
+}
+
+.parent__chevron {
+  flex-shrink: 0;
+  color: var(--outline-variant);
+  font-size: 18px;
+}
+
+/* ---------------- Détail d'une note ---------------- */
+
+.parent__grade-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.parent__grade-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 112px;
+  height: 112px;
+  border-radius: var(--radius-full);
+  border: 4px solid var(--surface-container-lowest);
+  box-shadow: var(--elevation-1);
+  font-size: 42px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.parent__facts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--surface-container-highest);
+  border-radius: var(--radius-lg);
+  background: var(--surface-container-low);
+}
+
+.parent__fact-label {
+  display: block;
+  font-size: var(--label-sm-size);
+  letter-spacing: var(--label-sm-tracking);
+  text-transform: uppercase;
+  color: var(--on-surface-variant);
+}
+
+.parent__fact-value {
+  display: block;
+  margin-top: 2px;
+  font-size: var(--body-md-size);
+  font-weight: 600;
+}
+
+.parent__comment {
+  padding: var(--space-4);
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-md);
+  background: var(--surface-container-lowest);
+  font-style: italic;
+  line-height: 1.55;
+  color: var(--on-surface-variant);
+}
+
+/* ---------------- Navigation basse ---------------- */
+
+.parent__nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  gap: var(--space-1);
+  padding: var(--space-2) var(--space-2) calc(var(--space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--surface-container-lowest);
+  border-top: 1px solid var(--surface-container-high);
+}
+
+.parent__nav-link {
+  flex: 1;
+  max-width: 130px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 6px 0;
+  border-radius: var(--radius);
+  color: var(--outline);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+}
+
+.parent__nav-link.is-active {
+  color: var(--primary-container);
+  background: var(--surface-container-low);
+}
+
+.parent__nav-icon {
+  font-size: 19px;
+  line-height: 1;
+}
