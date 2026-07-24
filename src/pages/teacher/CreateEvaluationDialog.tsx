@@ -32,7 +32,9 @@ export function CreateEvaluationDialog({
 
   const activeTypeId = gradeTypeId ?? gradeTypes.data?.[0]?.id;
   const max = Number(maxValue);
-  const canSubmit = label.trim().length > 0 && activeTypeId !== undefined && max > 0;
+  // Le barème est stocké en Decimal(5,2) côté serveur : borné à 999.
+  const maxValid = max > 0 && max <= 999;
+  const canSubmit = label.trim().length > 0 && activeTypeId !== undefined && maxValid;
 
   async function submit() {
     if (!activeTypeId) return;
@@ -107,6 +109,7 @@ export function CreateEvaluationDialog({
               className="ui-input"
               type="number"
               min={1}
+              max={999}
               step={1}
               value={maxValue}
               onChange={(e) => setMaxValue(e.target.value)}
