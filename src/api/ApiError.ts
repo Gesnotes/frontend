@@ -64,7 +64,9 @@ function defaultMessageFor(status: number): string {
   if (status === 403) return "Vous n'avez pas accès à cette ressource.";
   if (status === 404) return 'Ressource introuvable.';
   if (status === 429) return 'Trop de requêtes. Réessayez dans un instant.';
-  if (status >= 500) return 'Erreur interne du serveur.';
+  if (status >= 500) {
+    return "Une erreur inattendue est survenue de notre côté. Réessayez dans un instant ; si cela persiste, prévenez l'administration.";
+  }
   return 'Une erreur est survenue.';
 }
 
@@ -74,7 +76,13 @@ export function isApiError(error: unknown): error is ApiError {
 
 /** Message affichable à l'utilisateur, quelle que soit la nature de l'erreur. */
 export function errorMessage(error: unknown, fallback = 'Une erreur est survenue.'): string {
-  if (isApiError(error)) return error.message;
+  if (isApiError(error)) {
+    // Une 5xx ne porte jamais de message actionnable (« Erreur interne ») : on
+    // affiche un texte qui dit à l'utilisateur quoi faire, pas le jargon serveur.
+    // Les 4xx, elles, portent le vrai motif métier (« Vous n'enseignez pas… »).
+    if (error.status >= 500) return defaultMessageFor(error.status);
+    return error.message;
+  }
   if (error instanceof Error && error.message) return error.message;
   return fallback;
 }
