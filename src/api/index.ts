@@ -13,6 +13,7 @@ export * as subjectsApi from './resources/subjects';
 export * as teachersApi from './resources/teachers';
 export * as studentsApi from './resources/students';
 export * as gradesApi from './resources/grades';
+export * as evaluationsApi from './resources/evaluations';
 export * as dashboardApi from './resources/dashboard';
 export * as parentApi from './resources/parent';
 export * as referentialsApi from './resources/referentials';

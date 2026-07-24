@@ -51,8 +51,11 @@ function GradeBody({ grade }: { grade: ParentGrade }) {
           {grade.value}
         </div>
         <span className="t-label-sm t-muted">sur {grade.maxValue}</span>
-        <p className="t-title-md" style={{ marginTop: 'var(--space-2)' }}>{grade.type.label}</p>
-        <Chip tone="info">{grade.matiere.name}</Chip>
+        <p className="t-title-md" style={{ marginTop: 'var(--space-2)' }}>{grade.evaluation.label}</p>
+        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <Chip tone="info">{grade.matiere.name}</Chip>
+          <Chip tone="neutral">{grade.type.label}</Chip>
+        </div>
       </section>
 
       <section className="parent__facts">

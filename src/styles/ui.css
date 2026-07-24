@@ -422,6 +422,13 @@
   line-height: var(--body-md-line);
 }
 
+/* Porte le contenu inline dans un bloc unique qui peut rétrécir (min-width: 0)
+   au lieu de déborder : le texte et les <strong> se retournent normalement. */
+.ui-alert__content {
+  min-width: 0;
+  flex: 1;
+}
+
 .ui-alert--danger {
   background: var(--error-container);
   border-color: var(--error);

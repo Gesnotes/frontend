@@ -4,11 +4,10 @@ import { api } from '../http';
 import { queryKeys } from '../queryKeys';
 import type {
   CreateGradePayload,
-  CreateGradeResult,
+  EvaluationGrid,
   Grade,
   GradeBatchPayload,
   GradeBatchResult,
-  GradingTableRow,
   ID,
   ParentGrade,
   TeacherClassAssignment,
@@ -21,17 +20,9 @@ export function fetchMyClasses(termId?: ID): Promise<TeacherClassAssignment[]> {
   return api.get<TeacherClassAssignment[]>('/teachers/me/classes', { term_id: termId });
 }
 
-/** `GET /teachers/me/grades` — grille de saisie d'un couple classe × matière. */
-export function fetchGradingTable(
-  classId: ID,
-  subjectId: ID,
-  termId: ID,
-): Promise<GradingTableRow[]> {
-  return api.get<GradingTableRow[]>('/teachers/me/grades', {
-    class_id: classId,
-    subject_id: subjectId,
-    term_id: termId,
-  });
+/** `GET /teachers/me/grades` — grille de saisie d'une évaluation. */
+export function fetchEvaluationGrid(evaluationId: ID): Promise<EvaluationGrid> {
+  return api.get<EvaluationGrid>('/teachers/me/grades', { evaluation_id: evaluationId });
 }
 
 export function fetchMyGradeHistory(filters: {
@@ -51,8 +42,8 @@ export function fetchGrade(id: ID): Promise<ParentGrade> {
   return api.get<ParentGrade>(`/grades/${id}`);
 }
 
-export function createGrade(payload: CreateGradePayload): Promise<CreateGradeResult> {
-  return api.post<CreateGradeResult>('/grades', payload);
+export function createGrade(payload: CreateGradePayload): Promise<Grade> {
+  return api.post<Grade>('/grades', payload);
 }
 
 /**
@@ -82,15 +73,11 @@ export function useMyClasses(termId?: ID) {
   });
 }
 
-export function useGradingTable(
-  classId: ID | undefined,
-  subjectId: ID | undefined,
-  termId: ID | undefined,
-) {
+export function useEvaluationGrid(evaluationId: ID | undefined) {
   return useQuery({
-    queryKey: queryKeys.teacherMe.gradingTable(classId ?? 0, subjectId ?? 0, termId ?? 0),
-    queryFn: () => fetchGradingTable(classId!, subjectId!, termId!),
-    enabled: classId !== undefined && subjectId !== undefined && termId !== undefined,
+    queryKey: queryKeys.teacherMe.evaluationGrid(evaluationId ?? 0),
+    queryFn: () => fetchEvaluationGrid(evaluationId!),
+    enabled: evaluationId !== undefined,
   });
 }
 

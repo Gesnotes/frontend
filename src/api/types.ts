@@ -290,6 +290,7 @@ export type AttachParentPayload =
 export type Grade = {
   id: ID;
   studentId: ID;
+  evaluationId: ID;
   subjectId: ID;
   termId: ID;
   teacherUserId: ID | null;
@@ -309,50 +310,88 @@ export type ParentGrade = {
   comment: string | null;
   createdAt: IsoDateTime | null;
   type: { id: ID; code: string; label: string; weight: number };
+  evaluation: { id: ID; label: string; date: IsoDate | null };
   matiere: SubjectRef;
   periode: TermRef;
   professeur: PersonRef | null;
 };
 
-/** Ligne de la table de saisie : un élève et toutes ses notes du contexte. */
-export type GradingTableRow = {
-  id: ID;
-  firstName: string;
-  lastName: string;
-  notes: Grade[];
-};
-
 /** Entrée de l'historique de l'enseignant. */
 export type TeacherGradeHistoryItem = Grade & {
+  evaluation: { id: ID; label: string; date: IsoDate | null };
   eleve: { id: ID; firstName: string; lastName: string; classId: ID };
   matiere: SubjectRef;
   periode: TermRef;
 };
 
 export type CreateGradePayload = {
+  evaluationId: ID;
   studentId: ID;
-  subjectId: ID;
-  gradeTypeId: ID;
-  termId: ID;
   value: number;
-  maxValue?: number;
   comment?: string;
 };
 
 export type UpdateGradePayload = {
   value?: number;
-  maxValue?: number;
-  gradeTypeId?: ID;
   comment?: string | null;
 };
 
+// ------------------------------------------------------------- Évaluations
+
 /**
- * Réponse de `POST /grades`. `avertissementDoublon` signale qu'une note du
- * même type existe déjà pour cet élève dans cette matière et cette période.
+ * Une évaluation concrète : « Interro du 12/09 ». C'est elle qui permet
+ * plusieurs notes du même type dans une période. Le barème lui appartient ; le
+ * poids reste porté par le type de note.
  */
-export type CreateGradeResult = {
-  note: Grade;
-  avertissementDoublon: boolean;
+export type Evaluation = {
+  id: ID;
+  classId: ID;
+  subjectId: ID;
+  termId: ID;
+  teacherUserId: ID | null;
+  label: string;
+  date: IsoDate | null;
+  maxValue: number;
+  createdAt: IsoDateTime | null;
+  /** Nombre d'élèves déjà notés sur cette évaluation. */
+  gradedCount: number;
+  type: { id: ID; code: string; label: string; weight: number };
+};
+
+export type CreateEvaluationPayload = {
+  classId: ID;
+  subjectId: ID;
+  gradeTypeId: ID;
+  termId: ID;
+  label: string;
+  date?: string | null;
+  maxValue?: number;
+};
+
+export type UpdateEvaluationPayload = {
+  label?: string;
+  date?: string | null;
+  maxValue?: number;
+};
+
+/** Grille de saisie d'une évaluation : ses élèves et leur note (une ou aucune). */
+export type EvaluationGrid = {
+  evaluation: {
+    id: ID;
+    classId: ID;
+    subjectId: ID;
+    termId: ID;
+    label: string;
+    date: IsoDate | null;
+    maxValue: number;
+    type: { id: ID; code: string; label: string; weight: number };
+  };
+  students: {
+    id: ID;
+    firstName: string;
+    lastName: string;
+    note: { value: number; comment: string | null } | null;
+  }[];
 };
 
 // -------------------------------------------------------- Saisie en lot
@@ -367,20 +406,16 @@ export type GradeBatchEntry = {
 /**
  * Corps de `PUT /teachers/me/grades`.
  *
- * Le quadruplet identifie une évaluation ; l'opération est idempotente, donc
- * réémettre le même lot après une coupure réseau ne crée aucun doublon.
+ * L'évaluation identifie la colonne de notes ; l'opération est idempotente,
+ * donc réémettre le même lot après une coupure réseau ne crée aucun doublon.
  */
 export type GradeBatchPayload = {
-  classId: ID;
-  subjectId: ID;
-  gradeTypeId: ID;
-  termId: ID;
-  maxValue?: number;
+  evaluationId: ID;
   entries: GradeBatchEntry[];
 };
 
 /** Motifs pour lesquels le backend laisse un élève de côté. */
-export type GradeBatchSkipReason = 'eleve_hors_classe' | 'notes_multiples';
+export type GradeBatchSkipReason = 'eleve_hors_classe';
 
 export type GradeBatchResult = {
   created: number;

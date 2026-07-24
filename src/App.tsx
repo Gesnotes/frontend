@@ -4,6 +4,7 @@ import { useAuth } from './auth/auth-context';
 import { RedirectIfAuthenticated, RequireAuth, RequireRole } from './auth/guards';
 import { AppShell } from './layouts/AppShell';
 import { ParentShell } from './layouts/ParentShell';
+import { TeacherShell } from './layouts/TeacherShell';
 import NotFoundPage from './pages/NotFoundPage';
 import BulletinPage from './pages/admin/BulletinPage';
 import ClassDetailPage from './pages/admin/ClassDetailPage';
@@ -78,7 +79,7 @@ export default function App() {
         </Route>
 
         <Route element={<RequireRole allow={['teacher']} />}>
-          <Route path={paths.teacher.root} element={<AppShell />}>
+          <Route path={paths.teacher.root} element={<TeacherShell />}>
             <Route index element={<TeacherDashboardPage />} />
             <Route path="saisie" element={<GradeEntryPage />} />
             <Route path="historique" element={<TeacherHistoryPage />} />

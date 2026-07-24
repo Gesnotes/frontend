@@ -70,7 +70,10 @@ export function Alert({
 }: { tone?: 'info' | 'danger'; children: ReactNode }) {
   return (
     <div className={`ui-alert ui-alert--${tone}`} role={tone === 'danger' ? 'alert' : undefined}>
-      {children}
+      {/* Bloc unique : sans lui, un message contenant des éléments inline
+          (<strong>…) éclate en plusieurs items flex posés côte à côte sur une
+          ligne non retournée, qui débordent de la card en écran étroit. */}
+      <div className="ui-alert__content">{children}</div>
     </div>
   );
 }

@@ -52,8 +52,10 @@ export const queryKeys = {
   teacherMe: {
     all: ['teacher-me'] as const,
     classes: (termId?: ID) => ['teacher-me', 'classes', termId ?? null] as const,
-    gradingTable: (classId: ID, subjectId: ID, termId: ID) =>
-      ['teacher-me', 'grading-table', classId, subjectId, termId] as const,
+    evaluations: (classId: ID, subjectId: ID, termId: ID) =>
+      ['teacher-me', 'evaluations', classId, subjectId, termId] as const,
+    evaluationGrid: (evaluationId: ID) =>
+      ['teacher-me', 'evaluation-grid', evaluationId] as const,
     history: (classId?: ID, subjectId?: ID, termId?: ID) =>
       ['teacher-me', 'history', classId ?? null, subjectId ?? null, termId ?? null] as const,
   },

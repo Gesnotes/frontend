@@ -4,8 +4,6 @@ import { gradesApi, type TeacherClassAssignment } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatPercent, plural } from '../../lib/format';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
-import { TermSelect } from '../../layouts/TermSelect';
 import { InstallCard } from '../../pwa/InstallCard';
 import { gradeEntryPath } from '../../routes/paths';
 import { Button, Card, Chip, EmptyState, ProgressBar, Skeleton } from '../../ui';
@@ -16,34 +14,32 @@ export default function TeacherDashboardPage() {
 
   return (
     <>
-      <PageHeader
-        title="Mes classes"
-        subtitle={term ? `Avancement de la saisie · ${term.label}` : 'Avancement de la saisie'}
-        actions={<TermSelect />}
-      />
-      <PageContent>
-        <div className="page-stack">
-          <InstallCard compact />
+      <div>
+        <h1 className="tshell__page-title">Mes classes</h1>
+        <p className="tshell__page-subtitle">
+          {term ? `Avancement de la saisie · ${term.label}` : 'Avancement de la saisie'}
+        </p>
+      </div>
 
-          <QueryBoundary query={assignments} loading={<CardsSkeleton />}>
-            {(items) =>
-              items.length === 0 ? (
-                <EmptyState
-                  icon="▦"
-                  title="Aucune classe affectée"
-                  description="Votre administration ne vous a pas encore affecté de classe ni de matière. Sans affectation, la saisie de notes n'est pas possible."
-                />
-              ) : (
-                <div className="grid-cards">
-                  {items.map((item) => (
-                    <AssignmentCard key={item.assignmentId} item={item} />
-                  ))}
-                </div>
-              )
-            }
-          </QueryBoundary>
-        </div>
-      </PageContent>
+      <InstallCard compact />
+
+      <QueryBoundary query={assignments} loading={<CardsSkeleton />}>
+        {(items) =>
+          items.length === 0 ? (
+            <EmptyState
+              icon="▦"
+              title="Aucune classe affectée"
+              description="Votre administration ne vous a pas encore affecté de classe ni de matière. Sans affectation, la saisie de notes n'est pas possible."
+            />
+          ) : (
+            <div className="tcards">
+              {items.map((item) => (
+                <AssignmentCard key={item.assignmentId} item={item} />
+              ))}
+            </div>
+          )
+        }
+      </QueryBoundary>
     </>
   );
 }
@@ -111,7 +107,7 @@ function AssignmentCard({ item }: { item: TeacherClassAssignment }) {
 
 function CardsSkeleton() {
   return (
-    <div className="grid-cards">
+    <div className="tcards">
       {[0, 1, 2].map((i) => (
         <Card key={i} padded>
           <Skeleton width="45%" height={22} />

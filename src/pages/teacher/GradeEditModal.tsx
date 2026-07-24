@@ -1,21 +1,20 @@
 import { useState, type FormEvent } from 'react';
 
-import { errorMessage, gradesApi, type Grade, type GradeType, type ID } from '../../api';
-import {
-  Alert, Modal, ModalActions, SelectField, TextAreaField, TextField, useToast,
-} from '../../ui';
+import { errorMessage, gradesApi, type Grade } from '../../api';
+import { Alert, Chip, Modal, ModalActions, TextAreaField, TextField, useToast } from '../../ui';
 
 /**
- * Modification d'une note existante.
+ * Correction d'une note existante.
  *
- * Le commentaire est visible par la famille : c'est le seul champ de
- * l'application qui sorte de l'établissement, d'où le rappel explicite.
+ * Seules la valeur et le commentaire se modifient ici : le type et le barème
+ * appartiennent désormais à l'évaluation et se changent sur elle. Le
+ * commentaire est visible par la famille — le seul champ qui sorte de
+ * l'établissement, d'où le rappel explicite.
  */
 export function GradeEditModal({
-  grade, gradeTypes, subtitle, onClose,
+  grade, subtitle, onClose,
 }: {
   grade: Grade | null;
-  gradeTypes: GradeType[];
   subtitle?: string;
   onClose: () => void;
 }) {
@@ -23,15 +22,13 @@ export function GradeEditModal({
   const update = gradesApi.useUpdateGrade();
 
   const [value, setValue] = useState(String(grade?.value ?? ''));
-  const [maxValue, setMaxValue] = useState(String(grade?.maxValue ?? 20));
-  const [gradeTypeId, setGradeTypeId] = useState(String(grade?.type.id ?? ''));
   const [comment, setComment] = useState(grade?.comment ?? '');
   const [error, setError] = useState<string | null>(null);
 
+  const max = Number(grade?.maxValue ?? 20);
   const numericValue = Number(value);
-  const numericMax = Number(maxValue);
   const outOfRange =
-    value !== '' && (Number.isNaN(numericValue) || numericValue < 0 || numericValue > numericMax);
+    value !== '' && (Number.isNaN(numericValue) || numericValue < 0 || numericValue > max);
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
@@ -41,8 +38,6 @@ export function GradeEditModal({
       await update.mutateAsync({
         id: grade.id,
         value: numericValue,
-        maxValue: numericMax,
-        gradeTypeId: Number(gradeTypeId) as ID,
         // Chaîne vide envoyée en `null` : le backend distingue « pas de
         // commentaire » de « champ non modifié ».
         comment: comment.trim() || null,
@@ -72,38 +67,23 @@ export function GradeEditModal({
       <form onSubmit={submit} className="page-stack" style={{ gap: 'var(--space-4)' }}>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <TextField
-            label="Note"
-            type="number"
-            min={0}
-            max={numericMax}
-            step={0.25}
-            required
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            error={outOfRange ? `Entre 0 et ${maxValue}.` : undefined}
-          />
-          <TextField
-            label="Barème"
-            type="number"
-            min={1}
-            step={1}
-            required
-            value={maxValue}
-            onChange={(e) => setMaxValue(e.target.value)}
-          />
-        </div>
+        {grade ? (
+          <p className="t-body-md t-muted" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+            <Chip tone="info">{grade.type.label}</Chip>
+            <span>noté sur {grade.maxValue}</span>
+          </p>
+        ) : null}
 
-        <SelectField
-          label="Type"
+        <TextField
+          label={`Note / ${max}`}
+          type="number"
+          min={0}
+          max={max}
+          step={0.25}
           required
-          value={gradeTypeId}
-          onChange={(e) => setGradeTypeId(e.target.value)}
-          options={gradeTypes.map((t) => ({
-            value: String(t.id),
-            label: `${t.label} (coef. ${t.weight})`,
-          }))}
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          error={outOfRange ? `Entre 0 et ${max}.` : undefined}
         />
 
         <TextAreaField

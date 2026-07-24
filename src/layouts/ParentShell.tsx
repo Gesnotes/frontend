@@ -3,6 +3,7 @@ import { NavLink, Outlet } from 'react-router-dom';
 import { ChildProvider } from '../context/ChildProvider';
 import { TermProvider } from '../context/TermProvider';
 import { OfflineBar } from '../pwa/OfflineBar';
+import { useForegroundNotifications } from '../push/useForegroundNotifications';
 import { paths } from '../routes/paths';
 
 const items = [
@@ -14,6 +15,8 @@ const items = [
 
 /** Coquille mobile de l'espace parent : colonne unique et navigation basse. */
 export function ParentShell() {
+  useForegroundNotifications();
+
   return (
     <TermProvider>
       <ChildProvider>

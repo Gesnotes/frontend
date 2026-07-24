@@ -1,17 +1,14 @@
 import { useState } from 'react';
 
 import {
-  errorMessage, gradesApi, referentialsApi,
+  errorMessage, gradesApi,
   type Grade, type ID, type TeacherGradeHistoryItem,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { formatCount, formatDateShort, plural } from '../../lib/format';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
-import { TermSelect } from '../../layouts/TermSelect';
+import { formatCount, formatDate, formatDateShort, plural } from '../../lib/format';
 import {
-  Button, Card, Chip, ConfirmDialog, DataTable, EmptyState, Skeleton,
-  gradeTone, useToast, type Column,
+  Button, Card, Chip, ConfirmDialog, EmptyState, Skeleton, gradeTone, useToast,
 } from '../../ui';
 import { GradeEditModal } from './GradeEditModal';
 
@@ -20,7 +17,6 @@ export default function TeacherHistoryPage() {
   const toast = useToast();
 
   const assignments = gradesApi.useMyClasses(termId);
-  const gradeTypes = referentialsApi.useGradeTypes();
 
   const [classId, setClassId] = useState<ID | ''>('');
   const [subjectId, setSubjectId] = useState<ID | ''>('');
@@ -59,141 +55,102 @@ export default function TeacherHistoryPage() {
     }
   }
 
-  const columns: Column<TeacherGradeHistoryItem>[] = [
-    {
-      key: 'student',
-      header: 'Élève',
-      render: (row) => (
-        <span style={{ fontWeight: 600 }}>
-          {row.eleve.firstName} {row.eleve.lastName}
-        </span>
-      ),
-    },
-    {
-      key: 'subject',
-      header: 'Matière',
-      render: (row) => row.matiere.name,
-    },
-    {
-      key: 'type',
-      header: 'Type',
-      render: (row) => <Chip tone="info">{row.type.label}</Chip>,
-    },
-    {
-      key: 'value',
-      header: 'Note',
-      render: (row) => (
-        <Chip tone={gradeTone(row.value, row.maxValue)}>
-          {row.value} / {row.maxValue}
-        </Chip>
-      ),
-    },
-    {
-      key: 'period',
-      header: 'Période',
-      render: (row) => <span className="t-muted">{row.periode.label}</span>,
-    },
-    {
-      key: 'date',
-      header: 'Saisie le',
-      render: (row) => <span className="t-muted">{formatDateShort(row.createdAt)}</span>,
-    },
-    {
-      key: 'comment',
-      header: 'Commentaire',
-      render: (row) =>
-        row.comment ? (
-          <span title={row.comment} className="t-muted">
-            {row.comment.length > 40 ? `${row.comment.slice(0, 40)}…` : row.comment}
-          </span>
-        ) : (
-          <span className="t-subtle">—</span>
-        ),
-    },
-    {
-      key: 'actions',
-      header: '',
-      align: 'numeric',
-      render: (row) => (
-        <div className="cell-actions">
-          <Button size="sm" variant="tonal" onClick={() => setEditing(row)}>Modifier</Button>
-          <Button size="sm" variant="danger" onClick={() => setToDelete(row)}>Supprimer</Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <>
-      <PageHeader
-        title="Historique des notes"
-        subtitle={
-          term ? `Notes que vous avez saisies · ${term.label}` : 'Notes que vous avez saisies'
+      <div>
+        <h1 className="tshell__page-title">Historique</h1>
+        <p className="tshell__page-subtitle">
+          {term ? `Notes que vous avez saisies · ${term.label}` : 'Notes que vous avez saisies'}
+        </p>
+      </div>
+
+      <div className="page-toolbar">
+        <label className="ui-field" style={{ flex: 1, minWidth: 140 }}>
+          <span className="sr-only">Filtrer par classe</span>
+          <select
+            className="ui-select"
+            value={classId}
+            onChange={(e) => setClassId(e.target.value ? Number(e.target.value) : '')}
+          >
+            <option value="">Toutes mes classes</option>
+            {classes.map((klass) => (
+              <option key={klass.id} value={klass.id}>{klass.name}</option>
+            ))}
+          </select>
+        </label>
+
+        <label className="ui-field" style={{ flex: 1, minWidth: 140 }}>
+          <span className="sr-only">Filtrer par matière</span>
+          <select
+            className="ui-select"
+            value={subjectId}
+            onChange={(e) => setSubjectId(e.target.value ? Number(e.target.value) : '')}
+          >
+            <option value="">Toutes mes matières</option>
+            {subjects.map((subject) => (
+              <option key={subject.id} value={subject.id}>{subject.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+
+      <QueryBoundary query={history} loading={<ListSkeleton />}>
+        {(rows) =>
+          rows.length === 0 ? (
+            <EmptyState
+              icon="↺"
+              title="Aucune note saisie"
+              description="Les notes que vous enregistrerez apparaîtront ici, avec la possibilité de les corriger."
+            />
+          ) : (
+            <>
+              <p className="t-body-md t-muted">
+                {formatCount(rows.length)} {plural(rows.length, 'note')}
+                {rows.length >= 200 ? ' (200 plus récentes)' : ''}
+              </p>
+              <div className="tcards">
+                {rows.map((row) => (
+                  <Card key={row.id} padded>
+                    <div className="tsaisie-row">
+                      <span className="tsaisie-name">
+                        {row.eleve.firstName} {row.eleve.lastName}
+                      </span>
+                      <Chip tone={gradeTone(row.value, row.maxValue)}>
+                        {row.value} / {row.maxValue}
+                      </Chip>
+                    </div>
+
+                    <p className="tpick__meta" style={{ marginTop: 'var(--space-2)' }}>
+                      <strong>{row.evaluation.label}</strong>
+                      <Chip tone="info">{row.type.label}</Chip>
+                      {' · '}{row.matiere.name}
+                      {' · '}{row.periode.label}
+                      {row.evaluation.date
+                        ? ` · ${formatDate(row.evaluation.date)}`
+                        : ` · saisie le ${formatDateShort(row.createdAt)}`}
+                    </p>
+
+                    {row.comment ? (
+                      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-2)' }}>
+                        {row.comment}
+                      </p>
+                    ) : null}
+
+                    <div className="card-actions">
+                      <Button size="sm" variant="tonal" onClick={() => setEditing(row)}>Modifier</Button>
+                      <Button size="sm" variant="danger" onClick={() => setToDelete(row)}>Supprimer</Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )
         }
-        actions={<TermSelect />}
-      />
-      <PageContent>
-        <div className="page-stack">
-          <div className="page-toolbar">
-            <label className="ui-field" style={{ minWidth: 200 }}>
-              <span className="sr-only">Filtrer par classe</span>
-              <select
-                className="ui-select"
-                value={classId}
-                onChange={(e) => setClassId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">Toutes mes classes</option>
-                {classes.map((klass) => (
-                  <option key={klass.id} value={klass.id}>{klass.name}</option>
-                ))}
-              </select>
-            </label>
-
-            <label className="ui-field" style={{ minWidth: 200 }}>
-              <span className="sr-only">Filtrer par matière</span>
-              <select
-                className="ui-select"
-                value={subjectId}
-                onChange={(e) => setSubjectId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">Toutes mes matières</option>
-                {subjects.map((subject) => (
-                  <option key={subject.id} value={subject.id}>{subject.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
-
-          <QueryBoundary query={history} loading={<TableSkeleton />}>
-            {(rows) => (
-              <>
-                <p className="t-body-md t-muted">
-                  {formatCount(rows.length)} {plural(rows.length, 'note')}
-                  {rows.length >= 200 ? ' (200 plus récentes)' : ''}
-                </p>
-                <DataTable
-                  caption="Historique des notes saisies"
-                  columns={columns}
-                  rows={rows}
-                  rowKey={(row) => String(row.id)}
-                  empty={
-                    <EmptyState
-                      icon="↺"
-                      title="Aucune note saisie"
-                      description="Les notes que vous enregistrerez apparaîtront ici, avec la possibilité de les corriger."
-                    />
-                  }
-                />
-              </>
-            )}
-          </QueryBoundary>
-        </div>
-      </PageContent>
+      </QueryBoundary>
 
       <GradeEditModal
         key={editing?.id ?? 'none'}
         grade={editing}
-        gradeTypes={gradeTypes.data ?? []}
         onClose={() => setEditing(null)}
       />
 
@@ -214,12 +171,15 @@ export default function TeacherHistoryPage() {
   );
 }
 
-function TableSkeleton() {
+function ListSkeleton() {
   return (
-    <Card padded>
-      {[0, 1, 2, 3, 4, 5].map((i) => (
-        <Skeleton key={i} height={44} style={{ marginBottom: 12 }} />
+    <div className="tcards">
+      {[0, 1, 2, 3].map((i) => (
+        <Card key={i} padded>
+          <Skeleton width="50%" height={20} />
+          <Skeleton width="70%" height={12} style={{ marginTop: 10 }} />
+        </Card>
       ))}
-    </Card>
+    </div>
   );
 }

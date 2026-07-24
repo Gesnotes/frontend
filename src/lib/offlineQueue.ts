@@ -138,9 +138,9 @@ class OfflineQueue {
   }
 }
 
-/** Une évaluation = un couple classe × matière × type × période. */
+/** Une saisie en attente est identifiée par son évaluation. */
 function evaluationKey(payload: GradeBatchPayload): string {
-  return `${payload.classId}:${payload.subjectId}:${payload.gradeTypeId}:${payload.termId}`;
+  return String(payload.evaluationId);
 }
 
 function read(): PendingBatch[] {

@@ -69,7 +69,8 @@ function GradeList({ grades }: { grades: ParentGrade[] }) {
             <span className="parent__row-body">
               <span className="parent__row-title">{grade.matiere.name}</span>
               <span className="parent__row-meta">
-                {grade.type.label} · {formatDateShort(grade.createdAt)}
+                {grade.evaluation.label} · {grade.type.label} ·{' '}
+                {formatDateShort(grade.evaluation.date ?? grade.createdAt)}
                 {grade.comment ? ' · commentaire' : ''}
               </span>
             </span>

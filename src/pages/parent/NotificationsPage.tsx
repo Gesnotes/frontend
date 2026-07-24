@@ -1,14 +1,9 @@
-import { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-
 import { errorMessage, parentApi, type Device } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useAuth } from '../../auth/auth-context';
 import { formatDate } from '../../lib/format';
-import { onForegroundMessage } from '../../push/push';
 import { usePush } from '../../push/usePush';
 import { InstallCard } from '../../pwa/InstallCard';
-import { paths } from '../../routes/paths';
 import { Alert, Button, Card, EmptyState, Skeleton, useToast } from '../../ui';
 
 /**
@@ -20,28 +15,11 @@ import { Alert, Button, Card, EmptyState, Skeleton, useToast } from '../../ui';
  */
 export default function NotificationsPage() {
   const toast = useToast();
-  const navigate = useNavigate();
   const { logout } = useAuth();
 
   const push = usePush();
   const devices = parentApi.useDevices();
   const remove = parentApi.useRemoveDevice();
-
-  /**
-   * Message reçu application ouverte : FCM n'affiche alors rien de lui-même.
-   * Sans ce relais, un parent en train de consulter l'écran ne verrait pas
-   * passer la note qui vient d'arriver.
-   */
-  useEffect(() => {
-    let unsubscribe: (() => void) | undefined;
-    void onForegroundMessage((message) => {
-      toast.info(message.body || message.title);
-      if (message.gradeId) navigate(paths.parent.grade(message.gradeId));
-    }).then((fn) => {
-      unsubscribe = fn;
-    });
-    return () => unsubscribe?.();
-  }, [toast, navigate]);
 
   async function unregister(device: Device) {
     try {

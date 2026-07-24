@@ -30,12 +30,20 @@ cleanupOutdatedCaches();
  * Sans cela, ouvrir l'application hors connexion afficherait la page d'erreur
  * du navigateur — or l'enseignant doit pouvoir saisir ses notes sans réseau.
  * Les requêtes d'API sont exclues : elles ne doivent jamais renvoyer le HTML.
+ *
+ * Réservé à la production : en dev, `injectManifest` n'injecte aucun précache,
+ * si bien que `createHandlerBoundToURL('index.html')` lèverait dès l'évaluation
+ * du worker (`non-precached-url`) — le SW ne s'installerait jamais et
+ * `navigator.serviceWorker.ready` resterait bloqué. Le serveur Vite sert de
+ * toute façon `index.html` sur chaque navigation en dev, la route est inutile.
  */
-registerRoute(
-  new NavigationRoute(createHandlerBoundToURL('index.html'), {
-    denylist: [/^\/api/, /\/[^/?]+\.[^/]+$/],
-  }),
-);
+if (import.meta.env.PROD) {
+  registerRoute(
+    new NavigationRoute(createHandlerBoundToURL('index.html'), {
+      denylist: [/^\/api/, /\/[^/?]+\.[^/]+$/],
+    }),
+  );
+}
 
 registerRoute(
   ({ request }) => request.destination === 'style' || request.destination === 'script',
