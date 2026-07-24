@@ -295,6 +295,7 @@ function LinkParentModal({ student, onClose }: { student: Student | null; onClos
   const toast = useToast();
   const attach = studentsApi.useAttachParent();
   const detach = studentsApi.useDetachParent();
+  const resend = studentsApi.useResendParentInvitation();
 
   const [search, setSearch] = useState('');
   const results = studentsApi.useParentSearch(search);
@@ -326,6 +327,17 @@ function LinkParentModal({ student, onClose }: { student: Student | null; onClos
     }
   }
 
+  async function resendInvite(parentId: ID) {
+    if (!student) return;
+    setError(null);
+    try {
+      await resend.mutateAsync({ id: student.id, parentId });
+      toast.success('Invitation renvoyée');
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
   return (
     <Modal
       open={student !== null}
@@ -348,14 +360,24 @@ function LinkParentModal({ student, onClose }: { student: Student | null; onClos
                     <div className="list-row__title">{personName(parent)}</div>
                     <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="danger"
-                    loading={detach.isPending}
-                    onClick={() => void unlink(parent.id)}
-                  >
-                    Dissocier
-                  </Button>
+                  <div className="cell-actions">
+                    <Button
+                      size="sm"
+                      variant="tonal"
+                      loading={resend.isPending}
+                      onClick={() => void resendInvite(parent.id)}
+                    >
+                      Renvoyer l'invitation
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      loading={detach.isPending}
+                      onClick={() => void unlink(parent.id)}
+                    >
+                      Dissocier
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

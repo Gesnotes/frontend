@@ -68,6 +68,11 @@ export function detachParent(id: ID, parentId: ID) {
   return api.delete<Student>(`/students/${id}/parents/${parentId}`);
 }
 
+/** Renvoie le lien d'invitation à un parent déjà associé (email perdu, lien expiré). */
+export function resendParentInvitation(id: ID, parentId: ID) {
+  return api.post<{ message: string }>(`/students/${id}/parents/${parentId}/invitation`);
+}
+
 /** `GET /parents/search` — recherche d'un compte parent à associer. */
 export function searchParents(query: string): Promise<ParentContact[]> {
   return api.get<ParentContact[]>('/parents/search', { q: query });
@@ -151,6 +156,14 @@ export function useDetachParent() {
   return useMutation({
     mutationFn: ({ id, parentId }: { id: ID; parentId: ID }) => detachParent(id, parentId),
     onSuccess: invalidate,
+  });
+}
+
+/** Renvoi d'invitation : aucun état élève ne change, donc pas d'invalidation. */
+export function useResendParentInvitation() {
+  return useMutation({
+    mutationFn: ({ id, parentId }: { id: ID; parentId: ID }) =>
+      resendParentInvitation(id, parentId),
   });
 }
 
