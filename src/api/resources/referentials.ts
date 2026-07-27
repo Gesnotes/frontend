@@ -103,7 +103,20 @@ export function useDeleteTerm() {
  */
 export function defaultTerm(terms: Term[] | undefined): Term | undefined {
   if (!terms?.length) return undefined;
-  return terms.find((term) => term.isCurrent) ?? terms[terms.length - 1];
+
+  // D'abord la période dont la date du jour tombe dans les bornes : c'est elle
+  // qui est réellement « active », plutôt que la dernière créée (un trimestre
+  // clos ne doit pas rester sélectionné par défaut).
+  const today = new Date().toISOString().slice(0, 10);
+  const containing = terms.find((term) => {
+    const start = term.startDate ? term.startDate.slice(0, 10) : null;
+    const end = term.endDate ? term.endDate.slice(0, 10) : null;
+    return (!start || start <= today) && (!end || today <= end);
+  });
+
+  // À défaut (grandes vacances), on retombe sur `isCurrent` puis la dernière
+  // connue, pour ne pas laisser l'écran sans sélection.
+  return containing ?? terms.find((term) => term.isCurrent) ?? terms[terms.length - 1];
 }
 
 /**

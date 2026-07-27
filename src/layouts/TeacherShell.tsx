@@ -16,9 +16,10 @@ import { TermSelect } from './TermSelect';
  * Le sélecteur de période vit une fois dans la barre du haut, à l'intérieur du
  * `TermProvider`, et vaut pour tous les écrans.
  */
+// « Mes classes » a fusionné dans « Saisie » : la saisie commence par le choix
+// de la classe, avec l'avancement affiché sur chaque carte.
 const items = [
-  { to: paths.teacher.dashboard, label: 'Mes classes', icon: '▦', end: true },
-  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: '✎' },
+  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: '✎', end: true },
   { to: paths.teacher.history, label: 'Historique', icon: '↺' },
 ];
 
