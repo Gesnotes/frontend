@@ -74,6 +74,16 @@ export type Term = {
   /** Ce qu'une suppression définitive emporterait. */
   evaluationCount: number;
   gradeCount: number;
+  /** Période terminée : sa date de fin est passée. */
+  isClosed: boolean;
+  /** Échéance d'une réouverture accordée par l'administration, `null` sinon. */
+  reopenedUntil: IsoDateTime | null;
+  /**
+   * Un enseignant peut y saisir. Calculé par le backend, qui applique la même
+   * règle à l'écriture : ne jamais recalculer ici, sous peine d'annoncer une
+   * période ouverte que l'API refuserait ensuite.
+   */
+  isOpenForEntry: boolean;
 };
 
 /**

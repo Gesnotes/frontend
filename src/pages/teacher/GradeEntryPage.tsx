@@ -28,6 +28,15 @@ export default function GradeEntryPage() {
   const { termId, term } = useTermContext();
   const assignments = gradesApi.useMyClasses(termId);
 
+  /**
+   * Verrou de trimestre clos, tel que le backend le calcule.
+   *
+   * Il tient compte d'une réouverture éventuellement accordée par
+   * l'administration : le recalculer ici sur `endDate` annoncerait une période
+   * fermée alors que l'API accepte l'écriture, et l'inverse à l'expiration.
+   */
+  const locked = term !== undefined && !term.isOpenForEntry;
+
   const classId = params.get('classe') ? Number(params.get('classe')) : undefined;
   const subjectId = params.get('matiere') ? Number(params.get('matiere')) : undefined;
   const evalId = params.get('eval') ? Number(params.get('eval')) : undefined;
@@ -64,7 +73,7 @@ export default function GradeEntryPage() {
   }
 
   if (evalId !== undefined) {
-    return <EvaluationSaisie evaluationId={evalId} onBack={closeEvaluation} />;
+    return <EvaluationSaisie evaluationId={evalId} locked={locked} onBack={closeEvaluation} />;
   }
 
   if (selected && classId !== undefined && subjectId !== undefined) {
@@ -74,6 +83,7 @@ export default function GradeEntryPage() {
         classId={classId}
         subjectId={subjectId}
         termId={termId}
+        locked={locked}
         onOpen={openEvaluation}
         onChangeAssignment={clearSelection}
       />
@@ -121,12 +131,13 @@ export default function GradeEntryPage() {
 }
 
 function EvaluationList({
-  selected, classId, subjectId, termId, onOpen, onChangeAssignment,
+  selected, classId, subjectId, termId, locked, onOpen, onChangeAssignment,
 }: {
   selected: TeacherClassAssignment;
   classId: ID;
   subjectId: ID;
   termId: ID;
+  locked: boolean;
   onOpen: (id: ID) => void;
   onChangeAssignment: () => void;
 }) {
@@ -157,8 +168,15 @@ function EvaluationList({
           <h1 className="tshell__page-title">{selected.className}</h1>
           <p className="tshell__page-subtitle">{selected.subjectName}</p>
         </div>
-        <Button size="sm" onClick={() => setCreating(true)}>+ Évaluation</Button>
+        <Button size="sm" disabled={locked} onClick={() => setCreating(true)}>+ Évaluation</Button>
       </div>
+
+      {locked ? (
+        <Alert tone="info">
+          Ce trimestre est terminé : la saisie et la création d'évaluations n'y sont plus possibles.
+          Demandez à l'administration de rouvrir la période pour une correction.
+        </Alert>
+      ) : null}
 
       <PendingBatchesBanner
         pending={pending}
@@ -174,7 +192,7 @@ function EvaluationList({
               icon="✎"
               title="Aucune évaluation"
               description="Créez une première évaluation (interrogation, devoir, composition) pour commencer la saisie."
-              action={{ label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
+              action={locked ? undefined : { label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
             />
           ) : (
             <div className="tcards">
@@ -193,8 +211,11 @@ function EvaluationList({
                     </span>
                     <span className="tpick__chevron" aria-hidden="true">›</span>
                   </button>
+                  {/* Le backend refuse aussi la suppression sur un trimestre
+                      clos : le bouton ne doit pas promettre le contraire. */}
                   <button
                     className="tpick__delete"
+                    disabled={locked}
                     aria-label={`Supprimer l'évaluation ${evaluation.label}`}
                     onClick={() => setToDelete(evaluation)}
                   >

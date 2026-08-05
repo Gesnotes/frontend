@@ -65,6 +65,22 @@ export function restoreTerm(id: ID): Promise<Term> {
   return api.post<Term>(`/terms/${id}/restore`, {});
 }
 
+/**
+ * Rouvre la saisie sur une période terminée, jusqu'à `until` (instant ISO).
+ *
+ * Sans cette soupape, une note oubliée après la clôture obligeait
+ * l'administration à saisir à la place de l'enseignant, ou à repousser la date
+ * de fin du trimestre — ce qui aurait faussé « période en cours ».
+ */
+export function reopenTerm(id: ID, until: string): Promise<Term> {
+  return api.post<Term>(`/terms/${id}/reopen`, { until });
+}
+
+/** Referme la saisie avant l'échéance, une fois la correction faite. */
+export function closeTermEntry(id: ID): Promise<Term> {
+  return api.delete<Term>(`/terms/${id}/reopen`);
+}
+
 export function useTerms(includeArchived = false) {
   return useQuery({
     queryKey: queryKeys.terms.list(includeArchived),
@@ -122,6 +138,19 @@ export function useArchiveTerm() {
 export function useRestoreTerm() {
   const invalidate = useInvalidateTerms();
   return useMutation({ mutationFn: restoreTerm, onSuccess: invalidate });
+}
+
+export function useReopenTerm() {
+  const invalidate = useInvalidateTerms();
+  return useMutation({
+    mutationFn: ({ id, until }: { id: ID; until: string }) => reopenTerm(id, until),
+    onSuccess: invalidate,
+  });
+}
+
+export function useCloseTermEntry() {
+  const invalidate = useInvalidateTerms();
+  return useMutation({ mutationFn: closeTermEntry, onSuccess: invalidate });
 }
 
 export function useDeleteTermPermanently() {
