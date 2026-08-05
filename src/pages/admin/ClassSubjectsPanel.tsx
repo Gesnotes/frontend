@@ -37,7 +37,7 @@ export function ClassSubjectsPanel({ classId }: { classId: ID }) {
       <Card padded>
         <SectionTitle>Matières de la classe</SectionTitle>
         <Alert tone="danger">
-          Impossible de charger les matières.{' '}
+          La liste des matières n'a pas pu être chargée.{' '}
           <button
             type="button"
             className="ui-btn ui-btn--ghost ui-btn--sm"

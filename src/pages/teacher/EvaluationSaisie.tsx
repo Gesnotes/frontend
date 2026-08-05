@@ -81,7 +81,7 @@ export function EvaluationSaisie({
     (report: { sent: number; dropped: { label: string; reason: string }[] }) => {
       if (report.sent > 0) {
         toast.success(
-          `${report.sent} ${plural(report.sent, 'saisie')} en attente ${report.sent > 1 ? 'ont' : 'a'} été enregistrée${report.sent > 1 ? 's' : ''}`,
+          `${report.sent} ${plural(report.sent, 'saisie')} gardée${report.sent > 1 ? 's' : ''} sur l'appareil ${report.sent > 1 ? 'ont' : 'a'} été envoyée${report.sent > 1 ? 's' : ''}`,
         );
       }
       for (const dropped of report.dropped) {
@@ -118,7 +118,9 @@ export function EvaluationSaisie({
     if (!isOnline) {
       offlineQueue.enqueue(payload, label);
       setEdits({});
-      toast.info(`Hors connexion — ${payload.entries.length} ${plural(payload.entries.length, 'note')} mise${payload.entries.length > 1 ? 's' : ''} en attente`);
+      toast.info(
+        `Pas de réseau : vos ${payload.entries.length} ${plural(payload.entries.length, 'note')} sont gardées sur cet appareil. Elles partiront dès le retour de la connexion.`,
+      );
       return;
     }
 
@@ -130,7 +132,9 @@ export function EvaluationSaisie({
       if (!isApiError(error) || error.status === 0) {
         offlineQueue.enqueue(payload, label);
         setEdits({});
-        toast.info('Serveur injoignable — la saisie est conservée et sera envoyée au retour du réseau');
+        toast.info(
+          'Le serveur ne répond pas. Votre saisie est gardée sur cet appareil et partira dès que possible.',
+        );
         return;
       }
       toast.error(errorMessage(error));
@@ -164,7 +168,8 @@ export function EvaluationSaisie({
         </Alert>
       ) : queued ? (
         <Alert tone="info">
-          Cette évaluation est en file d'attente. Elle partira au retour du réseau, sans doublon.
+          Ces notes sont gardées sur cet appareil. Elles partiront dès le retour de la connexion,
+          sans risque de doublon.
         </Alert>
       ) : dirty.length > 0 ? (
         <Alert tone="info">
@@ -216,11 +221,11 @@ export function EvaluationSaisie({
           disabled={locked || dirty.length === 0 || invalid.length > 0}
           onClick={() => void save()}
         >
-          {isOnline ? 'Enregistrer' : 'Mettre en attente'}
+          {isOnline ? 'Enregistrer' : 'Garder sur cet appareil'}
           {dirty.length > 0 ? ` (${dirty.length})` : ''}
         </Button>
         {queued && isOnline ? (
-          <Button variant="secondary" block onClick={() => void flush()}>Renvoyer la file</Button>
+          <Button variant="secondary" block onClick={() => void flush()}>Envoyer maintenant</Button>
         ) : null}
       </div>
     </>

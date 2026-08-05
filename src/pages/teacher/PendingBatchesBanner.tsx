@@ -31,7 +31,8 @@ export function PendingBatchesBanner({
     <Alert tone={isOnline ? 'info' : 'danger'}>
       <div style={{ flex: 1 }}>
         <strong>
-          {pending.length} {plural(pending.length, 'saisie')} en attente d'envoi
+          {pending.length} {plural(pending.length, 'saisie')} pas encore{' '}
+          {pending.length > 1 ? 'envoyées' : 'envoyée'}
         </strong>
         <ul style={{ marginTop: 'var(--space-2)', display: 'grid', gap: 4 }}>
           {pending.map((item) => (
@@ -41,7 +42,7 @@ export function PendingBatchesBanner({
             >
               <span style={{ flex: 1 }}>
                 {item.label}{' '}
-                <span className="t-subtle">· mise en attente {formatRelative(item.queuedAt)}</span>
+                <span className="t-subtle">· gardée {formatRelative(item.queuedAt)}</span>
                 {item.lastError ? (
                   <span style={{ color: 'var(--error)' }}> · {item.lastError}</span>
                 ) : null}
