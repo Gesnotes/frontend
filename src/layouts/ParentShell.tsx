@@ -6,9 +6,11 @@ import { OfflineBar } from '../pwa/OfflineBar';
 import { useForegroundNotifications } from '../push/useForegroundNotifications';
 import { paths } from '../routes/paths';
 
+// « Notes » n'est plus un onglet : l'accueil montre déjà moyenne + par
+// matière, et la liste complète est à un clic (« Toutes les notes »). Avec
+// plusieurs enfants, un onglet Notes global était ambigu (quel enfant ?).
 const items = [
   { to: paths.parent.home, label: 'Accueil', icon: '⌂', end: true },
-  { to: paths.parent.grades, label: 'Notes', icon: '▤' },
   { to: paths.parent.children, label: 'Enfants', icon: '⚇' },
   { to: paths.parent.notifications, label: 'Alertes', icon: '◔' },
 ];

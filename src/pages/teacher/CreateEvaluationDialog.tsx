@@ -22,6 +22,7 @@ export function CreateEvaluationDialog({
   onCreated: (evaluation: Evaluation) => void;
 }) {
   const toast = useToast();
+  const { term } = useTermContext();
   const gradeTypes = referentialsApi.useGradeTypes();
   const create = evaluationsApi.useCreateEvaluation();
   const { term } = useTermContext();
@@ -136,6 +137,13 @@ export function CreateEvaluationDialog({
             error={baremeError}
           />
         </div>
+
+        {dateOutOfBounds ? (
+          <Alert tone="info">
+            Cette date est hors du trimestre « {term?.label} ». Vérifiez la période sélectionnée
+            avant de valider.
+          </Alert>
+        ) : null}
       </div>
     </Modal>
   );
