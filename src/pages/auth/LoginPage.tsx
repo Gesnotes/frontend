@@ -20,7 +20,7 @@ type LocationState = { from?: { pathname: string } };
  */
 function loginErrorMessage(cause: unknown): string {
   if (isApiError(cause) && cause.isUnauthorized) {
-    return 'Identifiants incorrects. Vérifiez votre email / téléphone et votre mot de passe.';
+    return 'Email, téléphone ou mot de passe incorrect. Vérifiez votre saisie, puis réessayez.';
   }
   return errorMessage(cause);
 }

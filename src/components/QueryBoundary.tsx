@@ -35,7 +35,7 @@ export function QueryBoundary<T>({
   if (query.isError) {
     return (
       <ErrorState
-        title={errorTitle ?? 'Impossible de charger les données'}
+        title={errorTitle ?? 'Le chargement a échoué'}
         description={errorMessage(query.error)}
         onRetry={() => void query.refetch()}
         retrying={query.isFetching ?? false}
