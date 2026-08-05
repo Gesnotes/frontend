@@ -30,6 +30,19 @@ export default function StudentsPage() {
   const [linking, setLinking] = useState<Student | null>(null);
   const [toArchive, setToArchive] = useState<Student | null>(null);
 
+  /**
+   * L'élève ouvert dans la fiche « parents » est relu dans les données fraîches.
+   *
+   * Associer un parent invalide la liste, mais l'objet mis en état ici reste
+   * celui d'avant la mutation : la fiche continuait d'afficher « Aucun parent
+   * associé » alors que le compte venait d'être créé côté serveur, et
+   * l'administration croyait l'opération échouée. Repli sur l'instantané tant
+   * que la requête n'a pas répondu, pour que la fiche ne se referme pas.
+   */
+  const linkingLive = linking
+    ? (students.data?.students.find((item) => item.id === linking.id) ?? linking)
+    : null;
+
   const total = students.data?.total ?? 0;
   const pageSize = students.data?.pageSize ?? 1;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
@@ -66,7 +79,7 @@ export default function StudentsPage() {
     },
     {
       key: 'actions',
-      header: '',
+      srHeader: 'Actions',
       align: 'numeric',
       render: (student) => (
         <div className="cell-actions">
@@ -177,7 +190,7 @@ export default function StudentsPage() {
 
       <LinkParentModal
         key={`link-${linking?.id ?? 'none'}`}
-        student={linking}
+        student={linkingLive}
         onClose={() => setLinking(null)}
       />
 
@@ -207,12 +220,31 @@ function StudentModal({
   const [classId, setClassId] = useState(String(student?.classId ?? ''));
   const [birthDate, setBirthDate] = useState(student?.birthDate ?? '');
   const [error, setError] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
 
   const pending = create.isPending || update.isPending;
 
+  /**
+   * Validation locale des champs obligatoires.
+   *
+   * Le bouton du pied de modale n'est pas un `submit` : la validation native du
+   * navigateur ne se déclenchait jamais et un formulaire vide partait au
+   * serveur, qui répondait un 400 sans rien dire de *quel* champ manquait. Les
+   * messages n'apparaissent qu'après une première tentative, pour ne pas
+   * accueillir l'utilisateur avec un formulaire déjà en rouge.
+   */
+  const fieldErrors = {
+    firstName: firstName.trim() ? undefined : 'Le prénom est requis.',
+    lastName: lastName.trim() ? undefined : 'Le nom est requis.',
+    classId: classId ? undefined : 'Choisissez une classe.',
+  };
+  const hasErrors = Object.values(fieldErrors).some(Boolean);
+
   async function submit(event?: FormEvent) {
     event?.preventDefault();
+    setSubmitted(true);
     setError(null);
+    if (hasErrors) return;
     try {
       const base = {
         firstName: firstName.trim(),
@@ -254,6 +286,7 @@ function StudentModal({
             required
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
+            error={submitted ? fieldErrors.firstName : undefined}
           />
           <TextField
             label="Nom"
@@ -261,6 +294,7 @@ function StudentModal({
             required
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
+            error={submitted ? fieldErrors.lastName : undefined}
           />
         </div>
 
@@ -271,6 +305,7 @@ function StudentModal({
           value={classId}
           onChange={(e) => setClassId(e.target.value)}
           options={classes.map((c) => ({ value: String(c.id), label: c.name }))}
+          error={submitted ? fieldErrors.classId : undefined}
         />
 
         <TextField

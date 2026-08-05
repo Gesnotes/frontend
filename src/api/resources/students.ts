@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { api } from '../http';
 import { queryKeys } from '../queryKeys';
 import type {
@@ -99,10 +100,12 @@ export function useStudent(id: ID | undefined) {
  * Recherche de parents pour l'association.
  *
  * Le backend ignore les requêtes de moins de deux caractères ; on évite
- * l'aller-retour côté client.
+ * l'aller-retour côté client. La saisie est temporisée : sans cela, chaque
+ * frappe partait en requête, ce qui remplissait la console d'appels
+ * intermédiaires sans jamais rien apporter à l'utilisateur.
  */
 export function useParentSearch(query: string) {
-  const trimmed = query.trim();
+  const trimmed = useDebouncedValue(query.trim());
   return useQuery({
     queryKey: queryKeys.students.parentSearch(trimmed),
     queryFn: () => searchParents(trimmed),
