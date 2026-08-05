@@ -23,7 +23,7 @@ export default function BulletinPage() {
   const toast = useToast();
 
   const bulletin = classesApi.useClassBulletin(Number.isFinite(id) ? id : undefined, termId);
-  const [exporting, setExporting] = useState<BulletinExportFormat | null>(null);
+  const [exporting, setExporting] = useState<BulletinExportFormat | 'csv' | null>(null);
 
   /**
    * Rien à imprimer tant qu'aucune note n'est saisie.
@@ -55,6 +55,24 @@ export default function BulletinPage() {
     }
   }
 
+  /** Le PDF se remet aux familles ; le CSV se retravaille dans un tableur. */
+  async function exportCsv() {
+    if (termId === undefined || !bulletin.data) return;
+    setExporting('csv');
+    try {
+      const blob = await classesApi.exportClassBulletinCsv(id, termId);
+      downloadBlob(
+        blob,
+        `${safeFilename(bulletin.data.className)}-${safeFilename(bulletin.data.termLabel)}.csv`,
+      );
+      toast.success('Bulletin exporté');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(null);
+    }
+  }
+
   return (
     <>
       <PageHeader
@@ -68,6 +86,15 @@ export default function BulletinPage() {
         actions={
           <>
             <TermSelect />
+            <Button
+              variant="tonal"
+              loading={exporting === 'csv'}
+              disabled={!printable}
+              title={printable ? undefined : 'Aucune note sur cette période.'}
+              onClick={() => void exportCsv()}
+            >
+              Export CSV
+            </Button>
             <Button
               variant="secondary"
               loading={exporting === 'classe'}

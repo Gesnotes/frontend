@@ -5,11 +5,13 @@ import {
   type AttachParentPayload, type ID, type Student,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
+import { downloadBlob } from '../../lib/download';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { emailError } from '../../lib/validation';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { DeleteStudentDialog } from './DeleteStudentDialog';
+import { ImportStudentsModal } from './ImportStudentsModal';
 import {
   Alert, Avatar, Button, Card, Chip, DataTable, EmptyState, Modal, ModalActions,
   SelectField, Skeleton, TextField, useToast, type Column,
@@ -27,7 +29,30 @@ export default function StudentsPage() {
   });
 
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
+
+  /**
+   * L'export porte le filtre de classe affiché, mais jamais la pagination :
+   * un secrétariat qui demande « la liste » veut l'établissement entier, pas
+   * les cent premiers.
+   */
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const blob = await studentsApi.exportStudentsCsv({
+        classId: classFilter === '' ? undefined : classFilter,
+      });
+      const scope = classFilter === '' ? 'etablissement' : 'classe';
+      downloadBlob(blob, `eleves-${scope}.csv`);
+      toast.success('Liste exportée');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(false);
+    }
+  }
   const [linking, setLinking] = useState<Student | null>(null);
   const [toArchive, setToArchive] = useState<Student | null>(null);
 
@@ -101,7 +126,17 @@ export default function StudentsPage() {
         subtitle={
           students.data ? `${formatCount(total)} ${plural(total, 'élève')} inscrit${total > 1 ? 's' : ''}` : 'Effectifs'
         }
-        actions={<Button onClick={() => setCreating(true)}>Ajouter un élève</Button>}
+        actions={
+          <>
+            <Button variant="tonal" loading={exporting} onClick={() => void exportCsv()}>
+              Exporter en CSV
+            </Button>
+            <Button variant="secondary" onClick={() => setImporting(true)}>
+              Importer une liste
+            </Button>
+            <Button onClick={() => setCreating(true)}>Ajouter un élève</Button>
+          </>
+        }
       />
       <PageContent>
         <div className="page-stack">
@@ -193,6 +228,16 @@ export default function StudentsPage() {
         key={`link-${linking?.id ?? 'none'}`}
         student={linkingLive}
         onClose={() => setLinking(null)}
+      />
+
+      <ImportStudentsModal
+        open={importing}
+        onClose={() => setImporting(false)}
+        onImported={(created) => {
+          setImporting(false);
+          setPage(1);
+          toast.success(`${formatCount(created)} ${plural(created, 'élève')} inscrit${created > 1 ? 's' : ''}`);
+        }}
       />
 
       <DeleteStudentDialog
