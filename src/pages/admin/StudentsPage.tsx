@@ -7,6 +7,7 @@ import {
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
+import { emailError } from '../../lib/validation';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { DeleteStudentDialog } from './DeleteStudentDialog';
 import {
@@ -340,6 +341,8 @@ function LinkParentModal({ student, onClose }: { student: Student | null; onClos
   const [inviteLastName, setInviteLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
+  const inviteEmailMessage = emailError(inviteEmail, false);
+
   async function link(payload: AttachParentPayload) {
     if (!student) return;
     setError(null);
@@ -484,13 +487,18 @@ function LinkParentModal({ student, onClose }: { student: Student | null; onClos
             <TextField
               label="Email"
               type="email"
+              autoComplete="email"
               hint="Le parent recevra un lien pour définir son mot de passe."
               value={inviteEmail}
               onChange={(e) => setInviteEmail(e.target.value)}
+              // Une adresse fausse crée un compte que l'invitation n'atteint
+              // jamais : le parent reste sans mot de passe, sans que rien ne
+              // le signale.
+              error={inviteEmailMessage}
             />
             <Button
               variant="secondary"
-              disabled={!inviteEmail.trim()}
+              disabled={!inviteEmail.trim() || inviteEmailMessage !== undefined}
               loading={attach.isPending}
               onClick={() =>
                 void link({

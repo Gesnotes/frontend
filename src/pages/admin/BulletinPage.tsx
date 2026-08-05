@@ -25,6 +25,18 @@ export default function BulletinPage() {
   const bulletin = classesApi.useClassBulletin(Number.isFinite(id) ? id : undefined, termId);
   const [exporting, setExporting] = useState<BulletinExportFormat | null>(null);
 
+  /**
+   * Rien à imprimer tant qu'aucune note n'est saisie.
+   *
+   * Le calcul agrège toute la classe et la mise en page ouvre une page par
+   * élève : produire ce document sur une période vide coûte cher pour un PDF
+   * rempli de tirets. Le backend refuse aussi, cette garde évite l'aller-retour
+   * et surtout le bouton qui promet un export impossible.
+   */
+  const printable = Boolean(
+    bulletin.data?.students.some((student) => student.subjects.length > 0),
+  );
+
   async function exportPdf(format: BulletinExportFormat) {
     if (termId === undefined || !bulletin.data) return;
     setExporting(format);
@@ -59,14 +71,16 @@ export default function BulletinPage() {
             <Button
               variant="secondary"
               loading={exporting === 'classe'}
-              disabled={!bulletin.data}
+              disabled={!printable}
+              title={printable ? undefined : 'Aucune note sur cette période.'}
               onClick={() => void exportPdf('classe')}
             >
               Synthèse PDF
             </Button>
             <Button
               loading={exporting === 'eleves'}
-              disabled={!bulletin.data}
+              disabled={!printable}
+              title={printable ? undefined : 'Aucune note sur cette période.'}
               onClick={() => void exportPdf('eleves')}
             >
               Bulletins élèves

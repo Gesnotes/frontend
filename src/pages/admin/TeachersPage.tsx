@@ -7,6 +7,7 @@ import {
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
+import { emailError, phoneError } from '../../lib/validation';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import {
   Alert, Avatar, Button, Card, Chip, ConfirmDialog, DataTable, EmptyState, Modal, ModalActions,
@@ -179,6 +180,14 @@ function TeacherModal({
 
   const pending = create.isPending || update.isPending;
 
+  const [submitted, setSubmitted] = useState(false);
+
+  // Le téléphone est un identifiant de connexion : mal saisi, il laisse
+  // l'enseignant dehors sans que rien ne le signale à la création. L'email,
+  // lui, porte l'invitation : faux, le compte reste sans mot de passe.
+  const phoneMessage = phoneError(phone);
+  const emailMessage = emailError(email);
+
   function toggle(classId: ID, subjectId: ID) {
     setAssignments((current) => {
       const exists = current.some((a) => a.classId === classId && a.subjectId === subjectId);
@@ -190,7 +199,9 @@ function TeacherModal({
 
   async function submit(event?: FormEvent) {
     event?.preventDefault();
+    setSubmitted(true);
     setError(null);
+    if (phoneMessage || emailMessage) return;
     try {
       if (teacher) {
         await update.mutateAsync({
@@ -258,17 +269,24 @@ function TeacherModal({
           label="Email"
           type="email"
           required
+          autoComplete="email"
           hint="C'est à cette adresse qu'est envoyée l'invitation."
           value={email}
           onChange={(e) => setEmail(e.target.value)}
+          error={submitted ? emailMessage : undefined}
         />
 
         <TextField
           label="Téléphone"
           type="tel"
+          inputMode="tel"
+          autoComplete="tel"
           maxLength={30}
+          placeholder="+229 01 97 00 00 00"
+          hint="Facultatif. Sert aussi d'identifiant de connexion."
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
+          error={phoneMessage}
         />
 
         <AssignmentPicker
