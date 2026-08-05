@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { errorMessage, evaluationsApi, referentialsApi, type Evaluation, type ID } from '../../api';
+import { useTermContext } from '../../context/term-context';
 import { Alert, Button, Modal, TextField, useToast } from '../../ui';
 
 /**
@@ -23,6 +24,7 @@ export function CreateEvaluationDialog({
   const toast = useToast();
   const gradeTypes = referentialsApi.useGradeTypes();
   const create = evaluationsApi.useCreateEvaluation();
+  const { term } = useTermContext();
 
   const [label, setLabel] = useState('');
   const [gradeTypeId, setGradeTypeId] = useState<ID | undefined>(undefined);
@@ -36,6 +38,18 @@ export function CreateEvaluationDialog({
   const baremeError =
     maxValue !== '' && !maxValid ? 'Le barème doit être compris entre 1 et 100.' : undefined;
   const canSubmit = label.trim().length > 0 && activeTypeId !== undefined && maxValid;
+
+  /**
+   * Avertissement, pas un refus : une évaluation datée hors des bornes du
+   * trimestre est presque toujours une mauvaise période sélectionnée — mais un
+   * rattrapage légitime peut tomber après la clôture, et le blocage ferait
+   * perdre la saisie.
+   */
+  const dateOutOfBounds =
+    date !== '' &&
+    term?.startDate != null &&
+    term.endDate != null &&
+    (date < term.startDate || date > term.endDate);
 
   async function submit() {
     if (!activeTypeId) return;
@@ -74,6 +88,13 @@ export function CreateEvaluationDialog({
     >
       <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
         {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        {dateOutOfBounds ? (
+          <Alert tone="info">
+            Cette date est hors de « {term?.label} ». Vérifiez la période sélectionnée avant de
+            valider.
+          </Alert>
+        ) : null}
 
         <TextField
           label="Intitulé"
