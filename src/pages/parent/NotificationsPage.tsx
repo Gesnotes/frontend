@@ -34,7 +34,7 @@ export default function NotificationsPage() {
     <main className="parent__body">
       <header className="parent__topbar">
         <div>
-          <p className="parent__name">Alertes</p>
+          <h1 className="parent__name">Alertes</h1>
           <p className="parent__greeting">Notifications de nouvelles notes</p>
         </div>
       </header>

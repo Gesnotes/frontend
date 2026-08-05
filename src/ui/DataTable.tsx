@@ -4,7 +4,14 @@ import { Skeleton } from './States';
 
 export type Column<T> = {
   key: string;
-  header: ReactNode;
+  header?: ReactNode;
+  /**
+   * En-tête réservé aux lecteurs d'écran, pour les colonnes sans libellé
+   * visible (celle des boutons d'action). Un `<th>` vide laisse la colonne sans
+   * nature restituée — c'est la violation `empty-table-header` relevée par
+   * l'audit sur tous les tableaux de gestion.
+   */
+  srHeader?: string;
   /** Alignement de la colonne ; `numeric` applique aussi des chiffres tabulaires. */
   align?: 'start' | 'center' | 'numeric';
   width?: number | string;
@@ -41,8 +48,13 @@ export function DataTable<T>({
           <thead>
             <tr>
               {columns.map((c) => (
-                <th key={c.key} className={alignClass(c.align)} style={c.width ? { width: c.width } : undefined}>
-                  {c.header}
+                <th
+                  key={c.key}
+                  scope="col"
+                  className={alignClass(c.align)}
+                  style={c.width ? { width: c.width } : undefined}
+                >
+                  {c.srHeader ? <span className="sr-only">{c.srHeader}</span> : c.header}
                 </th>
               ))}
             </tr>

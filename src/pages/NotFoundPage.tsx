@@ -13,6 +13,7 @@ export default function NotFoundPage() {
       <EmptyState
         icon="?"
         title="Page introuvable"
+        titleAs="h1"
         description="Ce lien n'existe pas ou n'est plus accessible."
         action={{
           label: 'Retour à l’accueil',

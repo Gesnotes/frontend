@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
-import { authApi, sessionStore, type Session } from '../api';
+import { authApi, sessionStore, TERM_STORAGE_KEY, type Session } from '../api';
 import { setMonitoringUser } from '../monitoring/monitoring';
 import { AuthContext, fullNameOf, type AuthContextValue } from './auth-context';
 
@@ -58,6 +58,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await authApi.logout();
     queryClient.clear();
+
+    // La période choisie appartient au compte qui vient de partir : la laisser
+    // ferait ouvrir la session suivante sur le trimestre du précédent.
+    try {
+      localStorage.removeItem(TERM_STORAGE_KEY);
+    } catch {
+      // Stockage indisponible : rien à purger.
+    }
   }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(

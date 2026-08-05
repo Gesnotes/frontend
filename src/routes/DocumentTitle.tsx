@@ -1,0 +1,71 @@
+import { useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
+import { paths } from './paths';
+
+const SUFFIX = 'Gesnotes';
+
+/**
+ * Titre du document, dérivé de la route courante.
+ *
+ * Toutes les pages partageaient le même `<title>` : l'historique du navigateur
+ * et les onglets épinglés étaient illisibles, et les favoris de l'utilisateur
+ * indiscernables les uns des autres.
+ *
+ * La table est tenue ici plutôt que dans chaque page : un titre est une
+ * propriété de la route, et les regrouper évite qu'un écran ajouté plus tard
+ * hérite silencieusement du titre du précédent.
+ */
+const TITLES: Record<string, string> = {
+  // Racine : redirige aussitôt vers l'espace du rôle, mais le rendu passe par
+  // là — sans entrée, l'onglet clignoterait sur « Page introuvable ».
+  '/': 'Le suivi scolaire, en toute confiance',
+
+  [paths.login]: 'Connexion',
+  [paths.forgotPassword]: 'Mot de passe oublié',
+  [paths.resetPassword]: 'Définir un mot de passe',
+  '/reset-password': 'Définir un mot de passe',
+
+  [paths.admin.dashboard]: 'Tableau de bord',
+  [paths.admin.classes]: 'Classes',
+  [paths.admin.subjects]: 'Matières',
+  [paths.admin.teachers]: 'Enseignants',
+  [paths.admin.students]: 'Élèves',
+  [paths.admin.periods]: 'Périodes scolaires',
+  [paths.admin.archives]: 'Archives',
+
+  [paths.teacher.dashboard]: 'Mes classes',
+  [paths.teacher.gradeEntry]: 'Saisie des notes',
+  [paths.teacher.history]: 'Historique des saisies',
+
+  [paths.parent.home]: 'Accueil',
+  [paths.parent.children]: 'Mes enfants',
+  [paths.parent.grades]: 'Notes',
+  [paths.parent.notifications]: 'Alertes',
+};
+
+/**
+ * Titres des routes à paramètre, reconnues par leur forme.
+ *
+ * L'identifiant n'apporte rien dans un onglet ; le nom de l'élève, lui, n'est
+ * pas connu ici — et n'a rien à faire dans un titre de fenêtre partagé à
+ * l'écran.
+ */
+function dynamicTitle(pathname: string): string | undefined {
+  if (/^\/admin\/classes\/[^/]+\/bulletin$/.test(pathname)) return 'Bulletin de classe';
+  if (/^\/admin\/classes\/[^/]+$/.test(pathname)) return 'Détail de la classe';
+  if (/^\/parent\/enfants\/[^/]+$/.test(pathname)) return 'Résultats de mon enfant';
+  if (/^\/parent\/notes\/[^/]+$/.test(pathname)) return 'Détail de la note';
+  return undefined;
+}
+
+export function DocumentTitle() {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    const page = TITLES[pathname] ?? dynamicTitle(pathname) ?? 'Page introuvable';
+    document.title = `${page} · ${SUFFIX}`;
+  }, [pathname]);
+
+  return null;
+}

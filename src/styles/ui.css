@@ -544,7 +544,15 @@
   box-shadow: var(--elevation-2);
   font-size: var(--body-md-size);
   animation: gn-toast-in var(--motion-base) ease;
-  pointer-events: auto;
+  /*
+   * Volontairement transparent aux clics (hérité de `.ui-toast-stack`).
+   *
+   * Les toasts sont posés en bas au centre, là où vivent la barre
+   * « Enregistrer » de la saisie et les actions de pied de page : réactiver
+   * `pointer-events` ici les rendait bloquants pendant leurs quelques secondes
+   * d'affichage. Rien n'y est cliquable — ni fermeture, ni action — donc rien
+   * ne le justifie.
+   */
 }
 
 .ui-toast__dot {

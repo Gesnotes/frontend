@@ -16,7 +16,7 @@ export default function ChildrenPage() {
     <main className="parent__body">
       <header className="parent__topbar">
         <div>
-          <p className="parent__name">Mes enfants</p>
+          <h1 className="parent__name">Mes enfants</h1>
           <p className="parent__greeting">
             {term ? `Moyennes du ${term.label.toLowerCase()}` : 'Sélectionnez un enfant'}
           </p>

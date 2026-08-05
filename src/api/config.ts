@@ -32,3 +32,12 @@ export const SCHOOL_SUBDOMAIN = import.meta.env.VITE_SCHOOL_SUBDOMAIN ?? '';
 
 /** Clé de stockage de la session dans `localStorage`. */
 export const SESSION_STORAGE_KEY = 'gesnotes.session';
+
+/**
+ * Clé de stockage de la période choisie.
+ *
+ * Le choix survit au rechargement et au passage d'un espace à l'autre : sans
+ * cela, chaque retour sur l'application rejouait la sélection par défaut et
+ * l'utilisateur devait re-choisir son trimestre à chaque fois.
+ */
+export const TERM_STORAGE_KEY = 'gesnotes.term';
