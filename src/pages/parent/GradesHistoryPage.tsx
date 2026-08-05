@@ -20,7 +20,7 @@ export default function GradesHistoryPage() {
     <main className="parent__body">
       <header className="parent__topbar">
         <div>
-          <p className="parent__name">Notes</p>
+          <h1 className="parent__name">Notes</h1>
           <p className="parent__greeting">
             {child ? `${child.firstName} ${child.lastName} · ${child.classe.name}` : ''}
           </p>

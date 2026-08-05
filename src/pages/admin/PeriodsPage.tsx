@@ -19,24 +19,33 @@ import {
 export default function PeriodsPage() {
   const toast = useToast();
   const terms = referentialsApi.useTerms();
-  const remove = referentialsApi.useDeleteTerm();
+  const archive = referentialsApi.useArchiveTerm();
+  const closeEntry = referentialsApi.useCloseTermEntry();
 
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Term | null>(null);
-  const [toDelete, setToDelete] = useState<Term | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toArchive, setToArchive] = useState<Term | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+  const [toReopen, setToReopen] = useState<Term | null>(null);
 
-  async function confirmDelete() {
-    if (!toDelete) return;
-    setDeleteError(null);
+  async function stopReopening(term: Term) {
     try {
-      await remove.mutateAsync(toDelete.id);
-      toast.success(`« ${toDelete.label} » supprimée`);
-      setToDelete(null);
+      await closeEntry.mutateAsync(term.id);
+      toast.success(`Saisie refermée sur « ${term.label} »`);
     } catch (cause) {
-      // 409 : des notes sont rattachées. Le message du backend porte le
-      // nombre exact, plus parlant qu'une formule générique.
-      setDeleteError(errorMessage(cause));
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  async function confirmArchive() {
+    if (!toArchive) return;
+    setArchiveError(null);
+    try {
+      await archive.mutateAsync(toArchive.id);
+      toast.success(`« ${toArchive.label} » archivée`);
+      setToArchive(null);
+    } catch (cause) {
+      setArchiveError(errorMessage(cause));
       if (!isApiError(cause) || !cause.isConflict) toast.error(errorMessage(cause));
     }
   }
@@ -49,6 +58,12 @@ export default function PeriodsPage() {
         <div className="cell-person">
           <span style={{ fontWeight: 600 }}>{term.label}</span>
           {term.isCurrent ? <Chip tone="success">En cours</Chip> : null}
+          {/* Une période rouverte reste « terminée » : c'est la saisie qui est
+              ouverte, pas le trimestre. Les deux informations comptent. */}
+          {term.isClosed ? <Chip tone="neutral">Terminée</Chip> : null}
+          {term.reopenedUntil ? (
+            <Chip tone="warning">Saisie rouverte jusqu'au {formatDate(term.reopenedUntil)}</Chip>
+          ) : null}
         </div>
       ),
     },
@@ -64,20 +79,38 @@ export default function PeriodsPage() {
     },
     {
       key: 'actions',
-      header: '',
+      srHeader: 'Actions',
       align: 'numeric',
       render: (term) => (
         <div className="cell-actions">
+          {/* La réouverture n'a de sens que sur une période terminée : ailleurs,
+              la saisie est déjà possible. */}
+          {term.isClosed ? (
+            term.reopenedUntil ? (
+              <Button
+                size="sm"
+                variant="tonal"
+                loading={closeEntry.isPending}
+                onClick={() => void stopReopening(term)}
+              >
+                Refermer la saisie
+              </Button>
+            ) : (
+              <Button size="sm" variant="tonal" onClick={() => setToReopen(term)}>
+                Rouvrir la saisie
+              </Button>
+            )
+          ) : null}
           <Button size="sm" variant="tonal" onClick={() => setEditing(term)}>Modifier</Button>
           <Button
             size="sm"
             variant="danger"
             onClick={() => {
-              setDeleteError(null);
-              setToDelete(term);
+              setArchiveError(null);
+              setToArchive(term);
             }}
           >
-            Supprimer
+            Archiver
           </Button>
         </div>
       ),
@@ -134,19 +167,114 @@ export default function PeriodsPage() {
         }}
       />
 
+      <ReopenModal
+        key={`reopen-${toReopen?.id ?? 'none'}`}
+        term={toReopen}
+        onClose={() => setToReopen(null)}
+        onDone={(label, until) => {
+          setToReopen(null);
+          toast.success(`Saisie rouverte sur « ${label} » jusqu'au ${formatDate(until)}`);
+        }}
+      />
+
       <ConfirmDialog
-        open={toDelete !== null}
-        title={`Supprimer « ${toDelete?.label ?? ''} » ?`}
+        open={toArchive !== null}
+        title={`Archiver « ${toArchive?.label ?? ''} » ?`}
         description={
-          deleteError ??
-          "La période disparaît définitivement. Il n'y a pas d'archivage : la suppression est refusée si des notes y sont rattachées, pour ne pas effacer le travail de saisie d'un trimestre entier."
+          archiveError ??
+          "La période sort des sélecteurs et des listes, mais rien n'est perdu : ses évaluations et ses notes restent en base. Vous pouvez la restaurer — ou la supprimer définitivement — depuis les Archives."
         }
-        confirmLabel="Supprimer"
-        loading={remove.isPending}
-        onCancel={() => setToDelete(null)}
-        onConfirm={() => void confirmDelete()}
+        confirmLabel="Archiver"
+        loading={archive.isPending}
+        onCancel={() => setToArchive(null)}
+        onConfirm={() => void confirmArchive()}
       />
     </>
+  );
+}
+
+/** Jour ISO, décalé de `days` jours. */
+function isoDay(days: number): string {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Réouverture de la saisie sur un trimestre terminé.
+ *
+ * Le besoin réel est le rattrapage : une note oubliée, une copie retrouvée.
+ * L'échéance est obligatoire — c'est elle qui distingue une soupape d'une levée
+ * pure et simple du verrou, et elle évite d'avoir à penser à refermer.
+ */
+function ReopenModal({
+  term, onClose, onDone,
+}: {
+  term: Term | null;
+  onClose: () => void;
+  onDone: (label: string, until: string) => void;
+}) {
+  const reopen = referentialsApi.useReopenTerm();
+
+  const [until, setUntil] = useState(isoDay(7));
+  const [error, setError] = useState<string | null>(null);
+
+  const maxDay = isoDay(90);
+  const outOfRange = until !== '' && (until < isoDay(0) || until > maxDay);
+
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
+    if (!term || outOfRange || !until) return;
+    setError(null);
+    try {
+      // Fin de journée : rouvrir « jusqu'au 12 » doit couvrir le 12 entier,
+      // sinon l'échéance tombe à minuit et la journée est perdue.
+      const deadline = new Date(`${until}T23:59:59`).toISOString();
+      await reopen.mutateAsync({ id: term.id, until: deadline });
+      onDone(term.label, deadline);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  return (
+    <Modal
+      open={term !== null}
+      onClose={onClose}
+      width={460}
+      title={`Rouvrir la saisie sur « ${term?.label ?? ''} » ?`}
+      subtitle="Les enseignants pourront de nouveau saisir et corriger, jusqu'à l'échéance."
+      footer={
+        <ModalActions
+          onCancel={onClose}
+          onConfirm={() => void submit()}
+          confirmLabel="Rouvrir la saisie"
+          loading={reopen.isPending}
+        />
+      }
+    >
+      <form onSubmit={submit} className="page-stack" style={{ gap: 'var(--space-4)' }}>
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        <Alert tone="info">
+          Ce trimestre est terminé : la saisie y est verrouillée pour les enseignants. La rouvrir
+          évite d'avoir à saisir à leur place, ou à repousser la date de fin — ce qui fausserait la
+          période en cours.
+        </Alert>
+
+        <TextField
+          label="Ouverte jusqu'au"
+          type="date"
+          required
+          min={isoDay(0)}
+          max={maxDay}
+          value={until}
+          onChange={(e) => setUntil(e.target.value)}
+          hint="Le verrou se remet seul à cette date, à 23h59. Vous pouvez aussi refermer avant."
+          error={outOfRange ? `Choisissez une date entre aujourd'hui et le ${formatDate(maxDay)}.` : undefined}
+        />
+      </form>
+    </Modal>
   );
 }
 

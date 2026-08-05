@@ -25,13 +25,21 @@ type StateProps = {
   icon?: ReactNode;
   action?: { label: string; onClick: () => void };
   secondaryAction?: { label: string; onClick: () => void };
+  /**
+   * Niveau du titre. `p` par défaut : un état vide s'affiche presque toujours
+   * dans une page qui a déjà son `h1`, et en ajouter un second casserait la
+   * hiérarchie. La page 404, elle, n'a que cet état — d'où `h1`.
+   */
+  titleAs?: 'p' | 'h1';
 };
 
-export function EmptyState({ title, description, icon = '▤', action, secondaryAction }: StateProps) {
+export function EmptyState({
+  title, description, icon = '▤', action, secondaryAction, titleAs: TitleTag = 'p',
+}: StateProps) {
   return (
     <div className="ui-state">
       <div className="ui-state__icon" aria-hidden="true">{icon}</div>
-      <p className="ui-state__title">{title}</p>
+      <TitleTag className="ui-state__title">{title}</TitleTag>
       {description ? <p className="ui-state__body">{description}</p> : null}
       {(action || secondaryAction) && (
         <div className="ui-state__actions">

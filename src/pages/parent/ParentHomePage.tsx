@@ -24,7 +24,9 @@ export default function ParentHomePage() {
       <header className="parent__topbar">
         <div>
           <p className="parent__greeting">Bonjour,</p>
-          <p className="parent__name">{displayName}</p>
+          {/* Titre de niveau 1 de l'écran d'accueil : chaque page doit en
+              porter un, et c'est bien ce libellé qui la nomme. */}
+          <h1 className="parent__name">{displayName}</h1>
         </div>
         {children.length > 1 ? (
           <Link to={paths.parent.children} style={{ marginLeft: 'auto' }}>

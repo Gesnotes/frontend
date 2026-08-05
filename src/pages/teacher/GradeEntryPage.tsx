@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
-  evaluationsApi, gradesApi,
+  errorMessage, evaluationsApi, gradesApi,
   type Evaluation, type ID, type TeacherClassAssignment,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
@@ -10,7 +10,7 @@ import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { usePendingBatches } from '../../hooks/usePendingBatches';
 import { formatCount, formatDate, plural } from '../../lib/format';
-import { Alert, Button, Card, Chip, EmptyState, Skeleton } from '../../ui';
+import { Alert, Button, Card, Chip, ConfirmDialog, EmptyState, Skeleton, useToast } from '../../ui';
 import { CreateEvaluationDialog } from './CreateEvaluationDialog';
 import { EvaluationSaisie } from './EvaluationSaisie';
 import { PendingBatchesBanner } from './PendingBatchesBanner';
@@ -36,7 +36,14 @@ export default function GradeEntryPage() {
   const { role } = useAuth();
   const assignments = gradesApi.useMyClasses(termId);
 
-  const termClosed = termClosedFor(role, term);
+  /**
+   * Verrou de trimestre clos, tel que le backend le calcule.
+   *
+   * Il tient compte d'une réouverture éventuellement accordée par
+   * l'administration : le recalculer ici sur `endDate` annoncerait une période
+   * fermée alors que l'API accepte l'écriture, et l'inverse à l'expiration.
+   */
+  const locked = term !== undefined && !term.isOpenForEntry;
 
   const classId = params.get('classe') ? Number(params.get('classe')) : undefined;
   const subjectId = params.get('matiere') ? Number(params.get('matiere')) : undefined;
@@ -74,7 +81,7 @@ export default function GradeEntryPage() {
   }
 
   if (evalId !== undefined) {
-    return <EvaluationSaisie evaluationId={evalId} termClosed={termClosed} onBack={closeEvaluation} />;
+    return <EvaluationSaisie evaluationId={evalId} locked={locked} onBack={closeEvaluation} />;
   }
 
   if (selected && classId !== undefined && subjectId !== undefined) {
@@ -84,7 +91,7 @@ export default function GradeEntryPage() {
         classId={classId}
         subjectId={subjectId}
         termId={termId}
-        termClosed={termClosed}
+        locked={locked}
         onOpen={openEvaluation}
         onChangeAssignment={clearSelection}
       />
@@ -136,19 +143,33 @@ export default function GradeEntryPage() {
 }
 
 function EvaluationList({
-  selected, classId, subjectId, termId, termClosed, onOpen, onChangeAssignment,
+  selected, classId, subjectId, termId, locked, onOpen, onChangeAssignment,
 }: {
   selected: TeacherClassAssignment;
   classId: ID;
   subjectId: ID;
   termId: ID;
-  termClosed: boolean;
+  locked: boolean;
   onOpen: (id: ID) => void;
   onChangeAssignment: () => void;
 }) {
+  const toast = useToast();
   const evaluations = evaluationsApi.useEvaluations(classId, subjectId, termId);
+  const remove = evaluationsApi.useDeleteEvaluation();
   const { pending, isOnline, flush, discard } = usePendingBatches();
   const [creating, setCreating] = useState(false);
+  const [toDelete, setToDelete] = useState<Evaluation | null>(null);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    try {
+      await remove.mutateAsync(toDelete.id);
+      toast.success(`« ${toDelete.label} » supprimée`);
+      setToDelete(null);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
 
   return (
     <>
@@ -159,13 +180,13 @@ function EvaluationList({
           <h1 className="tshell__page-title">{selected.className}</h1>
           <p className="tshell__page-subtitle">{selected.subjectName}</p>
         </div>
-        <Button size="sm" disabled={termClosed} onClick={() => setCreating(true)}>+ Évaluation</Button>
+        <Button size="sm" disabled={locked} onClick={() => setCreating(true)}>+ Évaluation</Button>
       </div>
 
-      {termClosed ? (
+      {locked ? (
         <Alert tone="info">
-          Ce trimestre est terminé : la saisie et la création d'évaluations ne sont plus possibles.
-          Contactez l'administration pour toute correction.
+          Ce trimestre est terminé : la saisie et la création d'évaluations n'y sont plus possibles.
+          Demandez à l'administration de rouvrir la période pour une correction.
         </Alert>
       ) : null}
 
@@ -183,24 +204,36 @@ function EvaluationList({
               icon="✎"
               title="Aucune évaluation"
               description="Créez une première évaluation (interrogation, devoir, composition) pour commencer la saisie."
-              action={termClosed ? undefined : { label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
+              action={locked ? undefined : { label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
             />
           ) : (
             <div className="tcards">
               {items.map((evaluation) => (
-                <button key={evaluation.id} className="tpick" onClick={() => onOpen(evaluation.id)}>
-                  <span className="tpick__body">
-                    <span className="tpick__title">{evaluation.label}</span>
-                    <span className="tpick__meta">
-                      <Chip tone="info">{evaluation.type.label}</Chip>
-                      {evaluation.date ? ` · ${formatDate(evaluation.date)}` : ''}
-                      {' · '}
-                      {formatCount(evaluation.gradedCount)}/{formatCount(selected.effectif)}{' '}
-                      {plural(selected.effectif, 'élève')}
+                <div key={evaluation.id} className="tpick-row">
+                  <button className="tpick" onClick={() => onOpen(evaluation.id)}>
+                    <span className="tpick__body">
+                      <span className="tpick__title">{evaluation.label}</span>
+                      <span className="tpick__meta">
+                        <Chip tone="info">{evaluation.type.label}</Chip>
+                        {evaluation.date ? ` · ${formatDate(evaluation.date)}` : ''}
+                        {' · '}
+                        {formatCount(evaluation.gradedCount)}/{formatCount(selected.effectif)}{' '}
+                        {plural(selected.effectif, 'élève')}
+                      </span>
                     </span>
-                  </span>
-                  <span className="tpick__chevron" aria-hidden="true">›</span>
-                </button>
+                    <span className="tpick__chevron" aria-hidden="true">›</span>
+                  </button>
+                  {/* Le backend refuse aussi la suppression sur un trimestre
+                      clos : le bouton ne doit pas promettre le contraire. */}
+                  <button
+                    className="tpick__delete"
+                    disabled={locked}
+                    aria-label={`Supprimer l'évaluation ${evaluation.label}`}
+                    onClick={() => setToDelete(evaluation)}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           )
@@ -217,6 +250,20 @@ function EvaluationList({
           setCreating(false);
           onOpen(evaluation.id);
         }}
+      />
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » ?`}
+        description={
+          toDelete && toDelete.gradedCount > 0
+            ? `${formatCount(toDelete.gradedCount)} ${plural(toDelete.gradedCount, 'note')} déjà saisie${toDelete.gradedCount > 1 ? 's' : ''} ${toDelete.gradedCount > 1 ? 'seront effacées' : 'sera effacée'} avec l'évaluation. Cette action est définitive.`
+            : "L'évaluation est effacée. Elle ne contient aucune note."
+        }
+        confirmLabel="Supprimer"
+        loading={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => void confirmDelete()}
       />
     </>
   );

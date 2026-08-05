@@ -33,8 +33,8 @@ function toBaseline(students: EvaluationGrid['students']): Record<number, Draft>
  * enseignant sans réseau enregistre quand même, le lot part au retour.
  */
 export function EvaluationSaisie({
-  evaluationId, termClosed, onBack,
-}: { evaluationId: ID; termClosed: boolean; onBack: () => void }) {
+  evaluationId, locked, onBack,
+}: { evaluationId: ID; locked: boolean; onBack: () => void }) {
   const toast = useToast();
   const grid = gradesApi.useEvaluationGrid(evaluationId);
   const saveBatch = gradesApi.useSaveGradeBatch();
@@ -153,14 +153,12 @@ export function EvaluationSaisie({
         </div>
       </div>
 
-      {termClosed ? (
+      {locked ? (
         <Alert tone="info">
-          Ce trimestre est terminé : les notes ne sont plus modifiables. Contactez l'administration
-          pour toute correction.
+          Ce trimestre est terminé : les notes n'y sont plus modifiables. Demandez à
+          l'administration de rouvrir la période pour une correction.
         </Alert>
-      ) : null}
-
-      {invalid.length > 0 ? (
+      ) : invalid.length > 0 ? (
         <Alert tone="danger">
           {formatCount(invalid.length)} {plural(invalid.length, 'note')} hors barème : entre 0 et {maxValue}.
         </Alert>
@@ -194,6 +192,7 @@ export function EvaluationSaisie({
                 return (
                   <StudentRow
                     key={student.id}
+                    studentId={student.id}
                     name={`${student.firstName} ${student.lastName}`}
                     draft={draft}
                     maxValue={maxValue}
@@ -214,7 +213,7 @@ export function EvaluationSaisie({
           block
           size="lg"
           loading={saveBatch.isPending}
-          disabled={dirty.length === 0 || invalid.length > 0 || termClosed}
+          disabled={locked || dirty.length === 0 || invalid.length > 0}
           onClick={() => void save()}
         >
           {isOnline ? 'Enregistrer' : 'Mettre en attente'}
@@ -229,8 +228,9 @@ export function EvaluationSaisie({
 }
 
 function StudentRow({
-  name, draft, maxValue, changed, outOfRange, onValue, onComment,
+  studentId, name, draft, maxValue, changed, outOfRange, onValue, onComment,
 }: {
+  studentId: ID;
   name: string;
   draft: Draft;
   maxValue: number;
@@ -240,6 +240,14 @@ function StudentRow({
   onComment: (c: string) => void;
 }) {
   const [showComment, setShowComment] = useState(draft.comment.length > 0);
+
+  /**
+   * Le message est rattaché au champ par `aria-describedby`, et non laissé au
+   * seul bandeau de tête : une bordure rouge et un bouton grisé n'apprennent
+   * rien à l'enseignant — l'audit a montré qu'on ignorait alors *pourquoi*
+   * l'enregistrement était bloqué, et sur quelle ligne.
+   */
+  const errorId = `note-error-${studentId}`;
 
   return (
     <Card padded>
@@ -259,12 +267,19 @@ function StudentRow({
             placeholder="—"
             aria-invalid={outOfRange}
             aria-label={`Note de ${name}`}
+            aria-describedby={outOfRange ? errorId : undefined}
             value={draft.value}
             onChange={(e) => onValue(e.target.value)}
           />
           <span className="tsaisie-max">/ {maxValue}</span>
         </div>
       </div>
+
+      {outOfRange ? (
+        <p id={errorId} className="ui-field__error tsaisie-error" role="alert">
+          La note doit être comprise entre 0 et {maxValue}.
+        </p>
+      ) : null}
 
       {showComment ? (
         <input

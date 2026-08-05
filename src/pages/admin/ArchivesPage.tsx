@@ -1,7 +1,8 @@
 import { useState } from 'react';
 
 import {
-  classesApi, errorMessage, studentsApi, subjectsApi, teachersApi, type ID,
+  classesApi, errorMessage, referentialsApi, studentsApi, subjectsApi, teachersApi,
+  type ID, type Term,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -12,13 +13,14 @@ import {
 } from '../../ui';
 import { PermanentDeleteDialog } from './PermanentDeleteDialog';
 
-type Tab = 'classes' | 'subjects' | 'teachers' | 'students';
+type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'classes', label: 'Classes' },
   { id: 'subjects', label: 'Matières' },
   { id: 'teachers', label: 'Enseignants' },
   { id: 'students', label: 'Élèves' },
+  { id: 'terms', label: 'Périodes' },
 ];
 
 /**
@@ -66,6 +68,7 @@ export default function ArchivesPage() {
           {tab === 'subjects' ? <ArchivedSubjects /> : null}
           {tab === 'teachers' ? <ArchivedTeachers /> : null}
           {tab === 'students' ? <ArchivedStudents /> : null}
+          {tab === 'terms' ? <ArchivedTerms /> : null}
         </div>
       </PageContent>
     </>
@@ -140,7 +143,7 @@ function ArchivedClasses() {
             },
             {
               key: 'actions',
-              header: '',
+              srHeader: 'Actions',
               align: 'numeric',
               render: (row) => (
                 <RowActions
@@ -216,7 +219,7 @@ function ArchivedSubjects() {
             },
             {
               key: 'actions',
-              header: '',
+              srHeader: 'Actions',
               align: 'numeric',
               render: (row) => (
                 <RowActions
@@ -297,7 +300,7 @@ function ArchivedTeachers() {
             },
             {
               key: 'actions',
-              header: '',
+              srHeader: 'Actions',
               align: 'numeric',
               render: (row) => (
                 <RowActions
@@ -383,7 +386,7 @@ function ArchivedStudents() {
             },
             {
               key: 'actions',
-              header: '',
+              srHeader: 'Actions',
               align: 'numeric',
               render: (row) => (
                 <RowActions
@@ -430,6 +433,112 @@ function ArchivedStudents() {
           if (!toDelete) return;
           await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmName: typedName });
           toast.success('Élève supprimé définitivement');
+          setToDelete(null);
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Périodes archivées.
+ *
+ * C'est le seul endroit d'où une période peut réellement disparaître : ses
+ * évaluations et ses notes sont en `RESTRICT`, si bien que la suppression
+ * directe échouait en base. On annonce donc précisément ce que l'opération
+ * détruit, et le libellé exact doit être ressaisi.
+ */
+function ArchivedTerms() {
+  const toast = useToast();
+  const terms = referentialsApi.useTerms(true);
+  const restore = referentialsApi.useRestoreTerm();
+  const remove = referentialsApi.useDeleteTermPermanently();
+
+  const [toDelete, setToDelete] = useState<Term | null>(null);
+
+  async function runRestore(term: Term) {
+    try {
+      await restore.mutateAsync(term.id);
+      toast.success(`« ${term.label} » restaurée`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <>
+      <QueryBoundary query={terms} loading={<TableSkeleton />}>
+        {(items) => {
+          const rows = onlyArchived(items);
+          const columns: Column<Term>[] = [
+            { key: 'label', header: 'Période', render: (row) => <strong>{row.label}</strong> },
+            {
+              key: 'dates',
+              header: 'Dates',
+              render: (row) => (
+                <span className="t-muted">
+                  {row.startDate ? `${formatDate(row.startDate)} → ${formatDate(row.endDate)}` : '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'content',
+              header: 'Contenu',
+              render: (row) => (
+                <Chip tone={row.gradeCount > 0 ? 'warning' : 'neutral'}>
+                  {formatCount(row.evaluationCount)} {plural(row.evaluationCount, 'évaluation')} ·{' '}
+                  {formatCount(row.gradeCount)} {plural(row.gradeCount, 'note')}
+                </Chip>
+              ),
+            },
+            {
+              key: 'archivedAt',
+              header: 'Archivée le',
+              render: (row) => <span className="t-muted">{formatDate(row.archivedAt)}</span>,
+            },
+            {
+              key: 'actions',
+              srHeader: 'Actions',
+              align: 'numeric',
+              render: (row) => (
+                <RowActions
+                  restoring={restore.isPending}
+                  onRestore={() => void runRestore(row)}
+                  onDelete={() => setToDelete(row)}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <DataTable
+              caption="Périodes archivées"
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => String(row.id)}
+              empty={<Empty what="période" />}
+            />
+          );
+        }}
+      </QueryBoundary>
+
+      <PermanentDeleteDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
+        description={
+          toDelete && (toDelete.evaluationCount > 0 || toDelete.gradeCount > 0)
+            ? `${formatCount(toDelete.evaluationCount)} ${plural(toDelete.evaluationCount, 'évaluation')} et ${formatCount(toDelete.gradeCount)} ${plural(toDelete.gradeCount, 'note')} seront effacées avec la période. Les bulletins de ce trimestre ne pourront plus être calculés.`
+            : 'La période est effacée. Elle ne contient aucune évaluation ni aucune note.'
+        }
+        // Effacer un trimestre détruit le travail de saisie d'une équipe
+        // entière : le backend exige le libellé exact.
+        confirmName={toDelete?.label}
+        pending={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={async (typedLabel) => {
+          if (!toDelete) return;
+          await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
+          toast.success(`« ${toDelete.label} » supprimée définitivement`);
           setToDelete(null);
         }}
       />

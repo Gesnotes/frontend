@@ -42,9 +42,9 @@ export default function ChildDetailPage() {
       <header className="parent__topbar">
         <button className="parent__back" onClick={() => navigate(-1)} aria-label="Retour">‹</button>
         <div>
-          <p className="parent__name">
+          <h1 className="parent__name">
             {detail.data ? `${detail.data.firstName} ${detail.data.lastName}` : 'Résultats'}
-          </p>
+          </h1>
           <p className="parent__greeting">{term?.label ?? ''}</p>
         </div>
       </header>

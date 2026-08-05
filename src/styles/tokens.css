@@ -23,8 +23,16 @@
   --inverse-surface: #213145;
   --inverse-on-surface: #eaf1ff;
 
-  /* ---- Contours ---- */
-  --outline: #757684;
+  /*
+   * ---- Contours ----
+   *
+   * `--outline` sert surtout de teinte de texte secondaire (mentions légales,
+   * méta de liste, libellés de navigation inactifs, indications de champ). À
+   * #757684 il plafonnait à 4,48:1 sur blanc — sous le seuil AA de 4,5:1, et
+   * l'audit d'accessibilité l'a relevé sur presque toutes les pages. #5b5c6b
+   * monte à 6,6:1 sur blanc et 6,0:1 sur `--surface-container-low`.
+   */
+  --outline: #5b5c6b;
   --outline-variant: #c4c5d5;
 
   /* ---- Primaire ---- */

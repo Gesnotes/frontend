@@ -18,7 +18,7 @@ export default function GradeDetailPage() {
       <header className="parent__topbar">
         <button className="parent__back" onClick={() => navigate(-1)} aria-label="Retour">‹</button>
         <div>
-          <p className="parent__name">Détail de la note</p>
+          <h1 className="parent__name">Détail de la note</h1>
           <p className="parent__greeting">{grade.data?.matiere.name ?? ''}</p>
         </div>
       </header>

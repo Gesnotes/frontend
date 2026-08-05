@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import { errorMessage, subjectsApi, type ID, type Subject } from '../../api';
+import { paths } from '../../routes/paths';
 import { Alert, Button, Card, Chip, SectionTitle, Skeleton, useToast } from '../../ui';
 
 /**
@@ -8,11 +10,15 @@ import { Alert, Button, Card, Chip, SectionTitle, Skeleton, useToast } from '../
  *
  * Le modèle n'a pas de « programme de classe » : une matière est rattachée à
  * une classe par le coefficient qu'on lui donne pour cette classe
- * (`SubjectCoefficient`), et/ou par l'affectation d'un enseignant. « Ajouter
- * une matière ici » signifie donc lui définir un coefficient propre à la
- * classe. Une matière sans entrée reste enseignable avec le coefficient de
- * l'école ; on la signale quand un professeur y est déjà affecté, pour que
- * l'administration voie ce qui est réellement enseigné.
+ * (`SubjectCoefficient`), et/ou par l'affectation d'un enseignant. Une matière
+ * sans entrée reste enseignable avec le coefficient de l'école ; on la signale
+ * quand un professeur y est déjà affecté, pour que l'administration voie ce qui
+ * est réellement enseigné.
+ *
+ * Cet écran **rattache**, il ne crée pas : il ne cherche que parmi les matières
+ * déjà au programme de l'école. La création vit sur `/admin/matieres`, et les
+ * libellés doivent le dire — « Ajouter une matière » promettait ici une action
+ * impossible.
  */
 export function ClassSubjectsPanel({ classId }: { classId: ID }) {
   const subjects = subjectsApi.useSubjects();
@@ -103,7 +109,7 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
     setError(null);
     try {
       await setCoef.mutateAsync({ id: subject.id, classId, coefficient });
-      toast.success(`${subject.name} ajoutée à la classe (coef. ${coefficient})`);
+      toast.success(`${subject.name} rattachée à la classe (coef. ${coefficient})`);
       setSearch('');
       setAddValue('');
     } catch (cause) {
@@ -125,29 +131,37 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
         </div>
       ) : null}
 
-      {/* --- Recherche / ajout --- */}
+      {/*
+        Rattachement, pas création.
+        Ce champ ne cherche que parmi les matières déjà au programme de l'école
+        et leur donne un coefficient pour cette classe. Il ne crée aucune
+        matière : intitulé « Ajouter une matière », il promettait une action
+        que l'écran ne sait pas faire.
+      */}
       <div className="ui-field" style={{ marginBottom: 'var(--space-4)' }}>
         <label className="ui-field__label" htmlFor="class-subject-search">
-          Ajouter une matière
+          Rattacher une matière du programme
         </label>
         <input
           id="class-subject-search"
           className="ui-input"
-          placeholder="Rechercher une matière du programme…"
+          placeholder="Rechercher parmi les matières de l'école…"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
         <span className="ui-field__hint">
-          Définir un coefficient rattache la matière à cette classe. Sans coefficient propre, une
-          matière utilise celui de l'école.
+          Rattacher, c'est donner à la matière un coefficient propre à cette classe ; sans
+          coefficient, elle utilise celui de l'école. Pour créer une matière qui n'existe pas
+          encore, passez par <Link to={paths.admin.subjects}>Matières</Link>.
         </span>
       </div>
 
       {search.trim() ? (
         matches.length === 0 ? (
           <p className="t-body-md t-muted" style={{ marginBottom: 'var(--space-4)' }}>
-            Aucune matière disponible pour « {search.trim()} ». Toutes les matières correspondantes
-            sont déjà rattachées, ou aucune ne porte ce nom.
+            Aucune matière du programme ne correspond à « {search.trim()} » : soit elle est déjà
+            rattachée, soit elle n'existe pas encore. Créez-la depuis{' '}
+            <Link to={paths.admin.subjects}>Matières</Link>.
           </p>
         ) : (
           <div className="list-rows" style={{ marginBottom: 'var(--space-4)' }}>
@@ -176,7 +190,7 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
                     void add(subject, addValue.trim() ? Number(addValue) : subject.coefficient)
                   }
                 >
-                  Ajouter
+                  Rattacher
                 </Button>
               </div>
             ))}
@@ -188,7 +202,7 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
       {rows.length === 0 ? (
         <p className="t-body-md t-muted">
           Aucune matière rattachée pour l'instant. Recherchez-en une ci-dessus, ou affectez un
-          enseignant à cette classe depuis l'écran Enseignants.
+          enseignant à cette classe depuis l'écran <Link to={paths.admin.teachers}>Enseignants</Link>.
         </p>
       ) : (
         <div className="list-rows">
