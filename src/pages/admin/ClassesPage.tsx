@@ -12,6 +12,7 @@ import {
   Alert, Button, Card, Chip, ConfirmDialog, EmptyState, Modal, ModalActions,
   ProgressBar, SelectField, Skeleton, TextField, gradeTone, useToast,
 } from '../../ui';
+import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 export default function ClassesPage() {
   const { termId } = useTermContext();
@@ -23,6 +24,13 @@ export default function ClassesPage() {
   const [editing, setEditing] = useState<ClassListItem | null>(null);
   const [toDelete, setToDelete] = useState<ClassListItem | null>(null);
   const deleteClass = classesApi.useDeleteClass();
+
+  /**
+   * Une seule classe dépliée à la fois. Les cartes sont en grille : deux
+   * bulletins ouverts côte à côte déformeraient la rangée, et l'écran servirait
+   * moins bien sa fonction première — comparer les classes entre elles.
+   */
+  const [openId, setOpenId] = useState<ID | null>(null);
 
   const list = classes.data ?? [];
   const headcount = list.reduce((sum, item) => sum + item.effectif, 0);
@@ -72,7 +80,9 @@ export default function ClassesPage() {
                   <ClassCard
                     key={item.id}
                     item={item}
-                    hasTerm={termId !== undefined}
+                    termId={termId}
+                    open={openId === item.id}
+                    onToggle={() => setOpenId(openId === item.id ? null : item.id)}
                     onOpen={() => navigate(paths.admin.classDetail(item.id))}
                     onEdit={() => setEditing(item)}
                     onArchive={() => setToDelete(item)}
@@ -118,14 +128,18 @@ export default function ClassesPage() {
 }
 
 function ClassCard({
-  item, hasTerm, onOpen, onEdit, onArchive,
+  item, termId, open, onToggle, onOpen, onEdit, onArchive,
 }: {
   item: ClassListItem;
-  hasTerm: boolean;
+  termId: ID | undefined;
+  open: boolean;
+  onToggle: () => void;
   onOpen: () => void;
   onEdit: () => void;
   onArchive: () => void;
 }) {
+  const hasTerm = termId !== undefined;
+
   return (
     <Card padded>
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
@@ -158,10 +172,18 @@ function ClassCard({
       ) : null}
 
       <div className="card-actions">
-        <Button size="sm" variant="tonal" onClick={onOpen}>Voir le détail</Button>
+        {/* Les notes se consultent sur place : c'est la question qu'on se pose
+            devant une liste de classes, et l'ouvrir en pleine page pour la
+            refermer aussitôt fait perdre le fil de la comparaison. */}
+        <Button size="sm" variant="tonal" disabled={!hasTerm} aria-expanded={open} onClick={onToggle}>
+          {open ? 'Masquer les notes' : 'Voir les notes'}
+        </Button>
+        <Button size="sm" variant="secondary" onClick={onOpen}>Détail</Button>
         <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
         <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
       </div>
+
+      {open && hasTerm ? <ClassBulletinPanel classId={item.id} termId={termId} /> : null}
     </Card>
   );
 }
