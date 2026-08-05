@@ -185,6 +185,7 @@ export function EvaluationSaisie({ evaluationId, onBack }: { evaluationId: ID; o
                 return (
                   <StudentRow
                     key={student.id}
+                    studentId={student.id}
                     name={`${student.firstName} ${student.lastName}`}
                     draft={draft}
                     maxValue={maxValue}
@@ -220,8 +221,9 @@ export function EvaluationSaisie({ evaluationId, onBack }: { evaluationId: ID; o
 }
 
 function StudentRow({
-  name, draft, maxValue, changed, outOfRange, onValue, onComment,
+  studentId, name, draft, maxValue, changed, outOfRange, onValue, onComment,
 }: {
+  studentId: ID;
   name: string;
   draft: Draft;
   maxValue: number;
@@ -231,6 +233,14 @@ function StudentRow({
   onComment: (c: string) => void;
 }) {
   const [showComment, setShowComment] = useState(draft.comment.length > 0);
+
+  /**
+   * Le message est rattaché au champ par `aria-describedby`, et non laissé au
+   * seul bandeau de tête : une bordure rouge et un bouton grisé n'apprennent
+   * rien à l'enseignant — l'audit a montré qu'on ignorait alors *pourquoi*
+   * l'enregistrement était bloqué, et sur quelle ligne.
+   */
+  const errorId = `note-error-${studentId}`;
 
   return (
     <Card padded>
@@ -250,12 +260,19 @@ function StudentRow({
             placeholder="—"
             aria-invalid={outOfRange}
             aria-label={`Note de ${name}`}
+            aria-describedby={outOfRange ? errorId : undefined}
             value={draft.value}
             onChange={(e) => onValue(e.target.value)}
           />
           <span className="tsaisie-max">/ {maxValue}</span>
         </div>
       </div>
+
+      {outOfRange ? (
+        <p id={errorId} className="ui-field__error tsaisie-error" role="alert">
+          La note doit être comprise entre 0 et {maxValue}.
+        </p>
+      ) : null}
 
       {showComment ? (
         <input

@@ -2,14 +2,14 @@ import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import {
-  evaluationsApi, gradesApi,
+  errorMessage, evaluationsApi, gradesApi,
   type Evaluation, type ID, type TeacherClassAssignment,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { usePendingBatches } from '../../hooks/usePendingBatches';
 import { formatCount, formatDate, plural } from '../../lib/format';
-import { Alert, Button, Card, Chip, EmptyState, Skeleton } from '../../ui';
+import { Alert, Button, Card, Chip, ConfirmDialog, EmptyState, Skeleton, useToast } from '../../ui';
 import { CreateEvaluationDialog } from './CreateEvaluationDialog';
 import { EvaluationSaisie } from './EvaluationSaisie';
 import { PendingBatchesBanner } from './PendingBatchesBanner';
@@ -130,9 +130,23 @@ function EvaluationList({
   onOpen: (id: ID) => void;
   onChangeAssignment: () => void;
 }) {
+  const toast = useToast();
   const evaluations = evaluationsApi.useEvaluations(classId, subjectId, termId);
+  const remove = evaluationsApi.useDeleteEvaluation();
   const { pending, isOnline, flush, discard } = usePendingBatches();
   const [creating, setCreating] = useState(false);
+  const [toDelete, setToDelete] = useState<Evaluation | null>(null);
+
+  async function confirmDelete() {
+    if (!toDelete) return;
+    try {
+      await remove.mutateAsync(toDelete.id);
+      toast.success(`« ${toDelete.label} » supprimée`);
+      setToDelete(null);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
 
   return (
     <>
@@ -165,19 +179,28 @@ function EvaluationList({
           ) : (
             <div className="tcards">
               {items.map((evaluation) => (
-                <button key={evaluation.id} className="tpick" onClick={() => onOpen(evaluation.id)}>
-                  <span className="tpick__body">
-                    <span className="tpick__title">{evaluation.label}</span>
-                    <span className="tpick__meta">
-                      <Chip tone="info">{evaluation.type.label}</Chip>
-                      {evaluation.date ? ` · ${formatDate(evaluation.date)}` : ''}
-                      {' · '}
-                      {formatCount(evaluation.gradedCount)}/{formatCount(selected.effectif)}{' '}
-                      {plural(selected.effectif, 'élève')}
+                <div key={evaluation.id} className="tpick-row">
+                  <button className="tpick" onClick={() => onOpen(evaluation.id)}>
+                    <span className="tpick__body">
+                      <span className="tpick__title">{evaluation.label}</span>
+                      <span className="tpick__meta">
+                        <Chip tone="info">{evaluation.type.label}</Chip>
+                        {evaluation.date ? ` · ${formatDate(evaluation.date)}` : ''}
+                        {' · '}
+                        {formatCount(evaluation.gradedCount)}/{formatCount(selected.effectif)}{' '}
+                        {plural(selected.effectif, 'élève')}
+                      </span>
                     </span>
-                  </span>
-                  <span className="tpick__chevron" aria-hidden="true">›</span>
-                </button>
+                    <span className="tpick__chevron" aria-hidden="true">›</span>
+                  </button>
+                  <button
+                    className="tpick__delete"
+                    aria-label={`Supprimer l'évaluation ${evaluation.label}`}
+                    onClick={() => setToDelete(evaluation)}
+                  >
+                    ✕
+                  </button>
+                </div>
               ))}
             </div>
           )
@@ -194,6 +217,20 @@ function EvaluationList({
           setCreating(false);
           onOpen(evaluation.id);
         }}
+      />
+
+      <ConfirmDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » ?`}
+        description={
+          toDelete && toDelete.gradedCount > 0
+            ? `${formatCount(toDelete.gradedCount)} ${plural(toDelete.gradedCount, 'note')} déjà saisie${toDelete.gradedCount > 1 ? 's' : ''} ${toDelete.gradedCount > 1 ? 'seront effacées' : 'sera effacée'} avec l'évaluation. Cette action est définitive.`
+            : "L'évaluation est effacée. Elle ne contient aucune note."
+        }
+        confirmLabel="Supprimer"
+        loading={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={() => void confirmDelete()}
       />
     </>
   );
