@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 
-import { classesApi, type ClassDetail, type RankedStudentResult } from '../../api';
+import { classesApi, type ClassDetail, type ID, type RankedStudentResult } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade } from '../../lib/format';
@@ -8,9 +8,10 @@ import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Avatar, Button, Card, Chip, DataTable, EmptyState, ProgressBar, Skeleton, StatTile,
-  gradeTone, type Column,
+  Avatar, Button, Card, Chip, DataTable, EmptyState, ProgressBar, SectionTitle, Skeleton,
+  StatTile, gradeTone, type Column,
 } from '../../ui';
+import { ClassBulletinPanel } from './ClassBulletinPanel';
 import { ClassSubjectsPanel } from './ClassSubjectsPanel';
 import { TermRequired } from './TermRequired';
 
@@ -50,7 +51,7 @@ export default function ClassDetailPage() {
       <PageContent>
         <TermRequired>
           <QueryBoundary query={detail} loading={<DetailSkeleton />}>
-            {(data) => <ClassBody data={data} />}
+            {(data) => <ClassBody data={data} termId={termId} />}
           </QueryBoundary>
         </TermRequired>
       </PageContent>
@@ -58,7 +59,7 @@ export default function ClassDetailPage() {
   );
 }
 
-function ClassBody({ data }: { data: ClassDetail }) {
+function ClassBody({ data, termId }: { data: ClassDetail; termId: ID | undefined }) {
   const { stats } = data;
 
   const columns: Column<RankedStudentResult>[] = [
@@ -125,6 +126,17 @@ function ClassBody({ data }: { data: ClassDetail }) {
           value={`${formatGrade(stats.meilleure)} · ${formatGrade(stats.plusFaible)}`}
         />
       </div>
+
+      {/*
+        Les notes par matière, à même la fiche.
+        Le tableau ci-dessous classe les élèves mais ne dit pas *dans quelle
+        matière* l'un décroche : il fallait ouvrir le bulletin en pleine page
+        pour le savoir.
+      */}
+      <Card padded>
+        <SectionTitle>Notes par matière</SectionTitle>
+        <ClassBulletinPanel classId={data.classId} termId={termId} />
+      </Card>
 
       <ClassSubjectsPanel classId={data.classId} />
 
