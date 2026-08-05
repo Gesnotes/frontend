@@ -6,7 +6,6 @@ import {
   type Evaluation, type ID, type TeacherClassAssignment,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
-import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { usePendingBatches } from '../../hooks/usePendingBatches';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -24,16 +23,9 @@ import { PendingBatchesBanner } from './PendingBatchesBanner';
  * Le contexte vit dans l'URL (`classe`, `matiere`, `eval`) : recharger la page
  * ou la mettre en favori retrouve le même écran.
  */
-/** Un trimestre est clos si sa date de fin est passée. L'admin n'est pas concerné. */
-function termClosedFor(role: string | null | undefined, term?: { endDate: string | null }): boolean {
-  if (role !== 'teacher' || !term?.endDate) return false;
-  return term.endDate.slice(0, 10) < new Date().toISOString().slice(0, 10);
-}
-
 export default function GradeEntryPage() {
   const [params, setParams] = useSearchParams();
   const { termId, term } = useTermContext();
-  const { role } = useAuth();
   const assignments = gradesApi.useMyClasses(termId);
 
   /**
