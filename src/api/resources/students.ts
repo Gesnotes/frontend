@@ -1,12 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
-import { api } from '../http';
+import { api, apiFetchBlob } from '../http';
 import { queryKeys } from '../queryKeys';
 import type {
   AttachParentPayload,
   CreateStudentPayload,
   ID,
+  ImportReport,
   ParentContact,
   Student,
   StudentPage,
@@ -72,6 +73,28 @@ export function detachParent(id: ID, parentId: ID) {
 /** Renvoie le lien d'invitation à un parent déjà associé (email perdu, lien expiré). */
 export function resendParentInvitation(id: ID, parentId: ID) {
   return api.post<{ message: string }>(`/students/${id}/parents/${parentId}/invitation`);
+}
+
+/**
+ * Export tableur de l'annuaire, sans pagination — c'est sa raison d'être : la
+ * liste à l'écran s'arrête à 100 élèves.
+ */
+export function exportStudentsCsv(filters: { classId?: ID; includeArchived?: boolean } = {}) {
+  return apiFetchBlob('/students/export/csv', {
+    class_id: filters.classId,
+    include_archived: filters.includeArchived ? 'true' : undefined,
+  });
+}
+
+/**
+ * Import d'une liste d'élèves.
+ *
+ * `dryRun` par défaut : le rapport se lit avant d'écrire quoi que ce soit. Une
+ * inscription de masse qu'on ne peut pas relire avant de valider est une
+ * inscription qu'on passera la journée à défaire.
+ */
+export function importStudents(csv: string, dryRun = true): Promise<ImportReport> {
+  return api.post<ImportReport>('/students/import', { csv, dryRun });
 }
 
 /** `GET /parents/search` — recherche d'un compte parent à associer. */
