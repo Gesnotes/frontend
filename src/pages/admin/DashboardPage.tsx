@@ -1,22 +1,18 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import {
-  classesApi, dashboardApi, errorMessage,
-  type AdminDashboard, type ID, type RecentGrade,
-} from '../../api';
+import { dashboardApi, type AdminDashboard, type ID, type RecentGrade } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { downloadBlob, safeFilename } from '../../lib/download';
 import { formatCount, formatGrade, formatPercent, formatRelative } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
-  useToast,
+  Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
 } from '../../ui';
+import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 export default function DashboardPage() {
   const { termId, term } = useTermContext();
@@ -225,117 +221,6 @@ function ClassAverages({ data, termId }: { data: AdminDashboard; termId: ID | un
           </div>
         );
       })}
-    </div>
-  );
-}
-
-/**
- * Bulletin d'une classe, chargé seulement au dépliage.
- *
- * Le tableau de bord affiche toutes les classes de l'école : charger leurs
- * bulletins d'avance ferait autant de calculs complets que de classes, pour un
- * contenu que l'administration ne regarde qu'une classe à la fois.
- */
-function ClassBulletinPanel({ classId, termId }: { classId: ID; termId: ID | undefined }) {
-  const toast = useToast();
-  const bulletin = classesApi.useClassBulletin(classId, termId);
-  const [exporting, setExporting] = useState(false);
-
-  async function exportCsv(className: string, termLabel: string) {
-    if (termId === undefined) return;
-    setExporting(true);
-    try {
-      const blob = await classesApi.exportClassBulletinCsv(classId, termId);
-      downloadBlob(blob, `${safeFilename(className)}-${safeFilename(termLabel)}.csv`);
-      toast.success('Bulletin exporté');
-    } catch (cause) {
-      toast.error(errorMessage(cause));
-    } finally {
-      setExporting(false);
-    }
-  }
-
-  return (
-    <div className="dash-bulletin">
-      <QueryBoundary query={bulletin} loading={<RowsSkeleton />}>
-        {(detail) => {
-          // Le backend ne renvoie que les matières réellement notées, et chaque
-          // élève porte la même liste : la lire sur le premier évite les
-          // colonnes fantômes.
-          const subjects = detail.students[0]?.subjects ?? [];
-
-          if (subjects.length === 0) {
-            return (
-              <p className="t-body-md t-muted">
-                Aucune note sur cette période : le bulletin apparaîtra dès les premières saisies.
-              </p>
-            );
-          }
-
-          return (
-            <>
-              <div className="dash-bulletin__scroll">
-                <table className="ui-table">
-                  <caption className="sr-only">
-                    Bulletin de {detail.className} pour {detail.termLabel}
-                  </caption>
-                  <thead>
-                    <tr>
-                      <th scope="col">Élève</th>
-                      {subjects.map((subject) => (
-                        <th key={subject.subjectId} scope="col" className="is-center">
-                          <span title={`Coefficient ${subject.coefficient}`}>
-                            {subject.subjectName}
-                          </span>
-                        </th>
-                      ))}
-                      <th scope="col" className="is-center">Moyenne</th>
-                      <th scope="col" className="is-numeric">Rang</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {detail.students.map((student) => (
-                      <tr key={student.studentId}>
-                        <td style={{ whiteSpace: 'nowrap' }}>
-                          {student.lastName} {student.firstName}
-                        </td>
-                        {subjects.map((subject) => {
-                          const value = student.subjects.find(
-                            (s) => s.subjectId === subject.subjectId,
-                          )?.average;
-                          return (
-                            <td key={subject.subjectId} className="is-center">
-                              <Chip tone={gradeTone(value)}>{formatGrade(value)}</Chip>
-                            </td>
-                          );
-                        })}
-                        <td className="is-center" style={{ fontWeight: 800 }}>
-                          {formatGrade(student.average)}
-                        </td>
-                        <td className="is-numeric">{student.rang ?? '—'}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              <div className="dash-bulletin__actions">
-                <Link to={paths.admin.classBulletin(classId)}>
-                  <Button size="sm" variant="secondary">Bulletin complet</Button>
-                </Link>
-                <Button
-                  size="sm"
-                  variant="tonal"
-                  loading={exporting}
-                  onClick={() => void exportCsv(detail.className, detail.termLabel)}
-                >
-                  Exporter en CSV
-                </Button>
-              </div>
-            </>
-          );
-        }}
-      </QueryBoundary>
     </div>
   );
 }

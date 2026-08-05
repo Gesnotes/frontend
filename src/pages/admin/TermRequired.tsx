@@ -19,8 +19,8 @@ export function TermRequired({ children }: { children: ReactNode }) {
   if (isError) {
     return (
       <ErrorState
-        title="Périodes indisponibles"
-        description="Impossible de charger les périodes scolaires. Les résultats en dépendent."
+        title="Les trimestres n'ont pas pu être chargés"
+        description="Sans eux, aucune moyenne ne peut s'afficher. Vérifiez votre connexion, puis appuyez sur « Réessayer »."
         onRetry={retry}
       />
     );
@@ -30,8 +30,8 @@ export function TermRequired({ children }: { children: ReactNode }) {
     return (
       <EmptyState
         icon="◔"
-        title="Aucune période scolaire"
-        description="Aucun trimestre n'est configuré pour cet établissement. Les moyennes et les bulletins ne peuvent pas être calculés tant qu'une période n'existe pas."
+        title="Aucun trimestre n'a encore été créé"
+        description="Les moyennes et les bulletins se calculent par trimestre. Créez-en un depuis l'écran « Périodes » pour que les résultats s'affichent."
       />
     );
   }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { errorMessage, studentsApi, type ImportReport, type ImportRow } from '../../api';
+import { downloadBlob } from '../../lib/download';
 import { formatCount, plural } from '../../lib/format';
 import { Alert, Button, Chip, Modal } from '../../ui';
 
@@ -15,6 +16,22 @@ import { Alert, Button, Chip, Modal } from '../../ui';
  * Le fichier est lu dans le navigateur et son texte posté en JSON : pas de
  * dépendance d'upload à embarquer pour quelques dizaines de kilo-octets.
  */
+/**
+ * Modèle à remplir.
+ *
+ * Beaucoup plus sûr qu'une consigne écrite : le fichier porte déjà les bons
+ * titres de colonnes, le bon séparateur et le bon encodage. Le secrétariat
+ * remplace les deux lignes d'exemple et n'a rien à comprendre au format.
+ */
+function downloadExample() {
+  const content =
+    '﻿Nom;Prénom;Classe;Date de naissance\r\n' +
+    'SAGBO;Adjovi;6e A;12/03/2012\r\n' +
+    'ZINSOU;Kofi;6e A;\r\n';
+
+  downloadBlob(new Blob([content], { type: 'text/csv;charset=utf-8' }), 'modele-eleves.csv');
+}
+
 export function ImportStudentsModal({
   open, onClose, onImported,
 }: {
@@ -73,8 +90,8 @@ export function ImportStudentsModal({
         onClose();
       }}
       width={640}
-      title="Importer une liste d'élèves"
-      subtitle="Fichier CSV — celui qu'Excel produit avec « Enregistrer sous » convient."
+      title="Ajouter plusieurs élèves à partir d'un fichier"
+      subtitle="Vous choisissez le fichier, nous vous montrons ce qui sera ajouté, et vous validez."
       footer={
         <>
           <Button
@@ -103,14 +120,27 @@ export function ImportStudentsModal({
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <Alert tone="info">
-          Colonnes attendues : <strong>Nom</strong>, <strong>Prénom</strong>,{' '}
-          <strong>Classe</strong>, et <strong>Date de naissance</strong> (facultative). Les classes
-          doivent exister au préalable — aucune n'est créée automatiquement, une classe inconnue
-          étant presque toujours une faute de frappe.
+          Tout en haut de votre fichier, la première ligne donne le titre de chaque colonne :{' '}
+          <strong>Nom</strong>, <strong>Prénom</strong>, <strong>Classe</strong>, et{' '}
+          <strong>Date de naissance</strong> si vous l'avez. Ensuite, un élève par ligne.
+          <br />
+          Les classes doivent déjà exister dans Gesnotes : celles du fichier ne sont pas créées
+          toutes seules. Si une classe n'est pas reconnue, les élèves concernés sont simplement
+          laissés de côté, et vous verrez lesquels.
         </Alert>
 
+        <div>
+          <Button size="sm" variant="secondary" onClick={downloadExample}>
+            Télécharger un fichier d'exemple
+          </Button>
+          <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginTop: 'var(--space-2)' }}>
+            Ouvrez-le dans Excel, remplacez les lignes par vos élèves, puis enregistrez-le au
+            format CSV.
+          </p>
+        </div>
+
         <label className="ui-field">
-          <span className="ui-field__label">Fichier</span>
+          <span className="ui-field__label">Votre fichier</span>
           <input
             className="ui-input"
             type="file"
@@ -121,7 +151,9 @@ export function ImportStudentsModal({
             }}
           />
           <span className="ui-field__hint">
-            {filename ? `Fichier analysé : ${filename}` : 'Rien n’est enregistré avant validation.'}
+            {filename
+              ? `Fichier examiné : ${filename}`
+              : "Rien n'est enregistré tant que vous n'avez pas validé."}
           </span>
         </label>
 
@@ -139,37 +171,37 @@ function ImportSummary({ report }: { report: ImportReport }) {
     <div className="page-stack" style={{ gap: 'var(--space-3)' }}>
       <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
         <Chip tone={counts.create > 0 ? 'success' : 'neutral'}>
-          {formatCount(counts.create)} à inscrire
+          {formatCount(counts.create)} {plural(counts.create, 'élève')} à inscrire
         </Chip>
         {counts.duplicate > 0 ? (
           <Chip tone="warning">{formatCount(counts.duplicate)} déjà inscrits</Chip>
         ) : null}
         {counts.error > 0 ? (
-          <Chip tone="danger">{formatCount(counts.error)} en erreur</Chip>
+          <Chip tone="danger">{formatCount(counts.error)} à corriger</Chip>
         ) : null}
       </div>
 
       {counts.create === 0 ? (
         <Alert tone="danger">
-          Aucune ligne exploitable. Corrigez le fichier d'après les motifs ci-dessous, puis
-          resélectionnez-le.
+          Aucun élève ne peut être inscrit pour le moment. Corrigez votre fichier en suivant les
+          explications ci-dessous, puis choisissez-le à nouveau.
         </Alert>
       ) : null}
 
       {problems.length > 0 ? (
         <>
-          <p className="t-label-sm t-muted">Lignes ignorées</p>
+          <p className="t-label-sm t-muted">Élèves qui ne seront pas inscrits</p>
           {/* Toutes les lignes fautives d'un coup : corriger son fichier une
               faute à la fois est le meilleur moyen d'abandonner. */}
           <div className="dash-bulletin__scroll" style={{ maxHeight: 260 }}>
             <table className="ui-table">
-              <caption className="sr-only">Lignes ignorées par l'import</caption>
+              <caption className="sr-only">Élèves laissés de côté par l'import</caption>
               <thead>
                 <tr>
-                  <th scope="col">Ligne</th>
+                  <th scope="col">Ligne du fichier</th>
                   <th scope="col">Élève</th>
                   <th scope="col">Classe</th>
-                  <th scope="col">Motif</th>
+                  <th scope="col">Pourquoi</th>
                 </tr>
               </thead>
               <tbody>
@@ -180,7 +212,10 @@ function ImportSummary({ report }: { report: ImportReport }) {
                     <td>{row.className || '—'}</td>
                     <td>
                       <Chip tone={row.status === 'duplicate' ? 'warning' : 'danger'}>
-                        {row.reason ?? (row.status === 'duplicate' ? 'Doublon' : 'Erreur')}
+                        {row.reason ??
+                          (row.status === 'duplicate'
+                            ? 'Cet élève est déjà inscrit.'
+                            : 'Ligne incomplète.')}
                       </Chip>
                     </td>
                   </tr>

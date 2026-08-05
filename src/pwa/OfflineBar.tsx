@@ -14,7 +14,7 @@ export function OfflineBar() {
   return (
     <div className="offline-bar" role="status">
       <span aria-hidden="true">⚠</span>
-      Hors connexion — les données affichées peuvent ne pas être à jour
+      Pas de connexion internet — ce que vous voyez date de votre dernière visite
     </div>
   );
 }

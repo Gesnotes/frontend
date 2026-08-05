@@ -54,8 +54,8 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title = 'Impossible de charger les données',
-  description = 'Une erreur est survenue. Vérifiez votre connexion puis réessayez.',
+  title = 'Le chargement a échoué',
+  description = 'Vérifiez votre connexion internet, puis appuyez sur « Réessayer ».',
   onRetry,
   retrying = false,
 }: { title?: string; description?: string; onRetry?: () => void; retrying?: boolean }) {

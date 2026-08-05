@@ -22,7 +22,7 @@ export class ApiError extends Error {
     const error = new ApiError(
       0,
       'NETWORK_ERROR',
-      'Impossible de joindre le serveur. Vérifiez votre connexion.',
+      'Connexion impossible. Vérifiez votre réseau ou vos données mobiles, puis réessayez.',
       cause,
     );
     return error;
@@ -59,15 +59,22 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Message de repli, quand le serveur n'en fournit aucun d'exploitable.
+ *
+ * Écrit pour une secrétaire ou un parent, pas pour un développeur : chaque
+ * phrase dit ce qui se passe **et** quoi faire. « Ressource introuvable » ne
+ * remplit ni l'un ni l'autre.
+ */
 function defaultMessageFor(status: number): string {
-  if (status === 401) return 'Session expirée, reconnectez-vous.';
-  if (status === 403) return "Vous n'avez pas accès à cette ressource.";
-  if (status === 404) return 'Ressource introuvable.';
-  if (status === 429) return 'Trop de requêtes. Réessayez dans un instant.';
+  if (status === 401) return 'Votre session a expiré. Reconnectez-vous pour continuer.';
+  if (status === 403) return "Vous n'avez pas accès à cette page.";
+  if (status === 404) return "Cet élément n'existe pas, ou il a été supprimé entre-temps.";
+  if (status === 429) return 'Vous allez trop vite pour nous. Patientez un instant, puis réessayez.';
   if (status >= 500) {
-    return "Une erreur inattendue est survenue de notre côté. Réessayez dans un instant ; si cela persiste, prévenez l'administration.";
+    return "Le problème vient de nous, pas de vous. Réessayez dans un instant ; si cela continue, prévenez l'administration.";
   }
-  return 'Une erreur est survenue.';
+  return "L'opération n'a pas pu être effectuée.";
 }
 
 export function isApiError(error: unknown): error is ApiError {
@@ -75,7 +82,10 @@ export function isApiError(error: unknown): error is ApiError {
 }
 
 /** Message affichable à l'utilisateur, quelle que soit la nature de l'erreur. */
-export function errorMessage(error: unknown, fallback = 'Une erreur est survenue.'): string {
+export function errorMessage(
+  error: unknown,
+  fallback = "L'opération n'a pas pu être effectuée.",
+): string {
   if (isApiError(error)) {
     // Une 5xx ne porte jamais de message actionnable (« Erreur interne ») : on
     // affiche un texte qui dit à l'utilisateur quoi faire, pas le jargon serveur.
