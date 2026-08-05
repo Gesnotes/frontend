@@ -67,8 +67,13 @@ export type Term = {
   label: string;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
-  /** Période contenant la date du jour. Au plus une l'est. */
+  /** Période contenant la date du jour. Au plus une l'est. Jamais une archivée. */
   isCurrent: boolean;
+  /** Non nul : période archivée, absente des sélecteurs mais rien n'est perdu. */
+  archivedAt: string | null;
+  /** Ce qu'une suppression définitive emporterait. */
+  evaluationCount: number;
+  gradeCount: number;
 };
 
 /**

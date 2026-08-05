@@ -5,7 +5,7 @@ export { sessionStore } from './session';
 export type { Session } from './session';
 export { queryKeys } from './queryKeys';
 export { createQueryClient } from './queryClient';
-export { API_BASE_URL, SCHOOL_SUBDOMAIN } from './config';
+export { API_BASE_URL, SCHOOL_SUBDOMAIN, TERM_STORAGE_KEY } from './config';
 
 export * as authApi from './resources/auth';
 export * as classesApi from './resources/classes';

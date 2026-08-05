@@ -19,24 +19,22 @@ import {
 export default function PeriodsPage() {
   const toast = useToast();
   const terms = referentialsApi.useTerms();
-  const remove = referentialsApi.useDeleteTerm();
+  const archive = referentialsApi.useArchiveTerm();
 
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<Term | null>(null);
-  const [toDelete, setToDelete] = useState<Term | null>(null);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [toArchive, setToArchive] = useState<Term | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
 
-  async function confirmDelete() {
-    if (!toDelete) return;
-    setDeleteError(null);
+  async function confirmArchive() {
+    if (!toArchive) return;
+    setArchiveError(null);
     try {
-      await remove.mutateAsync(toDelete.id);
-      toast.success(`« ${toDelete.label} » supprimée`);
-      setToDelete(null);
+      await archive.mutateAsync(toArchive.id);
+      toast.success(`« ${toArchive.label} » archivée`);
+      setToArchive(null);
     } catch (cause) {
-      // 409 : des notes sont rattachées. Le message du backend porte le
-      // nombre exact, plus parlant qu'une formule générique.
-      setDeleteError(errorMessage(cause));
+      setArchiveError(errorMessage(cause));
       if (!isApiError(cause) || !cause.isConflict) toast.error(errorMessage(cause));
     }
   }
@@ -64,7 +62,7 @@ export default function PeriodsPage() {
     },
     {
       key: 'actions',
-      header: '',
+      srHeader: 'Actions',
       align: 'numeric',
       render: (term) => (
         <div className="cell-actions">
@@ -73,11 +71,11 @@ export default function PeriodsPage() {
             size="sm"
             variant="danger"
             onClick={() => {
-              setDeleteError(null);
-              setToDelete(term);
+              setArchiveError(null);
+              setToArchive(term);
             }}
           >
-            Supprimer
+            Archiver
           </Button>
         </div>
       ),
@@ -135,16 +133,16 @@ export default function PeriodsPage() {
       />
 
       <ConfirmDialog
-        open={toDelete !== null}
-        title={`Supprimer « ${toDelete?.label ?? ''} » ?`}
+        open={toArchive !== null}
+        title={`Archiver « ${toArchive?.label ?? ''} » ?`}
         description={
-          deleteError ??
-          "La période disparaît définitivement. Il n'y a pas d'archivage : la suppression est refusée si des notes y sont rattachées, pour ne pas effacer le travail de saisie d'un trimestre entier."
+          archiveError ??
+          "La période sort des sélecteurs et des listes, mais rien n'est perdu : ses évaluations et ses notes restent en base. Vous pouvez la restaurer — ou la supprimer définitivement — depuis les Archives."
         }
-        confirmLabel="Supprimer"
-        loading={remove.isPending}
-        onCancel={() => setToDelete(null)}
-        onConfirm={() => void confirmDelete()}
+        confirmLabel="Archiver"
+        loading={archive.isPending}
+        onCancel={() => setToArchive(null)}
+        onConfirm={() => void confirmArchive()}
       />
     </>
   );
