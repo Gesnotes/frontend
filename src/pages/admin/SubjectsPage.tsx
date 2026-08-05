@@ -76,7 +76,7 @@ export default function SubjectsPage() {
     },
     {
       key: 'actions',
-      header: '',
+      srHeader: 'Actions',
       align: 'numeric',
       render: (subject) => (
         <div className="cell-actions">

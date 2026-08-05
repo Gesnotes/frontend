@@ -77,7 +77,7 @@ export default function TeachersPage() {
     },
     {
       key: 'actions',
-      header: '',
+      srHeader: 'Actions',
       align: 'numeric',
       render: (teacher) => (
         <div className="cell-actions">

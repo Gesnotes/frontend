@@ -56,10 +56,16 @@ export function AppShell() {
           </div>
         </aside>
 
-        <div className="shell__main">
+        {/*
+          Repère `main` : sans lui, un lecteur d'écran ne distingue pas la
+          navigation du contenu, et l'ensemble des listes de l'administration
+          se retrouve hors landmark (axe : landmark-one-main + region).
+          L'en-tête de page, qui porte le h1, doit rester à l'intérieur.
+        */}
+        <main className="shell__main">
           <OfflineBar />
           <Outlet />
-        </div>
+        </main>
       </div>
     </TermProvider>
   );
