@@ -1,15 +1,21 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import { dashboardApi, type AdminDashboard, type RecentGrade } from '../../api';
+import {
+  classesApi, dashboardApi, errorMessage,
+  type AdminDashboard, type ID, type RecentGrade,
+} from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
+import { downloadBlob, safeFilename } from '../../lib/download';
 import { formatCount, formatGrade, formatPercent, formatRelative } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
+  Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
+  useToast,
 } from '../../ui';
 
 export default function DashboardPage() {
@@ -44,8 +50,11 @@ export default function DashboardPage() {
               >
                 Moyennes par classe
               </SectionTitle>
+              <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
+                Cliquez sur une classe pour voir les matières, les notes et les rangs.
+              </p>
               <QueryBoundary query={dashboard} loading={<RowsSkeleton />}>
-                {(data) => <ClassAverages data={data} />}
+                {(data) => <ClassAverages data={data} termId={termId} />}
               </QueryBoundary>
             </Card>
           </div>
@@ -165,7 +174,19 @@ function RecentGrades({ grades }: { grades: RecentGrade[] }) {
   );
 }
 
-function ClassAverages({ data }: { data: AdminDashboard }) {
+/**
+ * Moyennes par classe, chaque ligne dépliable sur son bulletin.
+ *
+ * L'administration voulait voir les matières, les notes et la moyenne d'une
+ * classe sans quitter le tableau de bord : c'est la question qu'on se pose en
+ * l'ouvrant, et il fallait deux navigations pour y répondre. Le bulletin
+ * complet reste accessible d'un lien, pour le détail par catégorie.
+ */
+function ClassAverages({ data, termId }: { data: AdminDashboard; termId: ID | undefined }) {
+  // Une seule classe ouverte à la fois : le bulletin est large, deux tableaux
+  // dépliés côte à côte rendraient la carte illisible.
+  const [openId, setOpenId] = useState<ID | null>(null);
+
   if (data.classes.length === 0) {
     return (
       <EmptyState
@@ -178,24 +199,143 @@ function ClassAverages({ data }: { data: AdminDashboard }) {
 
   return (
     <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
-      {data.classes.map((row) => (
-        <div key={row.classId}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
-            <Link to={paths.admin.classDetail(row.classId)} className="t-body-md">
-              {row.className}
-            </Link>
-            <span className="t-body-md" style={{ fontWeight: 700 }}>
-              {formatGrade(row.average)}
-            </span>
+      {data.classes.map((row) => {
+        const open = openId === row.classId;
+        return (
+          <div key={row.classId}>
+            <button
+              type="button"
+              className="dash-class"
+              aria-expanded={open}
+              onClick={() => setOpenId(open ? null : row.classId)}
+            >
+              <span className="dash-class__caret" aria-hidden="true">{open ? '▾' : '▸'}</span>
+              <span className="dash-class__name">{row.className}</span>
+              <span className="dash-class__average">{formatGrade(row.average)}</span>
+            </button>
+
+            <ProgressBar
+              value={row.average ?? 0}
+              max={20}
+              tone={gradeTone(row.average)}
+              label={`Moyenne de ${row.className}`}
+            />
+
+            {open ? <ClassBulletinPanel classId={row.classId} termId={termId} /> : null}
           </div>
-          <ProgressBar
-            value={row.average ?? 0}
-            max={20}
-            tone={gradeTone(row.average)}
-            label={`Moyenne de ${row.className}`}
-          />
-        </div>
-      ))}
+        );
+      })}
+    </div>
+  );
+}
+
+/**
+ * Bulletin d'une classe, chargé seulement au dépliage.
+ *
+ * Le tableau de bord affiche toutes les classes de l'école : charger leurs
+ * bulletins d'avance ferait autant de calculs complets que de classes, pour un
+ * contenu que l'administration ne regarde qu'une classe à la fois.
+ */
+function ClassBulletinPanel({ classId, termId }: { classId: ID; termId: ID | undefined }) {
+  const toast = useToast();
+  const bulletin = classesApi.useClassBulletin(classId, termId);
+  const [exporting, setExporting] = useState(false);
+
+  async function exportCsv(className: string, termLabel: string) {
+    if (termId === undefined) return;
+    setExporting(true);
+    try {
+      const blob = await classesApi.exportClassBulletinCsv(classId, termId);
+      downloadBlob(blob, `${safeFilename(className)}-${safeFilename(termLabel)}.csv`);
+      toast.success('Bulletin exporté');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <div className="dash-bulletin">
+      <QueryBoundary query={bulletin} loading={<RowsSkeleton />}>
+        {(detail) => {
+          // Le backend ne renvoie que les matières réellement notées, et chaque
+          // élève porte la même liste : la lire sur le premier évite les
+          // colonnes fantômes.
+          const subjects = detail.students[0]?.subjects ?? [];
+
+          if (subjects.length === 0) {
+            return (
+              <p className="t-body-md t-muted">
+                Aucune note sur cette période : le bulletin apparaîtra dès les premières saisies.
+              </p>
+            );
+          }
+
+          return (
+            <>
+              <div className="dash-bulletin__scroll">
+                <table className="ui-table">
+                  <caption className="sr-only">
+                    Bulletin de {detail.className} pour {detail.termLabel}
+                  </caption>
+                  <thead>
+                    <tr>
+                      <th scope="col">Élève</th>
+                      {subjects.map((subject) => (
+                        <th key={subject.subjectId} scope="col" className="is-center">
+                          <span title={`Coefficient ${subject.coefficient}`}>
+                            {subject.subjectName}
+                          </span>
+                        </th>
+                      ))}
+                      <th scope="col" className="is-center">Moyenne</th>
+                      <th scope="col" className="is-numeric">Rang</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {detail.students.map((student) => (
+                      <tr key={student.studentId}>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          {student.lastName} {student.firstName}
+                        </td>
+                        {subjects.map((subject) => {
+                          const value = student.subjects.find(
+                            (s) => s.subjectId === subject.subjectId,
+                          )?.average;
+                          return (
+                            <td key={subject.subjectId} className="is-center">
+                              <Chip tone={gradeTone(value)}>{formatGrade(value)}</Chip>
+                            </td>
+                          );
+                        })}
+                        <td className="is-center" style={{ fontWeight: 800 }}>
+                          {formatGrade(student.average)}
+                        </td>
+                        <td className="is-numeric">{student.rang ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="dash-bulletin__actions">
+                <Link to={paths.admin.classBulletin(classId)}>
+                  <Button size="sm" variant="secondary">Bulletin complet</Button>
+                </Link>
+                <Button
+                  size="sm"
+                  variant="tonal"
+                  loading={exporting}
+                  onClick={() => void exportCsv(detail.className, detail.termLabel)}
+                >
+                  Exporter en CSV
+                </Button>
+              </div>
+            </>
+          );
+        }}
+      </QueryBoundary>
     </div>
   );
 }

@@ -294,6 +294,25 @@ export type UpdateStudentPayload = {
   birthDate?: IsoDate | null;
 };
 
+/** Une ligne du fichier d'import, telle que le backend l'a comprise. */
+export type ImportRow = {
+  /** Numéro de ligne dans le fichier, en-tête comprise : c'est ce que voit l'utilisateur. */
+  line: number;
+  firstName: string;
+  lastName: string;
+  className: string;
+  birthDate: string | null;
+  status: 'create' | 'duplicate' | 'error';
+  reason?: string;
+};
+
+/** Rapport d'import. `dryRun` vrai : rien n'a été écrit, c'est un aperçu. */
+export type ImportReport = {
+  rows: ImportRow[];
+  counts: { create: number; duplicate: number; error: number };
+  dryRun: boolean;
+};
+
 /** Association d'un parent : compte existant ou invitation par email. */
 export type AttachParentPayload =
   | { parentUserId: ID }

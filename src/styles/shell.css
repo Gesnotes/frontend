@@ -239,6 +239,61 @@
   align-items: start;
 }
 
+/* ---------------- Bulletin dépliable du tableau de bord ---------------- */
+
+.dash-class {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: 4px 0;
+  margin-bottom: 6px;
+  background: none;
+  border: none;
+  text-align: left;
+  color: inherit;
+  font-size: var(--body-md-size);
+}
+
+.dash-class__caret {
+  flex-shrink: 0;
+  width: 14px;
+  color: var(--outline);
+}
+
+.dash-class__name {
+  flex: 1;
+  min-width: 0;
+  color: var(--primary-container);
+}
+
+.dash-class__average {
+  font-weight: 700;
+}
+
+.dash-bulletin {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  background: var(--surface-container-low);
+  border-radius: var(--radius);
+}
+
+/*
+ * Le bulletin porte une colonne par matière : il déborde forcément de la carte
+ * dès qu'une classe en compte plus de cinq. Il défile dans son propre cadre,
+ * pour que la page, elle, ne défile jamais horizontalement.
+ */
+.dash-bulletin__scroll {
+  overflow-x: auto;
+}
+
+.dash-bulletin__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
+
 .cell-person {
   display: flex;
   align-items: center;

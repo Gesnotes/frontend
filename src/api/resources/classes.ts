@@ -35,6 +35,16 @@ export function exportClassBulletin(
   return apiFetchBlob(`/classes/${id}/bulletin/export`, { term_id: termId, format });
 }
 
+/**
+ * Export tableur du bulletin.
+ *
+ * Le PDF se remet aux familles, le CSV se retravaille — trier par moyenne,
+ * isoler une matière, recopier dans le tableau de l'inspection.
+ */
+export function exportClassBulletinCsv(id: ID, termId: ID): Promise<Blob> {
+  return apiFetchBlob(`/classes/${id}/bulletin/csv`, { term_id: termId });
+}
+
 export function createClass(payload: CreateClassPayload) {
   return api.post<ClassListItem>('/classes', payload);
 }
