@@ -6,6 +6,7 @@ import {
   type Evaluation, type ID, type TeacherClassAssignment,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
+import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { usePendingBatches } from '../../hooks/usePendingBatches';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -23,10 +24,19 @@ import { PendingBatchesBanner } from './PendingBatchesBanner';
  * Le contexte vit dans l'URL (`classe`, `matiere`, `eval`) : recharger la page
  * ou la mettre en favori retrouve le même écran.
  */
+/** Un trimestre est clos si sa date de fin est passée. L'admin n'est pas concerné. */
+function termClosedFor(role: string | null | undefined, term?: { endDate: string | null }): boolean {
+  if (role !== 'teacher' || !term?.endDate) return false;
+  return term.endDate.slice(0, 10) < new Date().toISOString().slice(0, 10);
+}
+
 export default function GradeEntryPage() {
   const [params, setParams] = useSearchParams();
   const { termId, term } = useTermContext();
+  const { role } = useAuth();
   const assignments = gradesApi.useMyClasses(termId);
+
+  const termClosed = termClosedFor(role, term);
 
   const classId = params.get('classe') ? Number(params.get('classe')) : undefined;
   const subjectId = params.get('matiere') ? Number(params.get('matiere')) : undefined;
@@ -64,7 +74,7 @@ export default function GradeEntryPage() {
   }
 
   if (evalId !== undefined) {
-    return <EvaluationSaisie evaluationId={evalId} onBack={closeEvaluation} />;
+    return <EvaluationSaisie evaluationId={evalId} termClosed={termClosed} onBack={closeEvaluation} />;
   }
 
   if (selected && classId !== undefined && subjectId !== undefined) {
@@ -74,6 +84,7 @@ export default function GradeEntryPage() {
         classId={classId}
         subjectId={subjectId}
         termId={termId}
+        termClosed={termClosed}
         onOpen={openEvaluation}
         onChangeAssignment={clearSelection}
       />
@@ -106,8 +117,12 @@ export default function GradeEntryPage() {
                   onClick={() => pick(item.classId, item.subjectId)}
                 >
                   <span className="tpick__body">
-                    <span className="tpick__title">{item.className}</span>
-                    <span className="tpick__meta">{item.subjectName}</span>
+                    <span className="tpick__title">{item.className} · {item.subjectName}</span>
+                    <span className="tpick__meta">
+                      {item.effectif === 0
+                        ? 'Aucun élève inscrit'
+                        : `${formatCount(item.evalues)}/${formatCount(item.effectif)} ${plural(item.effectif, 'élève')} noté${item.evalues > 1 ? 's' : ''}`}
+                    </span>
                   </span>
                   <span className="tpick__chevron" aria-hidden="true">›</span>
                 </button>
@@ -121,12 +136,13 @@ export default function GradeEntryPage() {
 }
 
 function EvaluationList({
-  selected, classId, subjectId, termId, onOpen, onChangeAssignment,
+  selected, classId, subjectId, termId, termClosed, onOpen, onChangeAssignment,
 }: {
   selected: TeacherClassAssignment;
   classId: ID;
   subjectId: ID;
   termId: ID;
+  termClosed: boolean;
   onOpen: (id: ID) => void;
   onChangeAssignment: () => void;
 }) {
@@ -143,8 +159,15 @@ function EvaluationList({
           <h1 className="tshell__page-title">{selected.className}</h1>
           <p className="tshell__page-subtitle">{selected.subjectName}</p>
         </div>
-        <Button size="sm" onClick={() => setCreating(true)}>+ Évaluation</Button>
+        <Button size="sm" disabled={termClosed} onClick={() => setCreating(true)}>+ Évaluation</Button>
       </div>
+
+      {termClosed ? (
+        <Alert tone="info">
+          Ce trimestre est terminé : la saisie et la création d'évaluations ne sont plus possibles.
+          Contactez l'administration pour toute correction.
+        </Alert>
+      ) : null}
 
       <PendingBatchesBanner
         pending={pending}
@@ -160,7 +183,7 @@ function EvaluationList({
               icon="✎"
               title="Aucune évaluation"
               description="Créez une première évaluation (interrogation, devoir, composition) pour commencer la saisie."
-              action={{ label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
+              action={termClosed ? undefined : { label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
             />
           ) : (
             <div className="tcards">

@@ -22,7 +22,6 @@ import GradesHistoryPage from './pages/parent/GradesHistoryPage';
 import NotificationsPage from './pages/parent/NotificationsPage';
 import ParentHomePage from './pages/parent/ParentHomePage';
 import GradeEntryPage from './pages/teacher/GradeEntryPage';
-import TeacherDashboardPage from './pages/teacher/TeacherDashboardPage';
 import TeacherHistoryPage from './pages/teacher/TeacherHistoryPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LoginPage from './pages/auth/LoginPage';
@@ -80,7 +79,7 @@ export default function App() {
 
         <Route element={<RequireRole allow={['teacher']} />}>
           <Route path={paths.teacher.root} element={<TeacherShell />}>
-            <Route index element={<TeacherDashboardPage />} />
+            <Route index element={<Navigate to={paths.teacher.gradeEntry} replace />} />
             <Route path="saisie" element={<GradeEntryPage />} />
             <Route path="historique" element={<TeacherHistoryPage />} />
             <Route path="*" element={<NotFoundPage />} />

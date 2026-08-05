@@ -32,7 +32,9 @@ function toBaseline(students: EvaluationGrid['students']): Record<number, Draft>
  * qu'on n'en veut pas. La file d'attente hors connexion est conservée : un
  * enseignant sans réseau enregistre quand même, le lot part au retour.
  */
-export function EvaluationSaisie({ evaluationId, onBack }: { evaluationId: ID; onBack: () => void }) {
+export function EvaluationSaisie({
+  evaluationId, termClosed, onBack,
+}: { evaluationId: ID; termClosed: boolean; onBack: () => void }) {
   const toast = useToast();
   const grid = gradesApi.useEvaluationGrid(evaluationId);
   const saveBatch = gradesApi.useSaveGradeBatch();
@@ -151,6 +153,13 @@ export function EvaluationSaisie({ evaluationId, onBack }: { evaluationId: ID; o
         </div>
       </div>
 
+      {termClosed ? (
+        <Alert tone="info">
+          Ce trimestre est terminé : les notes ne sont plus modifiables. Contactez l'administration
+          pour toute correction.
+        </Alert>
+      ) : null}
+
       {invalid.length > 0 ? (
         <Alert tone="danger">
           {formatCount(invalid.length)} {plural(invalid.length, 'note')} hors barème : entre 0 et {maxValue}.
@@ -205,7 +214,7 @@ export function EvaluationSaisie({ evaluationId, onBack }: { evaluationId: ID; o
           block
           size="lg"
           loading={saveBatch.isPending}
-          disabled={dirty.length === 0 || invalid.length > 0}
+          disabled={dirty.length === 0 || invalid.length > 0 || termClosed}
           onClick={() => void save()}
         >
           {isOnline ? 'Enregistrer' : 'Mettre en attente'}

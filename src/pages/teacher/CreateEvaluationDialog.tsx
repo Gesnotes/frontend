@@ -1,6 +1,7 @@
 import { useState } from 'react';
 
 import { errorMessage, evaluationsApi, referentialsApi, type Evaluation, type ID } from '../../api';
+import { useTermContext } from '../../context/term-context';
 import { Alert, Button, Modal, TextField, useToast } from '../../ui';
 
 /**
@@ -21,6 +22,7 @@ export function CreateEvaluationDialog({
   onCreated: (evaluation: Evaluation) => void;
 }) {
   const toast = useToast();
+  const { term } = useTermContext();
   const gradeTypes = referentialsApi.useGradeTypes();
   const create = evaluationsApi.useCreateEvaluation();
 
@@ -36,6 +38,12 @@ export function CreateEvaluationDialog({
   const baremeError =
     maxValue !== '' && !maxValid ? 'Le barème doit être compris entre 1 et 100.' : undefined;
   const canSubmit = label.trim().length > 0 && activeTypeId !== undefined && maxValid;
+
+  // Avertissement non bloquant : la date sort-elle des bornes du trimestre ?
+  const start = term?.startDate?.slice(0, 10);
+  const end = term?.endDate?.slice(0, 10);
+  const dateOutOfBounds =
+    date !== '' && ((start !== undefined && date < start) || (end !== undefined && date > end));
 
   async function submit() {
     if (!activeTypeId) return;
@@ -115,6 +123,13 @@ export function CreateEvaluationDialog({
             error={baremeError}
           />
         </div>
+
+        {dateOutOfBounds ? (
+          <Alert tone="info">
+            Cette date est hors du trimestre « {term?.label} ». Vérifiez la période sélectionnée
+            avant de valider.
+          </Alert>
+        ) : null}
       </div>
     </Modal>
   );
