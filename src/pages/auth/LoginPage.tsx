@@ -1,10 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 
-import { errorMessage, isApiError } from '../../api';
+import { errorMessage, isApiError, isOnSchoolSubdomain, useSchoolSelection } from '../../api';
 import { useAuth } from '../../auth/auth-context';
 import { homePathFor, paths } from '../../routes/paths';
-import { Alert, Button, TextField } from '../../ui';
+import { Alert, Button, Chip, TextField } from '../../ui';
 import { AuthLayout } from './AuthLayout';
 
 type LocationState = { from?: { pathname: string } };
@@ -29,12 +29,22 @@ export default function LoginPage() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const school = useSchoolSelection();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [hint, setHint] = useState(false);
+
+  /**
+   * Domaine principal (pas de sous-domaine dans l'adresse) et aucune école
+   * choisie sur cet appareil : impossible de savoir à qui adresser la
+   * connexion sans passer par la sélection d'école d'abord.
+   */
+  if (!isOnSchoolSubdomain() && !school) {
+    return <Navigate to={paths.schoolPicker} replace state={location.state} />;
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
@@ -64,6 +74,13 @@ export default function LoginPage() {
       footnote="Votre établissement vous a transmis vos identifiants par email."
     >
       <form className="auth__form" onSubmit={onSubmit} noValidate>
+        {school && !isOnSchoolSubdomain() ? (
+          <div className="auth__row-end" style={{ justifyContent: 'flex-start', gap: 'var(--space-2)' }}>
+            <Chip tone="success">{school.name}</Chip>
+            <Link to={paths.schoolPicker} className="t-label-sm">Changer</Link>
+          </div>
+        ) : null}
+
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         {hint ? (

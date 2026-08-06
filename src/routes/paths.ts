@@ -5,6 +5,8 @@ export const paths = {
   login: '/connexion',
   forgotPassword: '/mot-de-passe-oublie',
   resetPassword: '/reinitialiser-mot-de-passe',
+  schoolPicker: '/mon-ecole',
+  signup: '/inscription',
 
   admin: {
     root: '/admin',

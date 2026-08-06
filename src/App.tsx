@@ -8,8 +8,11 @@ import { ParentShell } from './layouts/ParentShell';
 import { TeacherShell } from './layouts/TeacherShell';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import SchoolPickerPage from './pages/auth/SchoolPickerPage';
+import SignupPage from './pages/auth/SignupPage';
 import { SkeletonLines } from './ui';
 import { DocumentTitle } from './routes/DocumentTitle';
 import { homePathFor, paths } from './routes/paths';
@@ -59,10 +62,11 @@ function PageFallback() {
   );
 }
 
-/** Racine `/` : renvoie vers l'espace du rôle connecté, sinon vers la connexion. */
+/** Racine `/` : renvoie vers l'espace du rôle connecté ; sinon, la vitrine publique. */
 function HomeRedirect() {
   const { role } = useAuth();
-  return <Navigate to={role ? homePathFor(role) : paths.login} replace />;
+  if (role) return <Navigate to={homePathFor(role)} replace />;
+  return <LandingPage />;
 }
 
 export default function App() {
@@ -87,6 +91,22 @@ export default function App() {
             element={
               <RedirectIfAuthenticated>
                 <ForgotPasswordPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path={paths.schoolPicker}
+            element={
+              <RedirectIfAuthenticated>
+                <SchoolPickerPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path={paths.signup}
+            element={
+              <RedirectIfAuthenticated>
+                <SignupPage />
               </RedirectIfAuthenticated>
             }
           />

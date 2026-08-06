@@ -34,6 +34,40 @@ export const SCHOOL_SUBDOMAIN = import.meta.env.VITE_SCHOOL_SUBDOMAIN ?? '';
 export const SESSION_STORAGE_KEY = 'gesnotes.session';
 
 /**
+ * Clé de stockage de l'école choisie sur cet appareil.
+ *
+ * Sert la connexion sans sous-domaine : sur le domaine principal, l'école ne
+ * vient plus d'une adresse à taper mais d'un choix (recherche, ou lien
+ * d'invitation) mémorisé ici — comme la période choisie survit déjà au
+ * rechargement. Indépendant de la session : se déconnecter ne doit pas faire
+ * oublier l'école sur un appareil qui lui reste dédié.
+ */
+export const SCHOOL_SELECTION_STORAGE_KEY = 'gesnotes.school';
+
+/**
+ * Domaine principal de l'application (vitrine, formulaire d'inscription,
+ * sélection d'école). Une adresse qui n'en est pas un sous-domaine dédié
+ * (`ecole-x.gesnotes.app`) déclenche la sélection d'école avant la connexion.
+ *
+ * Étiquettes réservées à la vitrine elle-même, jamais des sous-domaines
+ * d'école : à ajuster si l'hébergement de la vitrine change de nom.
+ */
+export const MAIN_DOMAIN = 'gesnotes.app';
+const MAIN_DOMAIN_LABELS = new Set(['www', 'app']);
+
+/**
+ * Vrai si l'adresse actuelle est déjà celle d'une école précise. Dans ce cas,
+ * le sous-domaine de l'adresse fait autorité côté serveur : la sélection
+ * d'école ne doit jamais s'interposer avant la connexion.
+ */
+export function isOnSchoolSubdomain(hostname = window.location.hostname): boolean {
+  const suffix = `.${MAIN_DOMAIN}`;
+  if (!hostname.endsWith(suffix)) return false;
+  const label = hostname.slice(0, -suffix.length);
+  return label !== '' && !MAIN_DOMAIN_LABELS.has(label);
+}
+
+/**
  * Clé de stockage de la période choisie.
  *
  * Le choix survit au rechargement et au passage d'un espace à l'autre : sans

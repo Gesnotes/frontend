@@ -10,7 +10,7 @@ import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
+  Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 
@@ -27,36 +27,96 @@ export default function DashboardPage() {
         actions={<TermSelect />}
       />
       <PageContent>
-        <div className="page-stack">
-          <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
-            {(data) => <DashboardBody data={data} />}
-          </QueryBoundary>
+        <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
+          {(data) =>
+            isSetupIncomplete(data.effectifs) ? (
+              <OnboardingChecklist effectifs={data.effectifs} />
+            ) : (
+              <div className="page-stack">
+                <DashboardBody data={data} />
 
-          <div className="grid-split">
-            <Card padded>
-              <SectionTitle>Dernières notes saisies</SectionTitle>
-              <QueryBoundary query={recent} loading={<RowsSkeleton />}>
-                {(grades) => <RecentGrades grades={grades} />}
-              </QueryBoundary>
-            </Card>
+                <div className="grid-split">
+                  <Card padded>
+                    <SectionTitle>Dernières notes saisies</SectionTitle>
+                    <QueryBoundary query={recent} loading={<RowsSkeleton />}>
+                      {(grades) => <RecentGrades grades={grades} />}
+                    </QueryBoundary>
+                  </Card>
 
-            <Card padded>
-              <SectionTitle
-                aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
-              >
-                Moyennes par classe
-              </SectionTitle>
-              <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
-                Cliquez sur une classe pour voir les matières, les notes et les rangs.
-              </p>
-              <QueryBoundary query={dashboard} loading={<RowsSkeleton />}>
-                {(data) => <ClassAverages data={data} termId={termId} />}
-              </QueryBoundary>
-            </Card>
-          </div>
-        </div>
+                  <Card padded>
+                    <SectionTitle
+                      aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
+                    >
+                      Moyennes par classe
+                    </SectionTitle>
+                    <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
+                      Cliquez sur une classe pour voir les matières, les notes et les rangs.
+                    </p>
+                    <ClassAverages data={data} termId={termId} />
+                  </Card>
+                </div>
+              </div>
+            )
+          }
+        </QueryBoundary>
       </PageContent>
     </>
+  );
+}
+
+/**
+ * Liste de tâches d'accueil (DESIGN.md §6) : remplace un tableau de bord
+ * vide à la première connexion, plutôt que d'afficher des moyennes et des
+ * effectifs à zéro qui n'apprennent rien à l'administration.
+ */
+function isSetupIncomplete(effectifs: AdminDashboard['effectifs']): boolean {
+  return effectifs.classes === 0 || effectifs.enseignants === 0 || effectifs.eleves === 0;
+}
+
+function OnboardingChecklist({ effectifs }: { effectifs: AdminDashboard['effectifs'] }) {
+  const steps = [
+    {
+      done: effectifs.classes > 0,
+      label: 'Ajouter vos classes, avec leur mode (notes ou présence)',
+      cta: 'Commencer par les classes',
+      to: paths.admin.classes,
+    },
+    {
+      done: effectifs.enseignants > 0,
+      label: 'Inviter vos enseignants',
+      cta: 'Inviter vos enseignants',
+      to: paths.admin.teachers,
+    },
+    {
+      done: effectifs.eleves > 0,
+      label: 'Importer la liste de vos élèves',
+      cta: 'Importer vos élèves',
+      to: paths.admin.students,
+    },
+  ];
+  const doneCount = steps.filter((step) => step.done).length;
+  const next = steps.find((step) => !step.done) ?? steps[0]!;
+
+  return (
+    <Card padded>
+      <SectionTitle>Bienvenue, configurons votre école</SectionTitle>
+      <p className="t-body-md t-muted" style={{ marginBottom: 'var(--space-4)' }}>
+        {doneCount} sur {steps.length} terminé
+      </p>
+
+      <div className="checklist">
+        {steps.map((step) => (
+          <div key={step.label} className={`checklist__row${step.done ? ' is-done' : ''}`}>
+            <span className="checklist__box" aria-hidden="true">{step.done ? '✓' : ''}</span>
+            {step.label}
+          </div>
+        ))}
+      </div>
+
+      <Link to={next.to}>
+        <Button variant="primary">{next.cta}</Button>
+      </Link>
+    </Card>
   );
 }
 

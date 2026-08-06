@@ -78,4 +78,8 @@ export const queryKeys = {
     grades: (id: ID, termId?: ID, subjectId?: ID) =>
       ['children', 'grades', id, termId ?? null, subjectId ?? null] as const,
   },
+
+  onboarding: {
+    schoolSearch: (query: string) => ['onboarding', 'school-search', query] as const,
+  },
 } as const;

@@ -561,3 +561,22 @@ export type Device = {
   fcmToken: string;
   createdAt: IsoDateTime | null;
 };
+
+// -------------------------------------------------------------- Inscription
+
+/** Élément de `GET /schools/search` — connexion sans sous-domaine. */
+export type SchoolSearchResult = {
+  id: ID;
+  name: string;
+  subdomain: string;
+  city: string | null;
+};
+
+/** Corps de `POST /signup-requests` — inscription hybride. */
+export type SignupRequestPayload = {
+  schoolName: string;
+  contactName: string;
+  phone: string;
+  city: string;
+  levels: string[];
+};
