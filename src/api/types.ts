@@ -576,6 +576,7 @@ export type SchoolSearchResult = {
 export type SignupRequestPayload = {
   schoolName: string;
   contactName: string;
+  email: string;
   phone: string;
   city: string;
   levels: string[];

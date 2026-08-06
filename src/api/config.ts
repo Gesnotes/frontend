@@ -30,6 +30,18 @@ export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replac
  */
 export const SCHOOL_SUBDOMAIN = import.meta.env.VITE_SCHOOL_SUBDOMAIN ?? '';
 
+/**
+ * Compte de démonstration public, montré sur la vitrine (« Voir une démo »).
+ *
+ * Facultatif : le bouton ne s'affiche que si les trois valeurs sont
+ * renseignées. Le mot de passe est un identifiant public assumé (le compte
+ * est fait pour ça), jamais celui d'un établissement réel.
+ */
+export const DEMO_SUBDOMAIN = import.meta.env.VITE_DEMO_SUBDOMAIN ?? '';
+export const DEMO_SCHOOL_NAME = import.meta.env.VITE_DEMO_SCHOOL_NAME || 'École de démonstration';
+export const DEMO_IDENTIFIER = import.meta.env.VITE_DEMO_IDENTIFIER ?? '';
+export const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? '';
+
 /** Clé de stockage de la session dans `localStorage`. */
 export const SESSION_STORAGE_KEY = 'gesnotes.session';
 

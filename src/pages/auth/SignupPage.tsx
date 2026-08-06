@@ -17,6 +17,7 @@ const NIVEAUX = ['Garderie', 'Maternelle', 'Primaire', 'Collège', 'Secondaire']
 export default function SignupPage() {
   const [schoolName, setSchoolName] = useState('');
   const [contactName, setContactName] = useState('');
+  const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [city, setCity] = useState('');
   const [levels, setLevels] = useState<string[]>([]);
@@ -38,6 +39,7 @@ export default function SignupPage() {
       await onboardingApi.createSignupRequest({
         schoolName: schoolName.trim(),
         contactName: contactName.trim(),
+        email: email.trim(),
         phone: phone.trim(),
         city: city.trim(),
         levels,
@@ -103,6 +105,16 @@ export default function SignupPage() {
         />
 
         <TextField
+          label="Email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+        />
+
+        <TextField
           label="Téléphone"
           name="phone"
           type="tel"
@@ -138,7 +150,14 @@ export default function SignupPage() {
           type="submit"
           block
           loading={submitting}
-          disabled={!schoolName.trim() || !contactName.trim() || !phone.trim() || !city.trim() || levels.length === 0}
+          disabled={
+            !schoolName.trim() ||
+            !contactName.trim() ||
+            !email.trim() ||
+            !phone.trim() ||
+            !city.trim() ||
+            levels.length === 0
+          }
         >
           Être rappelé·e
         </Button>

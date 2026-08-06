@@ -9,6 +9,7 @@ export { queryKeys } from './queryKeys';
 export { createQueryClient } from './queryClient';
 export {
   API_BASE_URL, SCHOOL_SUBDOMAIN, TERM_STORAGE_KEY, MAIN_DOMAIN, isOnSchoolSubdomain,
+  DEMO_SUBDOMAIN, DEMO_SCHOOL_NAME, DEMO_IDENTIFIER, DEMO_PASSWORD,
 } from './config';
 
 export * as authApi from './resources/auth';
