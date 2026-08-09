@@ -33,8 +33,14 @@ function toBaseline(students: EvaluationGrid['students']): Record<number, Draft>
  * enseignant sans réseau enregistre quand même, le lot part au retour.
  */
 export function EvaluationSaisie({
-  evaluationId, locked, onBack,
-}: { evaluationId: ID; locked: boolean; onBack: () => void }) {
+  evaluationId, locked, onBack, hideHeader = false,
+}: {
+  evaluationId: ID;
+  locked: boolean;
+  onBack: () => void;
+  /** L'administration fournit son propre `PageHeader` desktop à la place. */
+  hideHeader?: boolean;
+}) {
   const toast = useToast();
   const grid = gradesApi.useEvaluationGrid(evaluationId);
   const saveBatch = gradesApi.useSaveGradeBatch();
@@ -145,17 +151,27 @@ export function EvaluationSaisie({
 
   return (
     <>
-      <button className="tsaisie-back" onClick={onBack}>← Évaluations</button>
+      {hideHeader ? null : (
+        <>
+          <button className="tsaisie-back" onClick={onBack}>← Évaluations</button>
 
-      <div className="tsaisie-head">
-        <div>
-          <h1 className="tshell__page-title">{evaluation?.label ?? 'Saisie'}</h1>
-          <p className="tshell__page-subtitle">
-            {evaluation ? `${evaluation.type.label} · noté sur ${evaluation.maxValue}` : ''}
-            {students.length > 0 ? ` · ${formatCount(filled)}/${formatCount(students.length)} noté${filled > 1 ? 's' : ''}` : ''}
-          </p>
-        </div>
-      </div>
+          <div className="tsaisie-head">
+            <div>
+              <h1 className="tshell__page-title">{evaluation?.label ?? 'Saisie'}</h1>
+              <p className="tshell__page-subtitle">
+                {evaluation ? `${evaluation.type.label} · noté sur ${evaluation.maxValue}` : ''}
+                {students.length > 0 ? ` · ${formatCount(filled)}/${formatCount(students.length)} noté${filled > 1 ? 's' : ''}` : ''}
+              </p>
+            </div>
+          </div>
+        </>
+      )}
+
+      {hideHeader && students.length > 0 ? (
+        <p className="t-body-md t-muted" style={{ marginTop: 0 }}>
+          {formatCount(filled)}/{formatCount(students.length)} noté{filled > 1 ? 's' : ''}
+        </p>
+      ) : null}
 
       {locked ? (
         <Alert tone="info">

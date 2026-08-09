@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { gradesApi, type ID } from '../../api';
@@ -6,7 +7,7 @@ import { useTermContext } from '../../context/term-context';
 import { formatCount, plural } from '../../lib/format';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
-import { Alert, Card, EmptyState, Skeleton } from '../../ui';
+import { Alert, Button, Card, Chip, EmptyState, Skeleton } from '../../ui';
 import { EvaluationList } from '../teacher/EvaluationList';
 import { EvaluationSaisie } from '../teacher/EvaluationSaisie';
 
@@ -23,6 +24,7 @@ export default function AdminGradeEntryPage() {
   const [params, setParams] = useSearchParams();
   const { termId, term } = useTermContext();
   const assignments = gradesApi.useMyClasses(termId);
+  const [creating, setCreating] = useState(false);
 
   // Contrairement à un enseignant, l'administration n'est jamais bloquée par
   // une période close : `assertTermWritable` (backend) l'exempte explicitement
@@ -53,20 +55,37 @@ export default function AdminGradeEntryPage() {
   }
 
   if (evalId !== undefined) {
-    return <EvaluationSaisie evaluationId={evalId} locked={locked} onBack={closeEvaluation} />;
+    return (
+      <EvaluationGradingScreen evaluationId={evalId} locked={locked} onBack={closeEvaluation} />
+    );
   }
 
   if (selected && classId !== undefined && subjectId !== undefined && termId !== undefined) {
     return (
-      <EvaluationList
-        selected={selected}
-        classId={classId}
-        subjectId={subjectId}
-        termId={termId}
-        locked={locked}
-        onOpen={openEvaluation}
-        onChangeAssignment={clearSelection}
-      />
+      <>
+        <PageHeader
+          back={<Button variant="ghost" aria-label="Changer de classe" onClick={clearSelection}>‹</Button>}
+          title={selected.className}
+          subtitle={<Chip tone="info">{selected.subjectName}</Chip>}
+          actions={
+            <Button size="sm" disabled={locked} onClick={() => setCreating(true)}>+ Évaluation</Button>
+          }
+        />
+        <PageContent>
+          <EvaluationList
+            selected={selected}
+            classId={classId}
+            subjectId={subjectId}
+            termId={termId}
+            locked={locked}
+            onOpen={openEvaluation}
+            onChangeAssignment={clearSelection}
+            header="none"
+            creating={creating}
+            onCreatingChange={setCreating}
+          />
+        </PageContent>
+      </>
     );
   }
 
@@ -115,6 +134,40 @@ export default function AdminGradeEntryPage() {
             }
           </QueryBoundary>
         )}
+      </PageContent>
+    </>
+  );
+}
+
+/**
+ * Grille de notation, avec l'en-tête desktop standard de l'administration.
+ *
+ * `EvaluationSaisie` charge déjà la grille (`useEvaluationGrid`) ; l'appeler
+ * ici aussi ne coûte rien — React Query partage la même entrée de cache — et
+ * donne le libellé de l'évaluation avant que `EvaluationSaisie` ne rende quoi
+ * que ce soit.
+ */
+function EvaluationGradingScreen({
+  evaluationId, locked, onBack,
+}: { evaluationId: ID; locked: boolean; onBack: () => void }) {
+  const grid = gradesApi.useEvaluationGrid(evaluationId);
+  const evaluation = grid.data?.evaluation;
+
+  return (
+    <>
+      <PageHeader
+        back={<Button variant="ghost" aria-label="Retour aux évaluations" onClick={onBack}>‹</Button>}
+        title={evaluation?.label ?? 'Notation'}
+        subtitle={
+          evaluation ? (
+            <>
+              <Chip tone="info">{evaluation.type.label}</Chip> · noté sur {evaluation.maxValue}
+            </>
+          ) : undefined
+        }
+      />
+      <PageContent>
+        <EvaluationSaisie evaluationId={evaluationId} locked={locked} onBack={onBack} hideHeader />
       </PageContent>
     </>
   );

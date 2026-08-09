@@ -15,9 +15,17 @@ import { PendingBatchesBanner } from './PendingBatchesBanner';
  * sa grille de saisie. Commun à l'enseignant et à l'administration — ce qui
  * change entre les deux, c'est uniquement la façon dont le couple a été choisi
  * en amont (une affectation, ou l'école entière).
+ *
+ * L'en-tête, lui, ne l'est pas : l'enseignant reste dans son coquille mobile
+ * (`header="mobile"`, par défaut), l'administration fournit son propre
+ * `PageHeader` desktop et passe `header="none"` — la création reste pilotée
+ * depuis là par les mêmes `creating`/`onCreatingChange`, remontés en props
+ * plutôt que gardés en état interne, pour que le bouton « + Évaluation » de
+ * l'un ou l'autre en-tête déclenche la même boîte de dialogue.
  */
 export function EvaluationList({
   selected, classId, subjectId, termId, locked, onOpen, onChangeAssignment,
+  header = 'mobile', creating, onCreatingChange,
 }: {
   selected: TeacherClassAssignment;
   classId: ID;
@@ -26,12 +34,14 @@ export function EvaluationList({
   locked: boolean;
   onOpen: (id: ID) => void;
   onChangeAssignment: () => void;
+  header?: 'mobile' | 'none';
+  creating: boolean;
+  onCreatingChange: (value: boolean) => void;
 }) {
   const toast = useToast();
   const evaluations = evaluationsApi.useEvaluations(classId, subjectId, termId);
   const remove = evaluationsApi.useDeleteEvaluation();
   const { pending, isOnline, flush, discard } = usePendingBatches();
-  const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<Evaluation | null>(null);
 
   async function confirmDelete() {
@@ -47,15 +57,19 @@ export function EvaluationList({
 
   return (
     <>
-      <button className="tsaisie-back" onClick={onChangeAssignment}>← Changer de classe</button>
+      {header === 'mobile' ? (
+        <>
+          <button className="tsaisie-back" onClick={onChangeAssignment}>← Changer de classe</button>
 
-      <div className="tsaisie-head">
-        <div>
-          <h1 className="tshell__page-title">{selected.className}</h1>
-          <p className="tshell__page-subtitle">{selected.subjectName}</p>
-        </div>
-        <Button size="sm" disabled={locked} onClick={() => setCreating(true)}>+ Évaluation</Button>
-      </div>
+          <div className="tsaisie-head">
+            <div>
+              <h1 className="tshell__page-title">{selected.className}</h1>
+              <p className="tshell__page-subtitle">{selected.subjectName}</p>
+            </div>
+            <Button size="sm" disabled={locked} onClick={() => onCreatingChange(true)}>+ Évaluation</Button>
+          </div>
+        </>
+      ) : null}
 
       {locked ? (
         <Alert tone="info">
@@ -78,7 +92,7 @@ export function EvaluationList({
               icon="✎"
               title="Aucune évaluation"
               description="Créez une première évaluation (interrogation, devoir, composition) pour commencer la saisie."
-              action={locked ? undefined : { label: 'Nouvelle évaluation', onClick: () => setCreating(true) }}
+              action={locked ? undefined : { label: 'Nouvelle évaluation', onClick: () => onCreatingChange(true) }}
             />
           ) : (
             <div className="tcards">
@@ -119,9 +133,9 @@ export function EvaluationList({
         classId={classId}
         subjectId={subjectId}
         termId={termId}
-        onClose={() => setCreating(false)}
+        onClose={() => onCreatingChange(false)}
         onCreated={(evaluation: Evaluation) => {
-          setCreating(false);
+          onCreatingChange(false);
           onOpen(evaluation.id);
         }}
       />

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { gradesApi, type ID } from '../../api';
@@ -21,6 +22,7 @@ export default function GradeEntryPage() {
   const [params, setParams] = useSearchParams();
   const { termId, term } = useTermContext();
   const assignments = gradesApi.useMyClasses(termId);
+  const [creating, setCreating] = useState(false);
 
   /**
    * Verrou de trimestre clos, tel que le backend le calcule.
@@ -80,6 +82,8 @@ export default function GradeEntryPage() {
         locked={locked}
         onOpen={openEvaluation}
         onChangeAssignment={clearSelection}
+        creating={creating}
+        onCreatingChange={setCreating}
       />
     );
   }
