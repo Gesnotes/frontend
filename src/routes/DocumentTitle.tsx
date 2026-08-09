@@ -63,6 +63,7 @@ const TITLES: Record<string, string> = {
  */
 function dynamicTitle(pathname: string): string | undefined {
   if (/^\/admin\/classes\/[^/]+\/bulletin$/.test(pathname)) return 'Bulletin de classe';
+  if (/^\/admin\/classes\/[^/]+\/reinscription$/.test(pathname)) return 'Réinscription';
   if (/^\/admin\/classes\/[^/]+$/.test(pathname)) return 'Détail de la classe';
   if (/^\/parent\/enfants\/[^/]+$/.test(pathname)) return 'Résultats de mon enfant';
   if (/^\/parent\/notes\/[^/]+$/.test(pathname)) return 'Détail de la note';

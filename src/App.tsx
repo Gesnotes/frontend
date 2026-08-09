@@ -33,6 +33,7 @@ const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'));
 const ClassesPage = lazy(() => import('./pages/admin/ClassesPage'));
 const ClassDetailPage = lazy(() => import('./pages/admin/ClassDetailPage'));
 const BulletinPage = lazy(() => import('./pages/admin/BulletinPage'));
+const ClassEnrollmentPage = lazy(() => import('./pages/admin/ClassEnrollmentPage'));
 const SubjectsPage = lazy(() => import('./pages/admin/SubjectsPage'));
 const TeachersPage = lazy(() => import('./pages/admin/TeachersPage'));
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'));
@@ -148,6 +149,7 @@ export default function App() {
                 <Route path="classes" element={<ClassesPage />} />
                 <Route path="classes/:classId" element={<ClassDetailPage />} />
                 <Route path="classes/:classId/bulletin" element={<BulletinPage />} />
+                <Route path="classes/:classId/reinscription" element={<ClassEnrollmentPage />} />
                 <Route path="matieres" element={<SubjectsPage />} />
                 <Route path="enseignants" element={<TeachersPage />} />
                 <Route path="eleves" element={<StudentsPage />} />

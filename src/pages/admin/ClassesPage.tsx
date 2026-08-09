@@ -86,6 +86,7 @@ export default function ClassesPage() {
                     onOpen={() => navigate(paths.admin.classDetail(item.id))}
                     onEdit={() => setEditing(item)}
                     onArchive={() => setToDelete(item)}
+                    onEnroll={() => navigate(paths.admin.classEnrollment(item.id))}
                   />
                 ))}
               </div>
@@ -128,7 +129,7 @@ export default function ClassesPage() {
 }
 
 function ClassCard({
-  item, termId, open, onToggle, onOpen, onEdit, onArchive,
+  item, termId, open, onToggle, onOpen, onEdit, onArchive, onEnroll,
 }: {
   item: ClassListItem;
   termId: ID | undefined;
@@ -137,6 +138,7 @@ function ClassCard({
   onOpen: () => void;
   onEdit: () => void;
   onArchive: () => void;
+  onEnroll: () => void;
 }) {
   const hasTerm = termId !== undefined;
 
@@ -179,6 +181,7 @@ function ClassCard({
           {open ? 'Masquer les notes' : 'Voir les notes'}
         </Button>
         <Button size="sm" variant="secondary" onClick={onOpen}>Détail</Button>
+        <Button size="sm" variant="secondary" onClick={onEnroll}>Réinscrire</Button>
         <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
         <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
       </div>
