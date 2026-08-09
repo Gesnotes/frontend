@@ -2,7 +2,7 @@ export { Button } from './Button';
 export type { ButtonVariant, ButtonSize } from './Button';
 export { Card, ClickableCard, SectionTitle } from './Card';
 export { Chip } from './Chip';
-export { gradeTone, toneColor } from './tone';
+export { attendanceTone, gradeTone, toneColor } from './tone';
 export type { ChipTone } from './tone';
 export { TextField, SelectField, TextAreaField, CheckboxChip } from './Field';
 export type { SelectOption } from './Field';

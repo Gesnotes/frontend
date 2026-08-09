@@ -114,12 +114,22 @@ export type GradeType = {
 
 // ------------------------------------------------------------------- Classes
 
+/**
+ * `notes` : devoirs et compositions notés, bulletin par période.
+ * `presence` : maternelle/garderie — la présence remplace la saisie de notes,
+ * aucune évaluation ne peut y être créée.
+ */
+export type ClassMode = 'notes' | 'presence';
+
 /** Élément de `GET /classes`. */
 export type ClassListItem = {
   id: ID;
   schoolId: ID;
   name: string;
   level: string;
+  mode: ClassMode;
+  /** Seul habilité, avec l'administration, à prendre la présence de cette classe. */
+  homeroomTeacherId: ID | null;
   archivedAt: IsoDateTime | null;
   /** Nombre d'élèves non archivés. */
   effectif: number;
@@ -178,13 +188,62 @@ export type ClassDetail = {
 export type CreateClassPayload = {
   name: string;
   level: string;
+  mode?: ClassMode;
+  homeroomTeacherId?: ID;
   /** Reprend les coefficients d'une classe existante (gabarit de niveau). */
   copyCoefficientsFromClassId?: ID;
 };
 
-export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level'>>;
+export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level' | 'mode'>> & {
+  homeroomTeacherId?: ID | null;
+};
 
 export type BulletinExportFormat = 'eleves' | 'classe';
+
+// ------------------------------------------------------------------ Présence
+
+export type AttendanceStatus = 'present' | 'absent' | 'late';
+
+/** Élève d'une feuille de présence : son statut du jour, `null` si non encore saisi. */
+export type AttendanceSheetStudent = {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  status: AttendanceStatus | null;
+  comment: string | null;
+};
+
+/** Réponse de `GET /teachers/me/attendance` : la classe entière, pour un jour donné. */
+export type AttendanceSheet = {
+  classId: ID;
+  className: string;
+  date: IsoDate;
+  students: AttendanceSheetStudent[];
+};
+
+export type AttendanceEntry = {
+  studentId: ID;
+  /** `null` efface l'enregistrement du jour pour cet élève. */
+  status: AttendanceStatus | null;
+  comment?: string | null;
+};
+
+/** Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour la classe. */
+export type AttendanceBatchPayload = {
+  classId: ID;
+  date: IsoDate;
+  entries: AttendanceEntry[];
+};
+
+export type AttendanceSkipReason = 'eleve_hors_classe';
+
+export type AttendanceBatchResult = {
+  created: number;
+  updated: number;
+  deleted: number;
+  unchanged: number;
+  skipped: { studentId: ID; reason: AttendanceSkipReason }[];
+};
 
 // ------------------------------------------------------------------ Matières
 
@@ -559,6 +618,15 @@ export type ChildSummary = {
 export type ChildDetail = StudentResult & {
   termId: ID;
   termLabel: string;
+};
+
+/** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */
+export type ChildAttendanceRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+  classId: ID;
 };
 
 export type Device = {

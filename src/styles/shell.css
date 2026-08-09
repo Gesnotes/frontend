@@ -310,6 +310,71 @@
   justify-content: flex-end;
 }
 
+/* Choix du mode d'une classe (notes ou présence) : deux cartes larges plutôt
+   qu'une case perdue dans un formulaire — un choix qui se voit, pas qu'on coche. */
+.mode-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mode-card--selected {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary);
+}
+
+.mode-card__title {
+  font-weight: 700;
+  font-size: var(--body-md-size);
+}
+
+.mode-card__body {
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+.mode-card--selected .mode-card__body {
+  color: color-mix(in srgb, var(--on-primary) 82%, transparent);
+}
+
+/* Trois statuts côte à côte (feuille de présence) plutôt qu'une liste
+   déroulante à ouvrir — le cas fréquent (présent) se voit sans clic. */
+.attendance-toggle {
+  display: inline-flex;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.attendance-toggle__option {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: none;
+  border: none;
+  border-right: 1px solid var(--outline-variant);
+  cursor: pointer;
+}
+
+.attendance-toggle__option:last-child {
+  border-right: none;
+}
+
 .list-rows {
   display: flex;
   flex-direction: column;

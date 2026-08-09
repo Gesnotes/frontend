@@ -13,6 +13,7 @@ export const paths = {
     classes: '/admin/classes',
     classDetail: (id: number | string) => `/admin/classes/${id}`,
     classBulletin: (id: number | string) => `/admin/classes/${id}/bulletin`,
+    classAttendance: (id: number | string) => `/admin/classes/${id}/presence`,
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
@@ -24,6 +25,7 @@ export const paths = {
     root: '/enseignant',
     dashboard: '/enseignant',
     gradeEntry: '/enseignant/saisie',
+    attendance: '/enseignant/presence',
     history: '/enseignant/historique',
   },
 
@@ -34,6 +36,7 @@ export const paths = {
     child: (id: number | string) => `/parent/enfants/${id}`,
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
+    attendance: '/parent/presence',
     notifications: '/parent/alertes',
   },
 
