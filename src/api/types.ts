@@ -561,3 +561,91 @@ export type Device = {
   fcmToken: string;
   createdAt: IsoDateTime | null;
 };
+
+// -------------------------------------------------------------- Inscription
+
+/** Élément de `GET /schools/search` — connexion sans sous-domaine. */
+export type SchoolSearchResult = {
+  id: ID;
+  name: string;
+  subdomain: string;
+  city: string | null;
+};
+
+/** Corps de `POST /signup-requests` — inscription hybride. */
+export type SignupRequestPayload = {
+  schoolName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  levels: string[];
+};
+
+// ------------------------------------------------------ Équipe Gesnotes
+
+/** Compte de l'équipe Gesnotes — hors périmètre multi-écoles. */
+export type StaffAuthUser = {
+  id: ID;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+/** Réponse de `POST /staff/login` et `POST /staff/refresh`. */
+export type StaffLoginResult = {
+  accessToken: string;
+  refreshToken: string;
+  staff: StaffAuthUser;
+};
+
+/** Réponse de `GET /staff/overview` : totaux plateforme, tous établissements confondus. */
+export type PlatformOverview = {
+  schools: number;
+  students: number;
+  classes: number;
+  pendingSignupRequests: number;
+  users: { admin: number; teacher: number; parent: number; total: number };
+};
+
+/** Élément de `GET /staff/schools`. */
+export type SchoolWithMetrics = {
+  id: ID;
+  name: string;
+  subdomain: string;
+  city: string | null;
+  createdAt: IsoDateTime | null;
+  students: number;
+  classes: number;
+  admins: number;
+  teachers: number;
+  parents: number;
+};
+
+export type SignupRequestStatus = 'nouveau' | 'traite';
+
+/** Élément de `GET /staff/signup-requests`. */
+export type SignupRequestRow = {
+  id: ID;
+  schoolName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  levels: string[];
+  status: SignupRequestStatus;
+  schoolId: ID | null;
+  createdAt: IsoDateTime | null;
+};
+
+/** Corps de `POST /staff/signup-requests/:id/accept` — tout facultatif, dérivé de la demande sinon. */
+export type AcceptSignupRequestPayload = {
+  subdomain?: string;
+  schoolName?: string;
+  city?: string;
+};
+
+export type AcceptSignupRequestResult = {
+  school: { id: ID; name: string; subdomain: string; city: string | null };
+  adminEmail: string;
+};

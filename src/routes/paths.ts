@@ -5,6 +5,8 @@ export const paths = {
   login: '/connexion',
   forgotPassword: '/mot-de-passe-oublie',
   resetPassword: '/reinitialiser-mot-de-passe',
+  schoolPicker: '/mon-ecole',
+  signup: '/inscription',
 
   admin: {
     root: '/admin',
@@ -34,6 +36,15 @@ export const paths = {
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
     notifications: '/parent/alertes',
+  },
+
+  /** Espace de l'équipe Gesnotes — supervision de la plateforme. */
+  staff: {
+    login: '/equipe/connexion',
+    root: '/equipe',
+    dashboard: '/equipe',
+    signupRequests: '/equipe/demandes',
+    schools: '/equipe/ecoles',
   },
 } as const;
 

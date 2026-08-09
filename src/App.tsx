@@ -5,11 +5,16 @@ import { useAuth } from './auth/auth-context';
 import { RedirectIfAuthenticated, RequireAuth, RequireRole } from './auth/guards';
 import { AppShell } from './layouts/AppShell';
 import { ParentShell } from './layouts/ParentShell';
+import { StaffShell } from './layouts/StaffShell';
 import { TeacherShell } from './layouts/TeacherShell';
 import NotFoundPage from './pages/NotFoundPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
+import SchoolPickerPage from './pages/auth/SchoolPickerPage';
+import SignupPage from './pages/auth/SignupPage';
+import { RedirectIfStaffAuthenticated, RequireStaffAuth } from './staff/staff-guards';
 import { SkeletonLines } from './ui';
 import { DocumentTitle } from './routes/DocumentTitle';
 import { homePathFor, paths } from './routes/paths';
@@ -44,6 +49,11 @@ const GradesHistoryPage = lazy(() => import('./pages/parent/GradesHistoryPage'))
 const GradeDetailPage = lazy(() => import('./pages/parent/GradeDetailPage'));
 const NotificationsPage = lazy(() => import('./pages/parent/NotificationsPage'));
 
+const StaffLoginPage = lazy(() => import('./pages/staff/StaffLoginPage'));
+const StaffDashboardPage = lazy(() => import('./pages/staff/StaffDashboardPage'));
+const SignupRequestsPage = lazy(() => import('./pages/staff/SignupRequestsPage'));
+const SchoolsPage = lazy(() => import('./pages/staff/SchoolsPage'));
+
 /**
  * Attente d'un module de page.
  *
@@ -59,10 +69,11 @@ function PageFallback() {
   );
 }
 
-/** Racine `/` : renvoie vers l'espace du rôle connecté, sinon vers la connexion. */
+/** Racine `/` : renvoie vers l'espace du rôle connecté ; sinon, la vitrine publique. */
 function HomeRedirect() {
   const { role } = useAuth();
-  return <Navigate to={role ? homePathFor(role) : paths.login} replace />;
+  if (role) return <Navigate to={homePathFor(role)} replace />;
+  return <LandingPage />;
 }
 
 export default function App() {
@@ -90,9 +101,43 @@ export default function App() {
               </RedirectIfAuthenticated>
             }
           />
+          <Route
+            path={paths.schoolPicker}
+            element={
+              <RedirectIfAuthenticated>
+                <SchoolPickerPage />
+              </RedirectIfAuthenticated>
+            }
+          />
+          <Route
+            path={paths.signup}
+            element={
+              <RedirectIfAuthenticated>
+                <SignupPage />
+              </RedirectIfAuthenticated>
+            }
+          />
           {/* Deux chemins : le lien envoyé par le backend pointe sur /reset-password. */}
           <Route path={paths.resetPassword} element={<ResetPasswordPage />} />
           <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+          {/* --- Équipe Gesnotes : monde d'authentification distinct --- */}
+          <Route
+            path={paths.staff.login}
+            element={
+              <RedirectIfStaffAuthenticated>
+                <StaffLoginPage />
+              </RedirectIfStaffAuthenticated>
+            }
+          />
+          <Route element={<RequireStaffAuth />}>
+            <Route path={paths.staff.root} element={<StaffShell />}>
+              <Route index element={<StaffDashboardPage />} />
+              <Route path="demandes" element={<SignupRequestsPage />} />
+              <Route path="ecoles" element={<SchoolsPage />} />
+              <Route path="*" element={<NotFoundPage />} />
+            </Route>
+          </Route>
 
           {/* --- Espaces authentifiés --- */}
           <Route element={<RequireAuth />}>
