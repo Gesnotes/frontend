@@ -8,6 +8,7 @@ import { formatCount, formatGrade, formatPercent, formatRelative } from '../../l
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
+import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
 import {
   Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
@@ -27,38 +28,42 @@ export default function DashboardPage() {
         actions={<TermSelect />}
       />
       <PageContent>
-        <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
-          {(data) =>
-            isSetupIncomplete(data.effectifs) ? (
-              <OnboardingChecklist effectifs={data.effectifs} />
-            ) : (
-              <div className="page-stack">
-                <DashboardBody data={data} />
+        <div className="page-stack">
+          <InstallCard compact />
 
-                <div className="grid-split">
-                  <Card padded>
-                    <SectionTitle>Dernières notes saisies</SectionTitle>
-                    <QueryBoundary query={recent} loading={<RowsSkeleton />}>
-                      {(grades) => <RecentGrades grades={grades} />}
-                    </QueryBoundary>
-                  </Card>
+          <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
+            {(data) =>
+              isSetupIncomplete(data.effectifs) ? (
+                <OnboardingChecklist effectifs={data.effectifs} />
+              ) : (
+                <div className="page-stack">
+                  <DashboardBody data={data} />
 
-                  <Card padded>
-                    <SectionTitle
-                      aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
-                    >
-                      Moyennes par classe
-                    </SectionTitle>
-                    <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
-                      Cliquez sur une classe pour voir les matières, les notes et les rangs.
-                    </p>
-                    <ClassAverages data={data} termId={termId} />
-                  </Card>
+                  <div className="grid-split">
+                    <Card padded>
+                      <SectionTitle>Dernières notes saisies</SectionTitle>
+                      <QueryBoundary query={recent} loading={<RowsSkeleton />}>
+                        {(grades) => <RecentGrades grades={grades} />}
+                      </QueryBoundary>
+                    </Card>
+
+                    <Card padded>
+                      <SectionTitle
+                        aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
+                      >
+                        Moyennes par classe
+                      </SectionTitle>
+                      <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
+                        Cliquez sur une classe pour voir les matières, les notes et les rangs.
+                      </p>
+                      <ClassAverages data={data} termId={termId} />
+                    </Card>
+                  </div>
                 </div>
-              </div>
-            )
-          }
-        </QueryBoundary>
+              )
+            }
+          </QueryBoundary>
+        </div>
       </PageContent>
     </>
   );
