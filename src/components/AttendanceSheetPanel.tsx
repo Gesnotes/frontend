@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { attendanceApi, errorMessage, type AttendanceSheetStudent, type AttendanceStatus, type ID } from '../api';
 import { formatDate, plural } from '../lib/format';
-import { Alert, attendanceTone, Button, Skeleton, toneColor, useToast } from '../ui';
+import { Alert, attendanceTone, Avatar, Button, Skeleton, toneColor, useToast } from '../ui';
 import { QueryBoundary } from './QueryBoundary';
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
@@ -122,10 +122,11 @@ export function AttendanceSheetPanel({ classId }: { classId: ID }) {
               <div className="list-rows">
                 {data.students.map((student) => (
                   <div key={student.id} className="list-row">
-                    <div className="list-row__body">
-                      <div className="list-row__title">
+                    <div className="list-row__body cell-person">
+                      <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
+                      <span className="list-row__title">
                         {student.firstName} {student.lastName}
-                      </div>
+                      </span>
                     </div>
                     <div className="attendance-toggle">
                       {STATUS_OPTIONS.map((option) => {
