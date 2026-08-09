@@ -61,6 +61,29 @@ export function declineSignupRequest(id: ID): Promise<void> {
   return staffApiFetch<void>(`/staff/signup-requests/${id}/decline`, { method: 'POST' });
 }
 
+/**
+ * Suspend une école : ses comptes ne peuvent plus se connecter, sessions en
+ * cours révoquées, rien détruit — restaurable à tout moment.
+ */
+export function suspendSchool(id: ID): Promise<void> {
+  return staffApiFetch<void>(`/staff/schools/${id}`, { method: 'DELETE' });
+}
+
+export function restoreSchool(id: ID): Promise<void> {
+  return staffApiFetch<void>(`/staff/schools/${id}/restore`, { method: 'POST' });
+}
+
+/**
+ * Suppression définitive : l'école doit déjà être suspendue, et le nom exact
+ * doit être ressaisi. Efface l'école et tout ce qu'elle contient.
+ */
+export function deleteSchoolPermanently(id: ID, confirmLabel: string): Promise<void> {
+  return staffApiFetch<void>(`/staff/schools/${id}`, {
+    method: 'DELETE',
+    query: { permanent: true, confirm_label: confirmLabel },
+  });
+}
+
 // ------------------------------------------------------------------- Hooks
 
 export function useOverview() {
@@ -94,6 +117,37 @@ export function useDeclineSignupRequest() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (id: ID) => declineSignupRequest(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
+    },
+  });
+}
+
+export function useSuspendSchool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: ID) => suspendSchool(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.staff.schools });
+    },
+  });
+}
+
+export function useRestoreSchool() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: ID) => restoreSchool(id),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: queryKeys.staff.schools });
+    },
+  });
+}
+
+export function useDeleteSchoolPermanently() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, confirmLabel }: { id: ID; confirmLabel: string }) =>
+      deleteSchoolPermanently(id, confirmLabel),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
     },

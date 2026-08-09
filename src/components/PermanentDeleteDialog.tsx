@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
-import { errorMessage } from '../../api';
-import { Alert, Button, Modal, TextField } from '../../ui';
+import { errorMessage } from '../api';
+import { Alert, Button, Modal, TextField } from '../ui';
 
 /**
  * Suppression définitive d'un élément archivé.

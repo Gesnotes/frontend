@@ -25,7 +25,6 @@ const TITLES: Record<string, string> = {
   [paths.forgotPassword]: 'Mot de passe oublié',
   [paths.resetPassword]: 'Définir un mot de passe',
   '/reset-password': 'Définir un mot de passe',
-  [paths.schoolPicker]: 'Quelle est votre école ?',
   [paths.signup]: 'Essayer Gesnotes',
 
   [paths.admin.dashboard]: 'Tableau de bord',

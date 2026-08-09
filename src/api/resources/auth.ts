@@ -1,11 +1,33 @@
 import { api } from '../http';
+import { schoolSelectionStore } from '../schoolSelection';
 import { sessionStore } from '../session';
-import type { AuthContextPayload, LoginResult, MessageResponse } from '../types';
+import type { AuthContextPayload, IdentifyResult, LoginResult, MessageResponse } from '../types';
 
 /** `POST /auth/login` — identifiant = email **ou** téléphone. */
 export async function login(identifier: string, password: string): Promise<LoginResult> {
   const result = await api.anonymous<LoginResult>('/auth/login', { identifier, password });
   sessionStore.set(result);
+  return result;
+}
+
+/**
+ * `POST /auth/identify` — connexion sans sous-domaine connu : l'identifiant
+ * est cherché à travers toutes les écoles actives, plutôt que dans une seule
+ * déjà résolue par l'adresse.
+ *
+ * Un seul compte correspond : la session s'ouvre directement, et l'école
+ * résolue est mémorisée (comme si elle avait été choisie à la main) pour que
+ * les requêtes suivantes posent le bon `X-School-Subdomain`. Plusieurs
+ * comptes correspondent (même email/téléphone + mot de passe dans deux
+ * écoles) : aucune session n'est ouverte, l'appelant doit faire choisir
+ * l'école puis compléter avec `login()`.
+ */
+export async function identify(identifier: string, password: string): Promise<IdentifyResult> {
+  const result = await api.anonymous<IdentifyResult>('/auth/identify', { identifier, password });
+  if (result.status === 'ok') {
+    sessionStore.set(result);
+    schoolSelectionStore.set({ subdomain: result.school.subdomain, name: result.school.name, city: null });
+  }
   return result;
 }
 
