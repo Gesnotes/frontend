@@ -39,6 +39,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
+  const identify = useCallback(
+    async (identifier: string, password: string) => {
+      const result = await authApi.identify(identifier, password);
+      if (result.status === 'ok') queryClient.clear();
+      return result;
+    },
+    [queryClient],
+  );
+
   const logout = useCallback(async () => {
     /**
      * Le jeton push identifie l'appareil, pas le compte : le laisser
@@ -75,9 +84,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       isAuthenticated: session !== null,
       displayName: session ? fullNameOf(session.user) : '',
       login,
+      identify,
       logout,
     }),
-    [session, login, logout],
+    [session, login, identify, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

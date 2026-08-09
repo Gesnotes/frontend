@@ -12,7 +12,6 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import SchoolPickerPage from './pages/auth/SchoolPickerPage';
 import SignupPage from './pages/auth/SignupPage';
 import { RedirectIfStaffAuthenticated, RequireStaffAuth } from './staff/staff-guards';
 import { SkeletonLines } from './ui';
@@ -98,14 +97,6 @@ export default function App() {
             element={
               <RedirectIfAuthenticated>
                 <ForgotPasswordPage />
-              </RedirectIfAuthenticated>
-            }
-          />
-          <Route
-            path={paths.schoolPicker}
-            element={
-              <RedirectIfAuthenticated>
-                <SchoolPickerPage />
               </RedirectIfAuthenticated>
             }
           />
