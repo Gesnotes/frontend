@@ -77,6 +77,12 @@ export const queryKeys = {
     detail: (id: ID, termId: ID) => ['children', 'detail', id, termId] as const,
     grades: (id: ID, termId?: ID, subjectId?: ID) =>
       ['children', 'grades', id, termId ?? null, subjectId ?? null] as const,
+    attendance: (id: ID) => ['children', 'attendance', id] as const,
+  },
+
+  attendance: {
+    all: ['attendance'] as const,
+    sheet: (classId: ID, date: string) => ['attendance', 'sheet', classId, date] as const,
   },
 
   onboarding: {
