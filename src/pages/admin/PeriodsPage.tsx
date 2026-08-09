@@ -23,10 +23,19 @@ export default function PeriodsPage() {
   const closeEntry = referentialsApi.useCloseTermEntry();
 
   const [creating, setCreating] = useState(false);
+  // Formulaire partagé création/modification : sans ce compteur, la clé du
+  // modal ne changeait pas entre deux créations d'affilée et la période
+  // précédemment saisie restait affichée à la réouverture.
+  const [creationKey, setCreationKey] = useState(0);
   const [editing, setEditing] = useState<Term | null>(null);
   const [toArchive, setToArchive] = useState<Term | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
   const [toReopen, setToReopen] = useState<Term | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
 
   async function stopReopening(term: Term) {
     try {
@@ -122,7 +131,7 @@ export default function PeriodsPage() {
       <PageHeader
         title="Périodes scolaires"
         subtitle="Trimestres de l'année en cours"
-        actions={<Button onClick={() => setCreating(true)}>Créer une période</Button>}
+        actions={<Button onClick={openCreate}>Créer une période</Button>}
       />
       <PageContent>
         <div className="page-stack">
@@ -143,7 +152,7 @@ export default function PeriodsPage() {
                     icon="◔"
                     title="Aucune période"
                     description="Créez les trimestres de l'année scolaire pour permettre le calcul des moyennes."
-                    action={{ label: 'Créer une période', onClick: () => setCreating(true) }}
+                    action={{ label: 'Créer une période', onClick: openCreate }}
                   />
                 }
               />
@@ -153,7 +162,7 @@ export default function PeriodsPage() {
       </PageContent>
 
       <TermModal
-        key={editing?.id ?? 'new'}
+        key={editing ? editing.id : `new-${creationKey}`}
         open={creating || editing !== null}
         term={editing}
         onClose={() => {

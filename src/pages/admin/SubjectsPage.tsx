@@ -18,8 +18,17 @@ export default function SubjectsPage() {
 
   const [editing, setEditing] = useState<Subject | null>(null);
   const [creating, setCreating] = useState(false);
+  // Formulaire partagé création/modification : sans ce compteur, la clé du
+  // modal ne changeait pas entre deux créations d'affilée et la matière
+  // précédemment saisie restait affichée à la réouverture.
+  const [creationKey, setCreationKey] = useState(0);
   const [toArchive, setToArchive] = useState<Subject | null>(null);
   const [coefficientsFor, setCoefficientsFor] = useState<Subject | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
 
   const list = subjects.data ?? [];
 
@@ -99,7 +108,7 @@ export default function SubjectsPage() {
             ? `${formatCount(list.length)} ${plural(list.length, 'matière')} au programme`
             : 'Programme de l’établissement'
         }
-        actions={<Button onClick={() => setCreating(true)}>Créer une matière</Button>}
+        actions={<Button onClick={openCreate}>Créer une matière</Button>}
       />
       <PageContent>
         <QueryBoundary query={subjects} loading={<TableSkeleton />}>
@@ -114,7 +123,7 @@ export default function SubjectsPage() {
                   icon="≣"
                   title="Aucune matière"
                   description="Ajoutez les matières du programme pour permettre la saisie des notes."
-                  action={{ label: 'Créer une matière', onClick: () => setCreating(true) }}
+                  action={{ label: 'Créer une matière', onClick: openCreate }}
                 />
               }
             />
@@ -123,7 +132,7 @@ export default function SubjectsPage() {
       </PageContent>
 
       <SubjectModal
-        key={editing?.id ?? 'new'}
+        key={editing ? editing.id : `new-${creationKey}`}
         open={creating || editing !== null}
         subject={editing}
         onClose={() => {

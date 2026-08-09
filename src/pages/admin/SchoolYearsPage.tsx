@@ -25,10 +25,19 @@ export default function SchoolYearsPage() {
   const archive = schoolYearsApi.useArchiveSchoolYear();
 
   const [creating, setCreating] = useState(false);
+  // Formulaire partagé création/modification : sans ce compteur, la clé du
+  // modal ne changeait pas entre deux créations d'affilée et l'année scolaire
+  // précédemment saisie restait affichée à la réouverture.
+  const [creationKey, setCreationKey] = useState(0);
   const [editing, setEditing] = useState<SchoolYear | null>(null);
   const [preparing, setPreparing] = useState<SchoolYear | null>(null);
   const [toArchive, setToArchive] = useState<SchoolYear | null>(null);
   const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
 
   async function confirmArchive() {
     if (!toArchive) return;
@@ -103,7 +112,7 @@ export default function SchoolYearsPage() {
       <PageHeader
         title="Années scolaires"
         subtitle="Regroupent les périodes et les classes d'une même rentrée"
-        actions={<Button onClick={() => setCreating(true)}>+ Nouvelle année scolaire</Button>}
+        actions={<Button onClick={openCreate}>+ Nouvelle année scolaire</Button>}
       />
       <PageContent>
         <div className="page-stack">
@@ -119,7 +128,7 @@ export default function SchoolYearsPage() {
                     icon="⟳"
                     title="Aucune année scolaire"
                     description="Rattacher classes et périodes à une année scolaire est facultatif — créez-en une pour préparer une rentrée à l'avance."
-                    action={{ label: 'Nouvelle année scolaire', onClick: () => setCreating(true) }}
+                    action={{ label: 'Nouvelle année scolaire', onClick: openCreate }}
                   />
                 }
               />
@@ -129,7 +138,7 @@ export default function SchoolYearsPage() {
       </PageContent>
 
       <SchoolYearModal
-        key={editing?.id ?? 'new'}
+        key={editing ? editing.id : `new-${creationKey}`}
         open={creating || editing !== null}
         year={editing}
         onClose={() => {

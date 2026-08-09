@@ -22,7 +22,16 @@ export default function TeachersPage() {
 
   const [editing, setEditing] = useState<Teacher | null>(null);
   const [creating, setCreating] = useState(false);
+  // Formulaire partagé création/modification : sans ce compteur, la clé du
+  // modal ne changeait pas entre deux créations d'affilée et le compte
+  // précédemment saisi restait affiché à la réouverture.
+  const [creationKey, setCreationKey] = useState(0);
   const [toArchive, setToArchive] = useState<Teacher | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
 
   const list = teachers.data ?? [];
 
@@ -101,7 +110,7 @@ export default function TeachersPage() {
             ? `${formatCount(list.length)} ${plural(list.length, 'enseignant')} actif${list.length > 1 ? 's' : ''}`
             : 'Équipe pédagogique'
         }
-        actions={<Button onClick={() => setCreating(true)}>Créer un compte</Button>}
+        actions={<Button onClick={openCreate}>Créer un compte</Button>}
       />
       <PageContent>
         <QueryBoundary query={teachers} loading={<TableSkeleton />}>
@@ -116,7 +125,7 @@ export default function TeachersPage() {
                   icon="☰"
                   title="Aucun enseignant"
                   description="Créez un compte : l'enseignant recevra un lien pour définir son mot de passe."
-                  action={{ label: 'Créer un compte', onClick: () => setCreating(true) }}
+                  action={{ label: 'Créer un compte', onClick: openCreate }}
                 />
               }
             />
@@ -125,7 +134,7 @@ export default function TeachersPage() {
       </PageContent>
 
       <TeacherModal
-        key={editing?.id ?? 'new'}
+        key={editing ? editing.id : `new-${creationKey}`}
         open={creating || editing !== null}
         teacher={editing}
         onClose={() => {
