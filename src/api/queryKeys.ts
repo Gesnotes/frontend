@@ -18,10 +18,15 @@ export const queryKeys = {
     all: ['grade-types'] as const,
   },
 
+  schoolYears: {
+    all: ['school-years'] as const,
+    list: (includeArchived?: boolean) => ['school-years', 'list', includeArchived ?? false] as const,
+  },
+
   classes: {
     all: ['classes'] as const,
-    list: (termId?: ID, includeArchived?: boolean) =>
-      ['classes', 'list', termId ?? null, includeArchived ?? false] as const,
+    list: (termId?: ID, includeArchived?: boolean, schoolYearId?: ID) =>
+      ['classes', 'list', termId ?? null, includeArchived ?? false, schoolYearId ?? null] as const,
     detail: (id: ID, termId: ID) => ['classes', 'detail', id, termId] as const,
     bulletin: (id: ID, termId: ID) => ['classes', 'bulletin', id, termId] as const,
   },

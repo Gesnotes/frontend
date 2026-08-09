@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { classesApi, teachersApi, errorMessage, type ClassListItem, type ClassMode, type ID } from '../../api';
+import {
+  classesApi, teachersApi, errorMessage, schoolYearsApi,
+  type ClassListItem, type ClassMode, type ID,
+} from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade, plural } from '../../lib/format';
@@ -256,12 +259,14 @@ function EditClassModal({
 }: { item: ClassListItem | null; onClose: () => void; onSaved: (name: string) => void }) {
   const update = classesApi.useUpdateClass();
   const teachers = teachersApi.useTeachers();
+  const years = schoolYearsApi.useSchoolYears();
   const [name, setName] = useState(item?.name ?? '');
   const [level, setLevel] = useState(item?.level ?? '');
   const [mode, setMode] = useState<ClassMode>(item?.mode ?? 'notes');
   const [homeroomTeacherId, setHomeroomTeacherId] = useState(
     item?.homeroomTeacherId ? String(item.homeroomTeacherId) : '',
   );
+  const [schoolYearId, setSchoolYearId] = useState(item?.schoolYearId ? String(item.schoolYearId) : '');
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event?: FormEvent) {
@@ -275,6 +280,7 @@ function EditClassModal({
         level: level.trim(),
         mode,
         homeroomTeacherId: homeroomTeacherId ? (Number(homeroomTeacherId) as ID) : null,
+        schoolYearId: schoolYearId ? Number(schoolYearId) : null,
       });
       onSaved(name.trim());
     } catch (cause) {
@@ -328,6 +334,15 @@ function EditClassModal({
             value: String(t.id),
             label: [t.firstName, t.lastName].filter(Boolean).join(' ') || t.email,
           }))}
+        />
+
+        <SelectField
+          label="Année scolaire"
+          placeholder="— Aucune —"
+          hint="Nécessaire pour préparer la rentrée suivante depuis les Années scolaires."
+          value={schoolYearId}
+          onChange={(e) => setSchoolYearId(e.target.value)}
+          options={(years.data ?? []).map((y) => ({ value: String(y.id), label: y.label }))}
         />
       </form>
     </Modal>

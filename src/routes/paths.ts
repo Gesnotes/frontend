@@ -18,6 +18,7 @@ export const paths = {
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
     periods: '/admin/periodes',
+    schoolYears: '/admin/annees-scolaires',
     archives: '/admin/archives',
   },
 

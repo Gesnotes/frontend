@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import {
-  classesApi, errorMessage, referentialsApi, studentsApi, subjectsApi, teachersApi,
-  type ID, type Term,
+  classesApi, errorMessage, referentialsApi, schoolYearsApi, studentsApi, subjectsApi, teachersApi,
+  type ID, type SchoolYear, type Term,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -13,7 +13,7 @@ import {
 } from '../../ui';
 import { PermanentDeleteDialog } from '../../components/PermanentDeleteDialog';
 
-type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms';
+type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'classes', label: 'Classes' },
@@ -21,6 +21,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'teachers', label: 'Enseignants' },
   { id: 'students', label: 'Élèves' },
   { id: 'terms', label: 'Périodes' },
+  { id: 'schoolYears', label: 'Années scolaires' },
 ];
 
 /**
@@ -69,6 +70,7 @@ export default function ArchivesPage() {
           {tab === 'teachers' ? <ArchivedTeachers /> : null}
           {tab === 'students' ? <ArchivedStudents /> : null}
           {tab === 'terms' ? <ArchivedTerms /> : null}
+          {tab === 'schoolYears' ? <ArchivedSchoolYears /> : null}
         </div>
       </PageContent>
     </>
@@ -532,6 +534,110 @@ function ArchivedTerms() {
         }
         // Effacer un trimestre détruit le travail de saisie d'une équipe
         // entière : le backend exige le libellé exact.
+        confirmName={toDelete?.label}
+        pending={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={async (typedLabel) => {
+          if (!toDelete) return;
+          await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
+          toast.success(`« ${toDelete.label} » supprimée définitivement`);
+          setToDelete(null);
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Années scolaires archivées.
+ *
+ * `terms.school_year_id` et `classes.school_year_id` sont en RESTRICT : la
+ * suppression définitive détache d'abord les périodes et les classes plutôt
+ * que d'échouer en base. Elles gardent leur historique, seulement leur
+ * regroupement par année disparaît.
+ */
+function ArchivedSchoolYears() {
+  const toast = useToast();
+  const years = schoolYearsApi.useSchoolYears(true);
+  const restore = schoolYearsApi.useRestoreSchoolYear();
+  const remove = schoolYearsApi.useDeleteSchoolYearPermanently();
+
+  const [toDelete, setToDelete] = useState<SchoolYear | null>(null);
+
+  async function runRestore(year: SchoolYear) {
+    try {
+      await restore.mutateAsync(year.id);
+      toast.success(`« ${year.label} » restaurée`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <>
+      <QueryBoundary query={years} loading={<TableSkeleton />}>
+        {(items) => {
+          const rows = onlyArchived(items);
+          const columns: Column<SchoolYear>[] = [
+            { key: 'label', header: 'Année', render: (row) => <strong>{row.label}</strong> },
+            {
+              key: 'dates',
+              header: 'Dates',
+              render: (row) => (
+                <span className="t-muted">
+                  {row.startDate ? `${formatDate(row.startDate)} → ${formatDate(row.endDate)}` : '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'content',
+              header: 'Contenu',
+              render: (row) => (
+                <Chip tone={row.classCount > 0 || row.termCount > 0 ? 'warning' : 'neutral'}>
+                  {formatCount(row.classCount)} {plural(row.classCount, 'classe')} ·{' '}
+                  {formatCount(row.termCount)} {plural(row.termCount, 'période')}
+                </Chip>
+              ),
+            },
+            {
+              key: 'archivedAt',
+              header: 'Archivée le',
+              render: (row) => <span className="t-muted">{formatDate(row.archivedAt)}</span>,
+            },
+            {
+              key: 'actions',
+              srHeader: 'Actions',
+              align: 'numeric',
+              render: (row) => (
+                <RowActions
+                  restoring={restore.isPending}
+                  onRestore={() => void runRestore(row)}
+                  onDelete={() => setToDelete(row)}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <DataTable
+              caption="Années scolaires archivées"
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => String(row.id)}
+              empty={<Empty what="année scolaire" />}
+            />
+          );
+        }}
+      </QueryBoundary>
+
+      <PermanentDeleteDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
+        description={
+          toDelete && (toDelete.classCount > 0 || toDelete.termCount > 0)
+            ? `${formatCount(toDelete.classCount)} ${plural(toDelete.classCount, 'classe')} et ${formatCount(toDelete.termCount)} ${plural(toDelete.termCount, 'période')} seront détachées de cette année — elles gardent leur historique, seul leur regroupement disparaît.`
+            : "L'année est effacée. Elle ne regroupe aucune classe ni aucune période."
+        }
         confirmName={toDelete?.label}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
