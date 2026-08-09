@@ -11,7 +11,7 @@ import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import {
   Alert, Button, Card, Chip, DataTable, EmptyState, Skeleton, useToast, type Column,
 } from '../../ui';
-import { PermanentDeleteDialog } from './PermanentDeleteDialog';
+import { PermanentDeleteDialog } from '../../components/PermanentDeleteDialog';
 
 type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms';
 

@@ -45,6 +45,11 @@ export type LoginResult = {
   user: AuthUser;
 };
 
+/** Réponse de `POST /auth/identify` — connexion sans sous-domaine connu. */
+export type IdentifyResult =
+  | (LoginResult & { status: 'ok'; school: { subdomain: string; name: string } })
+  | { status: 'ambiguous'; schools: { subdomain: string; name: string; city: string | null }[] };
+
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
   userId: ID;
@@ -564,14 +569,6 @@ export type Device = {
 
 // -------------------------------------------------------------- Inscription
 
-/** Élément de `GET /schools/search` — connexion sans sous-domaine. */
-export type SchoolSearchResult = {
-  id: ID;
-  name: string;
-  subdomain: string;
-  city: string | null;
-};
-
 /** Corps de `POST /signup-requests` — inscription hybride. */
 export type SignupRequestPayload = {
   schoolName: string;
@@ -615,6 +612,8 @@ export type SchoolWithMetrics = {
   subdomain: string;
   city: string | null;
   createdAt: IsoDateTime | null;
+  /** Non nul : école suspendue par l'équipe Gesnotes, ses comptes ne peuvent plus se connecter. */
+  archivedAt: IsoDateTime | null;
   students: number;
   classes: number;
   admins: number;
