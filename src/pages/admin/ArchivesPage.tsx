@@ -177,11 +177,12 @@ function ArchivedClasses() {
             ? `${formatCount(toDelete.effectif)} ${plural(toDelete.effectif, 'élève')} y ${toDelete.effectif > 1 ? 'sont' : 'est'} rattaché${toDelete.effectif > 1 ? 's' : ''} : la suppression sera refusée. Réaffectez-les d'abord à une autre classe.`
             : 'La classe et ses coefficients sont effacés.'
         }
+        confirmName={toDelete?.name}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success(`${toDelete.name} supprimée définitivement`);
           setToDelete(null);
         }}
@@ -249,11 +250,12 @@ function ArchivedSubjects() {
         open={toDelete !== null}
         title={`Supprimer ${toDelete?.name ?? ''} définitivement ?`}
         description="La matière est effacée du programme. La suppression est refusée si des notes y sont rattachées, pour ne pas les effacer en cascade."
+        confirmName={toDelete?.name}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success(`${toDelete.name} supprimée définitivement`);
           setToDelete(null);
         }}
@@ -268,7 +270,9 @@ function ArchivedTeachers() {
   const restore = teachersApi.useRestoreTeacher();
   const remove = teachersApi.useDeleteTeacher();
 
-  const [toDelete, setToDelete] = useState<{ id: ID; name: string } | null>(null);
+  const [toDelete, setToDelete] = useState<{ id: ID; name: string; confirmName: string } | null>(
+    null,
+  );
 
   async function runRestore(id: ID, name: string) {
     try {
@@ -309,7 +313,16 @@ function ArchivedTeachers() {
                   restoreLabel="Réactiver"
                   restoring={restore.isPending}
                   onRestore={() => void runRestore(row.id, personName(row))}
-                  onDelete={() => setToDelete({ id: row.id, name: personName(row, row.email) })}
+                  onDelete={() =>
+                    setToDelete({
+                      id: row.id,
+                      name: personName(row, row.email),
+                      // Le backend compare au nom brut (prénom + nom, sans
+                      // repli sur l'email) : un compte sans nom n'a donc rien
+                      // à confirmer, la boîte de dialogue le laisse passant.
+                      confirmName: [row.firstName, row.lastName].filter(Boolean).join(' '),
+                    })
+                  }
                 />
               ),
             },
@@ -331,11 +344,12 @@ function ArchivedTeachers() {
         open={toDelete !== null}
         title={`Supprimer le compte de ${toDelete?.name ?? ''} ?`}
         description="Le compte est effacé. La suppression est refusée si cet enseignant a saisi des notes : elles doivent rester attribuées."
+        confirmName={toDelete?.confirmName || undefined}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success('Compte supprimé définitivement');
           setToDelete(null);
         }}

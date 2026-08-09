@@ -59,9 +59,16 @@ export function updateClass(id: ID, payload: UpdateClassPayload) {
   return api.patch<ClassListItem>(`/classes/${id}`, payload);
 }
 
-/** Archivage par défaut ; `permanent` échoue si des élèves sont rattachés. */
-export function deleteClass(id: ID, permanent = false) {
-  return api.delete<void>(`/classes/${id}`, { permanent: permanent ? 'true' : 'false' });
+/**
+ * Archivage par défaut. La suppression définitive est réservée à une classe
+ * déjà archivée et exige, côté backend, le nom exact en confirmation ;
+ * refusée aussi si des élèves sont rattachés.
+ */
+export function deleteClass(id: ID, permanent = false, confirmLabel = '') {
+  return api.delete<void>(`/classes/${id}`, {
+    permanent: permanent ? 'true' : 'false',
+    confirm_label: confirmLabel,
+  });
 }
 
 export function restoreClass(id: ID) {
@@ -131,7 +138,8 @@ export function useUpdateClass() {
 export function useDeleteClass() {
   const invalidate = useInvalidateClasses();
   return useMutation({
-    mutationFn: ({ id, permanent }: { id: ID; permanent?: boolean }) => deleteClass(id, permanent),
+    mutationFn: ({ id, permanent, confirmLabel }: { id: ID; permanent?: boolean; confirmLabel?: string }) =>
+      deleteClass(id, permanent, confirmLabel),
     onSuccess: invalidate,
   });
 }
