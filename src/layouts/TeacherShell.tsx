@@ -20,6 +20,7 @@ import { TermSelect } from './TermSelect';
 // de la classe, avec l'avancement affiché sur chaque carte.
 const items = [
   { to: paths.teacher.gradeEntry, label: 'Saisie', icon: '✎', end: true },
+  { to: paths.teacher.attendance, label: 'Présence', icon: '✓' },
   { to: paths.teacher.history, label: 'Historique', icon: '↺' },
 ];
 

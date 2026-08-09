@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { classesApi, errorMessage, type ClassListItem, type ID } from '../../api';
+import { classesApi, teachersApi, errorMessage, type ClassListItem, type ClassMode, type ID } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade, plural } from '../../lib/format';
@@ -13,6 +13,45 @@ import {
   ProgressBar, SelectField, Skeleton, TextField, gradeTone, useToast,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
+
+const MODE_OPTIONS: { value: ClassMode; icon: string; title: string; body: string }[] = [
+  {
+    value: 'notes',
+    icon: '📘',
+    title: 'Notes et bulletins',
+    body: 'Devoirs et interros notés. Bulletin chaque trimestre.',
+  },
+  {
+    value: 'presence',
+    icon: '🧸',
+    title: 'Présence',
+    body: 'Pour maternelle et garderie : qui est là chaque jour.',
+  },
+];
+
+/** Deux cartes larges plutôt qu'une case perdue dans un formulaire : un choix qui se voit. */
+function ModePicker({ value, onChange }: { value: ClassMode; onChange: (mode: ClassMode) => void }) {
+  return (
+    <div className="ui-field">
+      <span className="ui-field__label">Comment cette classe fonctionne-t-elle ?</span>
+      <div className="mode-picker">
+        {MODE_OPTIONS.map((option) => (
+          <button
+            key={option.value}
+            type="button"
+            className={`mode-card${value === option.value ? ' mode-card--selected' : ''}`}
+            onClick={() => onChange(option.value)}
+          >
+            <span className="mode-card__title">
+              <span aria-hidden="true">{option.icon}</span> {option.title}
+            </span>
+            <span className="mode-card__body">{option.body}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function ClassesPage() {
   const { termId } = useTermContext();
@@ -86,6 +125,7 @@ export default function ClassesPage() {
                     onOpen={() => navigate(paths.admin.classDetail(item.id))}
                     onEdit={() => setEditing(item)}
                     onArchive={() => setToDelete(item)}
+                    onAttendance={() => navigate(paths.admin.classAttendance(item.id))}
                   />
                 ))}
               </div>
@@ -128,7 +168,7 @@ export default function ClassesPage() {
 }
 
 function ClassCard({
-  item, termId, open, onToggle, onOpen, onEdit, onArchive,
+  item, termId, open, onToggle, onOpen, onEdit, onArchive, onAttendance,
 }: {
   item: ClassListItem;
   termId: ID | undefined;
@@ -137,8 +177,10 @@ function ClassCard({
   onOpen: () => void;
   onEdit: () => void;
   onArchive: () => void;
+  onAttendance: () => void;
 }) {
   const hasTerm = termId !== undefined;
+  const isPresence = item.mode === 'presence';
 
   return (
     <Card padded>
@@ -150,7 +192,11 @@ function ClassCard({
           </div>
         </div>
         <div style={{ marginLeft: 'auto' }}>
-          <Chip tone={gradeTone(item.average)}>{formatGrade(item.average)}</Chip>
+          {isPresence ? (
+            <Chip tone="success">Présence</Chip>
+          ) : (
+            <Chip tone={gradeTone(item.average)}>{formatGrade(item.average)}</Chip>
+          )}
         </div>
       </div>
 
@@ -158,32 +204,43 @@ function ClassCard({
         {formatCount(item.effectif)} {plural(item.effectif, 'élève')}
       </p>
 
-      <ProgressBar
-        value={item.average ?? 0}
-        max={20}
-        tone={gradeTone(item.average)}
-        label={`Moyenne de ${item.name}`}
-      />
+      {isPresence ? null : (
+        <>
+          <ProgressBar
+            value={item.average ?? 0}
+            max={20}
+            tone={gradeTone(item.average)}
+            label={`Moyenne de ${item.name}`}
+          />
 
-      {!hasTerm ? (
-        <p className="t-label-sm t-subtle" style={{ marginTop: 'var(--space-2)', textTransform: 'none' }}>
-          Sélectionnez une période pour afficher la moyenne.
-        </p>
-      ) : null}
+          {!hasTerm ? (
+            <p className="t-label-sm t-subtle" style={{ marginTop: 'var(--space-2)', textTransform: 'none' }}>
+              Sélectionnez une période pour afficher la moyenne.
+            </p>
+          ) : null}
+        </>
+      )}
 
       <div className="card-actions">
-        {/* Les notes se consultent sur place : c'est la question qu'on se pose
-            devant une liste de classes, et l'ouvrir en pleine page pour la
-            refermer aussitôt fait perdre le fil de la comparaison. */}
-        <Button size="sm" variant="tonal" disabled={!hasTerm} aria-expanded={open} onClick={onToggle}>
-          {open ? 'Masquer les notes' : 'Voir les notes'}
-        </Button>
+        {isPresence ? (
+          <Button size="sm" variant="tonal" onClick={onAttendance}>Feuille de présence</Button>
+        ) : (
+          <>
+            {/* Les notes se consultent sur place : c'est la question qu'on se pose
+                devant une liste de classes, et l'ouvrir en pleine page pour la
+                refermer aussitôt fait perdre le fil de la comparaison. */}
+            <Button size="sm" variant="tonal" disabled={!hasTerm} aria-expanded={open} onClick={onToggle}>
+              {open ? 'Masquer les notes' : 'Voir les notes'}
+            </Button>
+            <Button size="sm" variant="secondary" onClick={onAttendance}>Présence</Button>
+          </>
+        )}
         <Button size="sm" variant="secondary" onClick={onOpen}>Détail</Button>
         <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
         <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
       </div>
 
-      {open && hasTerm ? <ClassBulletinPanel classId={item.id} termId={termId} /> : null}
+      {open && hasTerm && !isPresence ? <ClassBulletinPanel classId={item.id} termId={termId} /> : null}
     </Card>
   );
 }
@@ -198,8 +255,13 @@ function EditClassModal({
   item, onClose, onSaved,
 }: { item: ClassListItem | null; onClose: () => void; onSaved: (name: string) => void }) {
   const update = classesApi.useUpdateClass();
+  const teachers = teachersApi.useTeachers();
   const [name, setName] = useState(item?.name ?? '');
   const [level, setLevel] = useState(item?.level ?? '');
+  const [mode, setMode] = useState<ClassMode>(item?.mode ?? 'notes');
+  const [homeroomTeacherId, setHomeroomTeacherId] = useState(
+    item?.homeroomTeacherId ? String(item.homeroomTeacherId) : '',
+  );
   const [error, setError] = useState<string | null>(null);
 
   async function submit(event?: FormEvent) {
@@ -207,7 +269,13 @@ function EditClassModal({
     if (!item) return;
     setError(null);
     try {
-      await update.mutateAsync({ id: item.id, name: name.trim(), level: level.trim() });
+      await update.mutateAsync({
+        id: item.id,
+        name: name.trim(),
+        level: level.trim(),
+        mode,
+        homeroomTeacherId: homeroomTeacherId ? (Number(homeroomTeacherId) as ID) : null,
+      });
       onSaved(name.trim());
     } catch (cause) {
       setError(errorMessage(cause));
@@ -247,6 +315,20 @@ function EditClassModal({
           value={level}
           onChange={(e) => setLevel(e.target.value)}
         />
+
+        <ModePicker value={mode} onChange={setMode} />
+
+        <SelectField
+          label="Enseignant référent"
+          placeholder="— Aucun —"
+          hint="Seul habilité, avec l'administration, à prendre la présence de cette classe."
+          value={homeroomTeacherId}
+          onChange={(e) => setHomeroomTeacherId(e.target.value)}
+          options={(teachers.data ?? []).map((t) => ({
+            value: String(t.id),
+            label: [t.firstName, t.lastName].filter(Boolean).join(' ') || t.email,
+          }))}
+        />
       </form>
     </Modal>
   );
@@ -261,14 +343,19 @@ function CreateClassModal({
   onCreated: (name: string) => void;
 }) {
   const create = classesApi.useCreateClass();
+  const teachers = teachersApi.useTeachers();
   const [name, setName] = useState('');
   const [level, setLevel] = useState('');
+  const [mode, setMode] = useState<ClassMode>('notes');
+  const [homeroomTeacherId, setHomeroomTeacherId] = useState('');
   const [copyFrom, setCopyFrom] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   function reset() {
     setName('');
     setLevel('');
+    setMode('notes');
+    setHomeroomTeacherId('');
     setCopyFrom('');
     setError(null);
   }
@@ -280,6 +367,8 @@ function CreateClassModal({
       await create.mutateAsync({
         name: name.trim(),
         level: level.trim(),
+        mode,
+        homeroomTeacherId: homeroomTeacherId ? (Number(homeroomTeacherId) as ID) : undefined,
         copyCoefficientsFromClassId: copyFrom ? (Number(copyFrom) as ID) : undefined,
       });
       onCreated(name.trim());
@@ -332,14 +421,30 @@ function CreateClassModal({
           onChange={(e) => setLevel(e.target.value)}
         />
 
+        <ModePicker value={mode} onChange={setMode} />
+
         <SelectField
-          label="Reprendre les coefficients de"
-          placeholder="— Ne rien reprendre —"
-          hint="Évite de ressaisir tous les coefficients d'une classe du même niveau."
-          value={copyFrom}
-          onChange={(e) => setCopyFrom(e.target.value)}
-          options={classes.map((c) => ({ value: String(c.id), label: `${c.name} (${c.level})` }))}
+          label="Enseignant référent"
+          placeholder="— Aucun —"
+          hint="Seul habilité, avec l'administration, à prendre la présence de cette classe."
+          value={homeroomTeacherId}
+          onChange={(e) => setHomeroomTeacherId(e.target.value)}
+          options={(teachers.data ?? []).map((t) => ({
+            value: String(t.id),
+            label: [t.firstName, t.lastName].filter(Boolean).join(' ') || t.email,
+          }))}
         />
+
+        {mode === 'notes' ? (
+          <SelectField
+            label="Reprendre les coefficients de"
+            placeholder="— Ne rien reprendre —"
+            hint="Évite de ressaisir tous les coefficients d'une classe du même niveau."
+            value={copyFrom}
+            onChange={(e) => setCopyFrom(e.target.value)}
+            options={classes.map((c) => ({ value: String(c.id), label: `${c.name} (${c.level})` }))}
+          />
+        ) : null}
       </form>
     </Modal>
   );
