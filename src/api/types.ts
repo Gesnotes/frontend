@@ -682,6 +682,35 @@ export type SignupRequestPayload = {
   levels: string[];
 };
 
+// ------------------------------------------------------- Réinscription
+
+export type EnrollmentDecisionType = 'promotion' | 'redoublement' | 'autre';
+
+export type EnrollmentEntry = {
+  studentId: ID;
+  toClassId: ID;
+  decision: EnrollmentDecisionType;
+};
+
+/**
+ * Corps de `POST /classes/:id/enrollment-decisions`.
+ *
+ * Un élève qui quitte l'école n'y figure pas : cet endpoint ne connaît que des
+ * déplacements vers une classe réelle, jamais une sortie. La page appelle
+ * séparément l'archivage de l'élève pour ce cas-là.
+ */
+export type EnrollmentBatchPayload = {
+  entries: EnrollmentEntry[];
+};
+
+/** Motif pour lequel le backend laisse un élève de côté (déjà sorti de la classe source). */
+export type EnrollmentSkipReason = 'eleve_hors_classe';
+
+export type EnrollmentBatchResult = {
+  moved: number;
+  skipped: { studentId: ID; reason: EnrollmentSkipReason }[];
+};
+
 // ------------------------------------------------------ Équipe Gesnotes
 
 /** Compte de l'équipe Gesnotes — hors périmètre multi-écoles. */
