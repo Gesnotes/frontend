@@ -29,6 +29,7 @@ const TITLES: Record<string, string> = {
 
   [paths.admin.dashboard]: 'Tableau de bord',
   [paths.admin.classes]: 'Classes',
+  [paths.admin.gradeEntry]: 'Saisie des notes',
   [paths.admin.subjects]: 'Matières',
   [paths.admin.teachers]: 'Enseignants',
   [paths.admin.students]: 'Élèves',

@@ -15,6 +15,7 @@ export const paths = {
     classBulletin: (id: number | string) => `/admin/classes/${id}/bulletin`,
     classAttendance: (id: number | string) => `/admin/classes/${id}/presence`,
     classEnrollment: (id: number | string) => `/admin/classes/${id}/reinscription`,
+    gradeEntry: '/admin/saisie',
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
