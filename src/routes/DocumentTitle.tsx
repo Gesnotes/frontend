@@ -25,7 +25,6 @@ const TITLES: Record<string, string> = {
   [paths.forgotPassword]: 'Mot de passe oublié',
   [paths.resetPassword]: 'Définir un mot de passe',
   '/reset-password': 'Définir un mot de passe',
-  [paths.schoolPicker]: 'Quelle est votre école ?',
   [paths.signup]: 'Essayer Gesnotes',
 
   [paths.admin.dashboard]: 'Tableau de bord',
@@ -41,11 +40,13 @@ const TITLES: Record<string, string> = {
   // écran « Mes classes » qui n'existe plus.
   [paths.teacher.dashboard]: 'Saisie des notes',
   [paths.teacher.gradeEntry]: 'Saisie des notes',
+  [paths.teacher.attendance]: 'Présence',
   [paths.teacher.history]: 'Historique des saisies',
 
   [paths.parent.home]: 'Accueil',
   [paths.parent.children]: 'Mes enfants',
   [paths.parent.grades]: 'Notes',
+  [paths.parent.attendance]: 'Présence',
   [paths.parent.notifications]: 'Alertes',
 
   [paths.staff.login]: 'Équipe Gesnotes',
@@ -63,6 +64,7 @@ const TITLES: Record<string, string> = {
  */
 function dynamicTitle(pathname: string): string | undefined {
   if (/^\/admin\/classes\/[^/]+\/bulletin$/.test(pathname)) return 'Bulletin de classe';
+  if (/^\/admin\/classes\/[^/]+\/presence$/.test(pathname)) return 'Présence';
   if (/^\/admin\/classes\/[^/]+$/.test(pathname)) return 'Détail de la classe';
   if (/^\/parent\/enfants\/[^/]+$/.test(pathname)) return 'Résultats de mon enfant';
   if (/^\/parent\/notes\/[^/]+$/.test(pathname)) return 'Détail de la note';

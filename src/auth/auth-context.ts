@@ -1,6 +1,6 @@
 import { createContext, useContext } from 'react';
 
-import type { AuthUser, Role } from '../api';
+import type { AuthUser, IdentifyResult, Role } from '../api';
 
 export type AuthContextValue = {
   user: AuthUser | null;
@@ -9,6 +9,8 @@ export type AuthContextValue = {
   /** Nom affichable : identité si connue, sinon l'email. */
   displayName: string;
   login: (identifier: string, password: string) => Promise<AuthUser>;
+  /** Connexion sans sous-domaine connu — voir `authApi.identify`. */
+  identify: (identifier: string, password: string) => Promise<IdentifyResult>;
   logout: () => Promise<void>;
 };
 

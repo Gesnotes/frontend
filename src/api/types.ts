@@ -45,6 +45,11 @@ export type LoginResult = {
   user: AuthUser;
 };
 
+/** Réponse de `POST /auth/identify` — connexion sans sous-domaine connu. */
+export type IdentifyResult =
+  | (LoginResult & { status: 'ok'; school: { subdomain: string; name: string } })
+  | { status: 'ambiguous'; schools: { subdomain: string; name: string; city: string | null }[] };
+
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
   userId: ID;
@@ -132,6 +137,13 @@ export type SchoolYearPayload = {
 
 // ------------------------------------------------------------------- Classes
 
+/**
+ * `notes` : devoirs et compositions notés, bulletin par période.
+ * `presence` : maternelle/garderie — la présence remplace la saisie de notes,
+ * aucune évaluation ne peut y être créée.
+ */
+export type ClassMode = 'notes' | 'presence';
+
 /** Élément de `GET /classes`. */
 export type ClassListItem = {
   id: ID;
@@ -216,6 +228,51 @@ export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'leve
 };
 
 export type BulletinExportFormat = 'eleves' | 'classe';
+
+// ------------------------------------------------------------------ Présence
+
+export type AttendanceStatus = 'present' | 'absent' | 'late';
+
+/** Élève d'une feuille de présence : son statut du jour, `null` si non encore saisi. */
+export type AttendanceSheetStudent = {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  status: AttendanceStatus | null;
+  comment: string | null;
+};
+
+/** Réponse de `GET /teachers/me/attendance` : la classe entière, pour un jour donné. */
+export type AttendanceSheet = {
+  classId: ID;
+  className: string;
+  date: IsoDate;
+  students: AttendanceSheetStudent[];
+};
+
+export type AttendanceEntry = {
+  studentId: ID;
+  /** `null` efface l'enregistrement du jour pour cet élève. */
+  status: AttendanceStatus | null;
+  comment?: string | null;
+};
+
+/** Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour la classe. */
+export type AttendanceBatchPayload = {
+  classId: ID;
+  date: IsoDate;
+  entries: AttendanceEntry[];
+};
+
+export type AttendanceSkipReason = 'eleve_hors_classe';
+
+export type AttendanceBatchResult = {
+  created: number;
+  updated: number;
+  deleted: number;
+  unchanged: number;
+  skipped: { studentId: ID; reason: AttendanceSkipReason }[];
+};
 
 // ------------------------------------------------------------------ Matières
 
@@ -592,6 +649,15 @@ export type ChildDetail = StudentResult & {
   termLabel: string;
 };
 
+/** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */
+export type ChildAttendanceRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+  classId: ID;
+};
+
 export type Device = {
   id: ID;
   fcmToken: string;
@@ -599,14 +665,6 @@ export type Device = {
 };
 
 // -------------------------------------------------------------- Inscription
-
-/** Élément de `GET /schools/search` — connexion sans sous-domaine. */
-export type SchoolSearchResult = {
-  id: ID;
-  name: string;
-  subdomain: string;
-  city: string | null;
-};
 
 /** Corps de `POST /signup-requests` — inscription hybride. */
 export type SignupRequestPayload = {
@@ -651,6 +709,8 @@ export type SchoolWithMetrics = {
   subdomain: string;
   city: string | null;
   createdAt: IsoDateTime | null;
+  /** Non nul : école suspendue par l'équipe Gesnotes, ses comptes ne peuvent plus se connecter. */
+  archivedAt: IsoDateTime | null;
   students: number;
   classes: number;
   admins: number;

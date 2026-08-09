@@ -15,6 +15,7 @@ export {
 } from './config';
 
 export * as authApi from './resources/auth';
+export * as attendanceApi from './resources/attendance';
 export * as classesApi from './resources/classes';
 export * as schoolYearsApi from './resources/schoolYears';
 export * as subjectsApi from './resources/subjects';

@@ -12,7 +12,6 @@ import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import LandingPage from './pages/auth/LandingPage';
 import LoginPage from './pages/auth/LoginPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
-import SchoolPickerPage from './pages/auth/SchoolPickerPage';
 import SignupPage from './pages/auth/SignupPage';
 import { RedirectIfStaffAuthenticated, RequireStaffAuth } from './staff/staff-guards';
 import { SkeletonLines } from './ui';
@@ -32,6 +31,7 @@ import { homePathFor, paths } from './routes/paths';
 const DashboardPage = lazy(() => import('./pages/admin/DashboardPage'));
 const ClassesPage = lazy(() => import('./pages/admin/ClassesPage'));
 const ClassDetailPage = lazy(() => import('./pages/admin/ClassDetailPage'));
+const ClassAttendancePage = lazy(() => import('./pages/admin/ClassAttendancePage'));
 const BulletinPage = lazy(() => import('./pages/admin/BulletinPage'));
 const SubjectsPage = lazy(() => import('./pages/admin/SubjectsPage'));
 const TeachersPage = lazy(() => import('./pages/admin/TeachersPage'));
@@ -41,11 +41,13 @@ const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
+const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
 const TeacherHistoryPage = lazy(() => import('./pages/teacher/TeacherHistoryPage'));
 
 const ParentHomePage = lazy(() => import('./pages/parent/ParentHomePage'));
 const ChildrenPage = lazy(() => import('./pages/parent/ChildrenPage'));
 const ChildDetailPage = lazy(() => import('./pages/parent/ChildDetailPage'));
+const ChildAttendancePage = lazy(() => import('./pages/parent/ChildAttendancePage'));
 const GradesHistoryPage = lazy(() => import('./pages/parent/GradesHistoryPage'));
 const GradeDetailPage = lazy(() => import('./pages/parent/GradeDetailPage'));
 const NotificationsPage = lazy(() => import('./pages/parent/NotificationsPage'));
@@ -103,14 +105,6 @@ export default function App() {
             }
           />
           <Route
-            path={paths.schoolPicker}
-            element={
-              <RedirectIfAuthenticated>
-                <SchoolPickerPage />
-              </RedirectIfAuthenticated>
-            }
-          />
-          <Route
             path={paths.signup}
             element={
               <RedirectIfAuthenticated>
@@ -148,6 +142,7 @@ export default function App() {
                 <Route path="classes" element={<ClassesPage />} />
                 <Route path="classes/:classId" element={<ClassDetailPage />} />
                 <Route path="classes/:classId/bulletin" element={<BulletinPage />} />
+                <Route path="classes/:classId/presence" element={<ClassAttendancePage />} />
                 <Route path="matieres" element={<SubjectsPage />} />
                 <Route path="enseignants" element={<TeachersPage />} />
                 <Route path="eleves" element={<StudentsPage />} />
@@ -167,6 +162,7 @@ export default function App() {
                 */}
                 <Route index element={<Navigate to={paths.teacher.gradeEntry} replace />} />
                 <Route path="saisie" element={<GradeEntryPage />} />
+                <Route path="presence" element={<TeacherAttendancePage />} />
                 <Route path="historique" element={<TeacherHistoryPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
@@ -178,6 +174,7 @@ export default function App() {
                 <Route path="enfants" element={<ChildrenPage />} />
                 <Route path="enfants/:childId" element={<ChildDetailPage />} />
                 <Route path="notes" element={<GradesHistoryPage />} />
+                <Route path="presence" element={<ChildAttendancePage />} />
                 <Route path="notes/:gradeId" element={<GradeDetailPage />} />
                 <Route path="alertes" element={<NotificationsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
