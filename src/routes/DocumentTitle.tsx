@@ -34,6 +34,7 @@ const TITLES: Record<string, string> = {
   [paths.admin.teachers]: 'Enseignants',
   [paths.admin.students]: 'Élèves',
   [paths.admin.periods]: 'Périodes scolaires',
+  [paths.admin.schoolYears]: 'Années scolaires',
   [paths.admin.archives]: 'Archives',
 
   // `/enseignant` redirige vers la saisie : le titre ne doit pas annoncer un

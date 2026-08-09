@@ -107,6 +107,29 @@ export type GradeType = {
   position: number;
 };
 
+// -------------------------------------------------------- Années scolaires
+
+/** Élément de `GET /school-years`. */
+export type SchoolYear = {
+  id: ID;
+  label: string;
+  startDate: IsoDate | null;
+  endDate: IsoDate | null;
+  /** Année en cours à la date du jour. Au plus une l'est. */
+  isCurrent: boolean;
+  /** Non nul : l'année est sortie des sélecteurs, sans rien perdre. */
+  archivedAt: IsoDateTime | null;
+  /** Ce qu'une suppression définitive détacherait (pas ne détruirait pas). */
+  termCount: number;
+  classCount: number;
+};
+
+export type SchoolYearPayload = {
+  label: string;
+  startDate?: IsoDate | null;
+  endDate?: IsoDate | null;
+};
+
 // ------------------------------------------------------------------- Classes
 
 /** Élément de `GET /classes`. */
@@ -115,11 +138,21 @@ export type ClassListItem = {
   schoolId: ID;
   name: string;
   level: string;
+  schoolYearId: ID | null;
+  /** Non nul : cette classe a déjà été préparée pour l'année scolaire suivante. */
+  promotesToId: ID | null;
   archivedAt: IsoDateTime | null;
   /** Nombre d'élèves non archivés. */
   effectif: number;
   /** `null` si aucune période n'est demandée ou si aucune note n'existe. */
   average: number | null;
+};
+
+/** Corps de `POST /classes/:id/duplicate` — prépare la rentrée suivante. */
+export type DuplicateClassPayload = {
+  schoolYearId: ID;
+  name?: string;
+  level?: string;
 };
 
 /** Moyenne d'une matière pour un élève, avec le détail par catégorie. */
@@ -173,11 +206,14 @@ export type ClassDetail = {
 export type CreateClassPayload = {
   name: string;
   level: string;
+  schoolYearId?: ID;
   /** Reprend les coefficients d'une classe existante (gabarit de niveau). */
   copyCoefficientsFromClassId?: ID;
 };
 
-export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level'>>;
+export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level'>> & {
+  schoolYearId?: ID | null;
+};
 
 export type BulletinExportFormat = 'eleves' | 'classe';
 
