@@ -46,6 +46,11 @@ const TITLES: Record<string, string> = {
   [paths.parent.children]: 'Mes enfants',
   [paths.parent.grades]: 'Notes',
   [paths.parent.notifications]: 'Alertes',
+
+  [paths.staff.login]: 'Équipe Gesnotes',
+  [paths.staff.dashboard]: "Vue d'ensemble",
+  [paths.staff.signupRequests]: "Demandes d'inscription",
+  [paths.staff.schools]: 'Écoles',
 };
 
 /**

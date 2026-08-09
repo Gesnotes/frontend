@@ -45,6 +45,9 @@ export const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? '';
 /** Clé de stockage de la session dans `localStorage`. */
 export const SESSION_STORAGE_KEY = 'gesnotes.session';
 
+/** Session de l'équipe Gesnotes — clé distincte : les deux mondes ne se mélangent jamais. */
+export const STAFF_SESSION_STORAGE_KEY = 'gesnotes.staff-session';
+
 /**
  * Clé de stockage de l'école choisie sur cet appareil.
  *

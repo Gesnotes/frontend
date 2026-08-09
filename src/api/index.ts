@@ -5,6 +5,8 @@ export { sessionStore } from './session';
 export type { Session } from './session';
 export { schoolSelectionStore, useSchoolSelection } from './schoolSelection';
 export type { SchoolSelection } from './schoolSelection';
+export { staffSessionStore } from './staffSession';
+export type { StaffSession } from './staffSession';
 export { queryKeys } from './queryKeys';
 export { createQueryClient } from './queryClient';
 export {
@@ -23,3 +25,4 @@ export * as dashboardApi from './resources/dashboard';
 export * as parentApi from './resources/parent';
 export * as referentialsApi from './resources/referentials';
 export * as onboardingApi from './resources/onboarding';
+export * as staffApi from './resources/staff';

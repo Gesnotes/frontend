@@ -37,6 +37,15 @@ export const paths = {
     grade: (id: number | string) => `/parent/notes/${id}`,
     notifications: '/parent/alertes',
   },
+
+  /** Espace de l'équipe Gesnotes — supervision de la plateforme. */
+  staff: {
+    login: '/equipe/connexion',
+    root: '/equipe',
+    dashboard: '/equipe',
+    signupRequests: '/equipe/demandes',
+    schools: '/equipe/ecoles',
+  },
 } as const;
 
 /**

@@ -82,4 +82,11 @@ export const queryKeys = {
   onboarding: {
     schoolSearch: (query: string) => ['onboarding', 'school-search', query] as const,
   },
+
+  staff: {
+    all: ['staff'] as const,
+    overview: ['staff', 'overview'] as const,
+    schools: ['staff', 'schools'] as const,
+    signupRequests: (status?: string) => ['staff', 'signup-requests', status ?? 'all'] as const,
+  },
 } as const;

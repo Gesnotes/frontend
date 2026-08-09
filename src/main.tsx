@@ -16,6 +16,7 @@ import { createQueryClient } from './api';
 import { AuthProvider } from './auth/AuthProvider';
 import { AppErrorBoundary } from './monitoring/AppErrorBoundary';
 import { UpdatePrompt } from './pwa/UpdatePrompt';
+import { StaffAuthProvider } from './staff/StaffAuthProvider';
 import { ToastProvider } from './ui';
 import './index.css';
 
@@ -27,10 +28,12 @@ createRoot(document.getElementById('root')!).render(
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <AuthProvider>
-            <ToastProvider>
-              <App />
-              <UpdatePrompt />
-            </ToastProvider>
+            <StaffAuthProvider>
+              <ToastProvider>
+                <App />
+                <UpdatePrompt />
+              </ToastProvider>
+            </StaffAuthProvider>
           </AuthProvider>
         </BrowserRouter>
       </QueryClientProvider>
