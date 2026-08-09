@@ -22,6 +22,7 @@ export const paths = {
     periods: '/admin/periodes',
     schoolYears: '/admin/annees-scolaires',
     archives: '/admin/archives',
+    settings: '/admin/parametres',
   },
 
   teacher: {

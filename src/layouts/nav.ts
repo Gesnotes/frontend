@@ -19,6 +19,7 @@ const adminNav: NavItem[] = [
   { to: paths.admin.periods, label: 'Périodes', icon: '◔' },
   { to: paths.admin.schoolYears, label: 'Années scolaires', icon: '⟳' },
   { to: paths.admin.archives, label: 'Archives', icon: '⧉' },
+  { to: paths.admin.settings, label: 'Paramètres', icon: '⚙' },
 ];
 
 const teacherNav: NavItem[] = [

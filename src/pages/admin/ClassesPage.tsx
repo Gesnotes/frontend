@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -7,15 +7,14 @@ import {
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { formatCount, formatGrade, plural } from '../../lib/format';
+import { formatCount, plural } from '../../lib/format';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Alert, Button, Card, Chip, ConfirmDialog, EmptyState, Modal, ModalActions,
-  ProgressBar, SelectField, Skeleton, TextField, gradeTone, useToast,
+  Alert, Button, Card, ConfirmDialog, EmptyState, Modal, ModalActions,
+  ProgressBar, SelectField, Skeleton, TextField, useToast,
 } from '../../ui';
-import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 const MODE_OPTIONS: { value: ClassMode; icon: string; title: string; body: string }[] = [
   {
@@ -67,13 +66,6 @@ export default function ClassesPage() {
   const [toDelete, setToDelete] = useState<ClassListItem | null>(null);
   const deleteClass = classesApi.useDeleteClass();
 
-  /**
-   * Une seule classe dépliée à la fois. Les cartes sont en grille : deux
-   * bulletins ouverts côte à côte déformeraient la rangée, et l'écran servirait
-   * moins bien sa fonction première — comparer les classes entre elles.
-   */
-  const [openId, setOpenId] = useState<ID | null>(null);
-
   const list = classes.data ?? [];
   const headcount = list.reduce((sum, item) => sum + item.effectif, 0);
 
@@ -123,13 +115,11 @@ export default function ClassesPage() {
                     key={item.id}
                     item={item}
                     termId={termId}
-                    open={openId === item.id}
-                    onToggle={() => setOpenId(openId === item.id ? null : item.id)}
                     onOpen={() => navigate(paths.admin.classDetail(item.id))}
+                    onBulletin={() => navigate(paths.admin.classBulletin(item.id))}
                     onEdit={() => setEditing(item)}
                     onArchive={() => setToDelete(item)}
                     onAttendance={() => navigate(paths.admin.classAttendance(item.id))}
-                    onEnroll={() => navigate(paths.admin.classEnrollment(item.id))}
                   />
                 ))}
               </div>
@@ -172,24 +162,26 @@ export default function ClassesPage() {
 }
 
 function ClassCard({
-  item, termId, open, onToggle, onOpen, onEdit, onArchive, onAttendance, onEnroll,
+  item, termId, onOpen, onBulletin, onEdit, onArchive, onAttendance,
 }: {
   item: ClassListItem;
   termId: ID | undefined;
-  open: boolean;
-  onToggle: () => void;
   onOpen: () => void;
+  onBulletin: () => void;
   onEdit: () => void;
   onArchive: () => void;
   onAttendance: () => void;
-  onEnroll: () => void;
 }) {
   const hasTerm = termId !== undefined;
   const isPresence = item.mode === 'presence';
+  const pct =
+    hasTerm && item.evalues !== null && item.effectif > 0
+      ? Math.round((item.evalues / item.effectif) * 100)
+      : null;
 
   return (
     <Card padded>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
         <span className="class-card__badge" aria-hidden="true">{item.level}</span>
         <div style={{ minWidth: 0, flex: 1 }}>
           <div className="t-title-md">{item.name}</div>
@@ -197,59 +189,101 @@ function ClassCard({
             {formatCount(item.effectif)} {plural(item.effectif, 'élève')}
           </div>
         </div>
-        {isPresence ? (
-          <Chip tone="success">Présence</Chip>
-        ) : (
-          <Chip tone={gradeTone(item.average)}>{formatGrade(item.average)}</Chip>
-        )}
+        <ClassCardMenu onEdit={onEdit} onArchive={onArchive} className={item.name} />
       </div>
 
       {isPresence ? null : (
-        <>
-          <div style={{ marginTop: 'var(--space-4)' }}>
-            <ProgressBar
-              value={item.average ?? 0}
-              max={20}
-              tone={gradeTone(item.average)}
-              label={`Moyenne de ${item.name}`}
-            />
-          </div>
-
-          {!hasTerm ? (
-            <p className="t-label-sm t-subtle" style={{ marginTop: 'var(--space-2)', textTransform: 'none' }}>
-              Sélectionnez une période pour afficher la moyenne.
-            </p>
-          ) : null}
-        </>
+        <div style={{ marginTop: 'var(--space-4)' }}>
+          <p className="t-label-sm t-subtle" style={{ marginBottom: 'var(--space-1)', textTransform: 'none' }}>
+            {pct !== null
+              ? `${pct}% des notes saisies ce trimestre`
+              : 'Sélectionnez une période pour suivre la saisie.'}
+          </p>
+          <ProgressBar value={pct ?? 0} max={100} tone="info" label={`Notes saisies pour ${item.name}`} />
+        </div>
       )}
 
-      <div className="card-actions">
+      <div className="card-actions card-actions--stacked">
         {isPresence ? (
-          <Button size="sm" variant="tonal" onClick={onAttendance}>Feuille de présence</Button>
+          <Button block variant="tonal" icon="◔" onClick={onAttendance}>Feuille de présence</Button>
         ) : (
           <>
-            {/* Les notes se consultent sur place : c'est la question qu'on se pose
-                devant une liste de classes, et l'ouvrir en pleine page pour la
-                refermer aussitôt fait perdre le fil de la comparaison. */}
-            <Button size="sm" variant="tonal" disabled={!hasTerm} aria-expanded={open} onClick={onToggle}>
-              {open ? 'Masquer les notes' : 'Voir les notes'}
-            </Button>
-            <Button size="sm" variant="secondary" onClick={onAttendance}>Présence</Button>
+            <Button block variant="tonal" icon="▤" onClick={onBulletin}>Voir les notes</Button>
+            <Button block variant="secondary" icon="◔" onClick={onAttendance}>Présence</Button>
           </>
         )}
-        <Button size="sm" variant="secondary" onClick={onOpen}>Détail</Button>
+        <Button block variant="secondary" icon="⋯" onClick={onOpen}>Détail</Button>
       </div>
-
-      {/* Gestes plus rares, délibérément plus discrets qu'au-dessus — la
-          carte sert d'abord à consulter une classe, pas à la réorganiser. */}
-      <div className="card-actions card-actions--secondary">
-        <Button size="sm" variant="ghost" onClick={onEnroll}>Réinscrire</Button>
-        <Button size="sm" variant="ghost" onClick={onEdit}>Renommer</Button>
-        <Button size="sm" variant="ghost" onClick={onArchive} className="class-card__archive">Archiver</Button>
-      </div>
-
-      {open && hasTerm && !isPresence ? <ClassBulletinPanel classId={item.id} termId={termId} /> : null}
     </Card>
+  );
+}
+
+/**
+ * Menu « … » : gestes rares (renommer, archiver), délibérément repliés plutôt
+ * qu'en rangée permanente — la carte sert d'abord à consulter une classe, pas
+ * à la réorganiser.
+ */
+function ClassCardMenu({
+  onEdit, onArchive, className,
+}: { onEdit: () => void; onArchive: () => void; className: string }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    function onPointerDown(event: MouseEvent) {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    }
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false);
+    }
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [open]);
+
+  return (
+    <div className="class-card__menu" ref={ref}>
+      <button
+        type="button"
+        className="class-card__menu-trigger"
+        aria-label={`Actions pour ${className}`}
+        aria-haspopup="true"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        ⋮
+      </button>
+      {open ? (
+        <div className="class-card__menu-panel" role="menu">
+          <button
+            type="button"
+            role="menuitem"
+            className="class-card__menu-item"
+            onClick={() => {
+              setOpen(false);
+              onEdit();
+            }}
+          >
+            Renommer
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            className="class-card__menu-item class-card__menu-item--danger"
+            onClick={() => {
+              setOpen(false);
+              onArchive();
+            }}
+          >
+            Archiver
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

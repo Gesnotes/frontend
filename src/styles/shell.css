@@ -232,17 +232,70 @@
   min-width: 0;
 }
 
-/* Gestes rares (réinscrire, renommer, archiver) : ligne à part, plus discrète
-   que les actions du quotidien juste au-dessus. */
-.card-actions--secondary {
-  margin-top: var(--space-2);
+/* Trois actions pleine largeur, empilées plutôt qu'en rangée : à cinq ou six
+   lettres près, "Voir les notes" et "Présence" côte à côte s'écrasaient sur
+   une carte de largeur variable. */
+.card-actions--stacked {
+  flex-direction: column;
 }
 
-.card-actions--secondary .ui-btn {
+/* Menu « … » de la carte classe (renommer, archiver) : gestes rares, repliés
+   plutôt qu'en rangée permanente à côté des actions du quotidien. */
+.class-card__menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.class-card__menu-trigger {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
   color: var(--on-surface-variant);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
 }
 
-.class-card__archive {
+.class-card__menu-trigger:hover {
+  background: var(--surface-container-low);
+}
+
+.class-card__menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: var(--space-2);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius);
+  box-shadow: var(--elevation-2);
+}
+
+.class-card__menu-item {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: var(--body-md-size);
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+}
+
+.class-card__menu-item:hover {
+  background: var(--surface-container-low);
+}
+
+.class-card__menu-item--danger {
   color: var(--error);
 }
 

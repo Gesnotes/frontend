@@ -36,6 +36,7 @@ const TITLES: Record<string, string> = {
   [paths.admin.periods]: 'Périodes scolaires',
   [paths.admin.schoolYears]: 'Années scolaires',
   [paths.admin.archives]: 'Archives',
+  [paths.admin.settings]: 'Paramètres',
 
   // `/enseignant` redirige vers la saisie : le titre ne doit pas annoncer un
   // écran « Mes classes » qui n'existe plus.

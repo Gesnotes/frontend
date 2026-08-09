@@ -17,6 +17,15 @@ export type IsoDate = string;
 
 export type Role = 'admin' | 'teacher' | 'parent';
 
+// -------------------------------------------------------------------- École
+
+/** `GET /school` — réglages de l'école courante. */
+export type SchoolSettings = {
+  name: string;
+  /** Moyenne à partir de laquelle l'école considère un élève admis. */
+  passingGrade: number;
+};
+
 // ------------------------------------------------------------------- Erreurs
 
 /** Format unique du gestionnaire d'erreurs backend. */
@@ -159,6 +168,8 @@ export type ClassListItem = {
   archivedAt: IsoDateTime | null;
   /** Nombre d'élèves non archivés. */
   effectif: number;
+  /** Élèves ayant une moyenne générale publiée sur la période. `null` sans période demandée. */
+  evalues: number | null;
   /** `null` si aucune période n'est demandée ou si aucune note n'existe. */
   average: number | null;
 };

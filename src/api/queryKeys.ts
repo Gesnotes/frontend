@@ -18,6 +18,10 @@ export const queryKeys = {
     all: ['grade-types'] as const,
   },
 
+  school: {
+    all: ['school'] as const,
+  },
+
   schoolYears: {
     all: ['school-years'] as const,
     list: (includeArchived?: boolean) => ['school-years', 'list', includeArchived ?? false] as const,

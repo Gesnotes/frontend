@@ -29,3 +29,4 @@ export * as parentApi from './resources/parent';
 export * as referentialsApi from './resources/referentials';
 export * as onboardingApi from './resources/onboarding';
 export * as staffApi from './resources/staff';
+export * as schoolApi from './resources/school';
