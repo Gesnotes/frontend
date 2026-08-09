@@ -189,34 +189,31 @@ function ClassCard({
 
   return (
     <Card padded>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
-        <div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+        <span className="class-card__badge" aria-hidden="true">{item.level}</span>
+        <div style={{ minWidth: 0, flex: 1 }}>
           <div className="t-title-md">{item.name}</div>
           <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
-            Niveau {item.level}
+            {formatCount(item.effectif)} {plural(item.effectif, 'élève')}
           </div>
         </div>
-        <div style={{ marginLeft: 'auto' }}>
-          {isPresence ? (
-            <Chip tone="success">Présence</Chip>
-          ) : (
-            <Chip tone={gradeTone(item.average)}>{formatGrade(item.average)}</Chip>
-          )}
-        </div>
+        {isPresence ? (
+          <Chip tone="success">Présence</Chip>
+        ) : (
+          <Chip tone={gradeTone(item.average)}>{formatGrade(item.average)}</Chip>
+        )}
       </div>
-
-      <p className="t-body-md t-muted" style={{ margin: 'var(--space-4) 0 var(--space-2)' }}>
-        {formatCount(item.effectif)} {plural(item.effectif, 'élève')}
-      </p>
 
       {isPresence ? null : (
         <>
-          <ProgressBar
-            value={item.average ?? 0}
-            max={20}
-            tone={gradeTone(item.average)}
-            label={`Moyenne de ${item.name}`}
-          />
+          <div style={{ marginTop: 'var(--space-4)' }}>
+            <ProgressBar
+              value={item.average ?? 0}
+              max={20}
+              tone={gradeTone(item.average)}
+              label={`Moyenne de ${item.name}`}
+            />
+          </div>
 
           {!hasTerm ? (
             <p className="t-label-sm t-subtle" style={{ marginTop: 'var(--space-2)', textTransform: 'none' }}>
@@ -241,9 +238,14 @@ function ClassCard({
           </>
         )}
         <Button size="sm" variant="secondary" onClick={onOpen}>Détail</Button>
-        <Button size="sm" variant="secondary" onClick={onEnroll}>Réinscrire</Button>
-        <Button size="sm" variant="secondary" onClick={onEdit}>Renommer</Button>
-        <Button size="sm" variant="danger" onClick={onArchive}>Archiver</Button>
+      </div>
+
+      {/* Gestes plus rares, délibérément plus discrets qu'au-dessus — la
+          carte sert d'abord à consulter une classe, pas à la réorganiser. */}
+      <div className="card-actions card-actions--secondary">
+        <Button size="sm" variant="ghost" onClick={onEnroll}>Réinscrire</Button>
+        <Button size="sm" variant="ghost" onClick={onEdit}>Renommer</Button>
+        <Button size="sm" variant="ghost" onClick={onArchive} className="class-card__archive">Archiver</Button>
       </div>
 
       {open && hasTerm && !isPresence ? <ClassBulletinPanel classId={item.id} termId={termId} /> : null}

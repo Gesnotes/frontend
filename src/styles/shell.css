@@ -232,6 +232,39 @@
   min-width: 0;
 }
 
+/* Gestes rares (réinscrire, renommer, archiver) : ligne à part, plus discrète
+   que les actions du quotidien juste au-dessus. */
+.card-actions--secondary {
+  margin-top: var(--space-2);
+}
+
+.card-actions--secondary .ui-btn {
+  color: var(--on-surface-variant);
+}
+
+.class-card__archive {
+  color: var(--error);
+}
+
+/* Pastille de niveau, en tête de carte classe — même famille visuelle que
+   l'avatar des personnes (pastille ronde, initiales), mais pour un niveau
+   scolaire, qui ne tient pas toujours en deux lettres ("Terminale"). */
+.class-card__badge {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: var(--label-sm-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .grid-split {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
