@@ -49,8 +49,8 @@ export default function DashboardPage() {
             <div className="page-stack">
               <InstallCard compact />
 
-              {isSetupIncomplete(data.effectifs) ? (
-                <OnboardingChecklist effectifs={data.effectifs} />
+              {isSetupIncomplete(data) ? (
+                <OnboardingChecklist data={data} />
               ) : (
                 <div className="page-stack">
                   <DashboardBody data={data} />
@@ -89,18 +89,36 @@ export default function DashboardPage() {
  * Liste de tâches d'accueil (DESIGN.md §6) : remplace un tableau de bord
  * vide à la première connexion, plutôt que d'afficher des moyennes et des
  * effectifs à zéro qui n'apprennent rien à l'administration.
+ *
+ * Couvre aussi les matières et la période : sans elles, la saisie de notes
+ * échoue silencieusement une fois les classes/enseignants/élèves en place —
+ * mieux vaut le dire ici que laisser l'administration le découvrir plus tard,
+ * bloquée, sans configuration à portée de main.
  */
-function isSetupIncomplete(effectifs: AdminDashboard['effectifs']): boolean {
-  return effectifs.classes === 0 || effectifs.enseignants === 0 || effectifs.eleves === 0;
+function isSetupIncomplete({ effectifs, periode }: AdminDashboard): boolean {
+  return (
+    effectifs.classes === 0 ||
+    effectifs.matieres === 0 ||
+    effectifs.enseignants === 0 ||
+    effectifs.eleves === 0 ||
+    periode === null
+  );
 }
 
-function OnboardingChecklist({ effectifs }: { effectifs: AdminDashboard['effectifs'] }) {
+function OnboardingChecklist({ data }: { data: AdminDashboard }) {
+  const { effectifs, periode } = data;
   const steps = [
     {
       done: effectifs.classes > 0,
       label: 'Ajouter vos classes, avec leur mode (notes ou présence)',
       cta: 'Commencer par les classes',
       to: paths.admin.classes,
+    },
+    {
+      done: effectifs.matieres > 0,
+      label: 'Ajouter vos matières',
+      cta: 'Ajouter vos matières',
+      to: paths.admin.subjects,
     },
     {
       done: effectifs.enseignants > 0,
@@ -113,6 +131,12 @@ function OnboardingChecklist({ effectifs }: { effectifs: AdminDashboard['effecti
       label: 'Importer la liste de vos élèves',
       cta: 'Importer vos élèves',
       to: paths.admin.students,
+    },
+    {
+      done: periode !== null,
+      label: 'Ouvrir une période (trimestre ou semestre)',
+      cta: 'Ouvrir une période',
+      to: paths.admin.periods,
     },
   ];
   const doneCount = steps.filter((step) => step.done).length;
