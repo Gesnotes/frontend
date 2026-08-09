@@ -592,6 +592,7 @@ export type DashboardClassRow = {
  * à une période valent `null` ou un tableau vide, jamais `undefined`.
  */
 export type AdminDashboard = {
+  school: { name: string };
   effectifs: {
     eleves: number;
     classes: number;

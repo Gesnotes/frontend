@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { dashboardApi, type AdminDashboard, type ID, type RecentGrade } from '../../api';
+import { useAuth } from '../../auth/auth-context';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade, formatPercent, formatRelative, plural } from '../../lib/format';
@@ -16,24 +17,39 @@ import {
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 export default function DashboardPage() {
+  const { displayName } = useAuth();
   const { termId, term } = useTermContext();
   const dashboard = dashboardApi.useDashboard(termId);
   const recent = dashboardApi.useRecentGrades(8);
 
   return (
-    <>
-      <PageHeader
-        title="Tableau de bord"
-        subtitle={term ? `Vue d'ensemble · ${term.label}` : "Vue d'ensemble de l'établissement"}
-        actions={<TermSelect />}
-      />
-      <PageContent>
-        <div className="page-stack">
-          <InstallCard compact />
+    <QueryBoundary
+      query={dashboard}
+      loading={
+        <>
+          <PageHeader
+            title="Tableau de bord"
+            subtitle="Vue d'ensemble de l'établissement"
+            actions={<TermSelect />}
+          />
+          <PageContent>
+            <StatsSkeleton />
+          </PageContent>
+        </>
+      }
+    >
+      {(data) => (
+        <>
+          <PageHeader
+            title={`Bonjour, ${displayName}`}
+            subtitle={term ? `${data.school.name} · ${term.label}` : data.school.name}
+            actions={<TermSelect />}
+          />
+          <PageContent>
+            <div className="page-stack">
+              <InstallCard compact />
 
-          <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
-            {(data) =>
-              isSetupIncomplete(data.effectifs) ? (
+              {isSetupIncomplete(data.effectifs) ? (
                 <OnboardingChecklist effectifs={data.effectifs} />
               ) : (
                 <div className="page-stack">
@@ -60,12 +76,12 @@ export default function DashboardPage() {
                     </Card>
                   </div>
                 </div>
-              )
-            }
-          </QueryBoundary>
-        </div>
-      </PageContent>
-    </>
+              )}
+            </div>
+          </PageContent>
+        </>
+      )}
+    </QueryBoundary>
   );
 }
 
@@ -224,8 +240,10 @@ function PresenceSummary({ presence }: { presence: AdminDashboard['presence'] })
           }}
         >
           <span className="t-label-sm t-muted">Aucun appel :</span>
-          {presence.classesSansAppel.map((name) => (
-            <Chip key={name} tone="warning">{name}</Chip>
+          {presence.classesSansAppel.map((name, index) => (
+            // Deux classes homonymes sont possibles (ex. deux « 6e A » après
+            // une préparation de rentrée) : le nom seul ne suffit pas comme clé.
+            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
           ))}
         </div>
       ) : null}
@@ -271,8 +289,8 @@ function GradingProgress({ saisie }: { saisie: NonNullable<AdminDashboard['saisi
           }}
         >
           <span className="t-label-sm t-muted">Aucune note :</span>
-          {late.map((name) => (
-            <Chip key={name} tone="warning">{name}</Chip>
+          {late.map((name, index) => (
+            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
           ))}
         </div>
       ) : null}
