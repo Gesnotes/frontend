@@ -9,6 +9,16 @@ interface ImportMetaEnv {
   readonly VITE_SCHOOL_SUBDOMAIN?: string;
 
   /**
+   * Compte de démonstration public affiché sur la vitrine. Facultatif : le
+   * bouton « Voir une démo » n'apparaît que si les trois valeurs sont
+   * renseignées.
+   */
+  readonly VITE_DEMO_SUBDOMAIN?: string;
+  readonly VITE_DEMO_SCHOOL_NAME?: string;
+  readonly VITE_DEMO_IDENTIFIER?: string;
+  readonly VITE_DEMO_PASSWORD?: string;
+
+  /**
    * Configuration web Firebase — Console → Paramètres du projet → Général →
    * Vos applications → Application Web. Valeurs publiques : elles identifient
    * le projet et n'autorisent aucun envoi.

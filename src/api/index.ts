@@ -3,9 +3,16 @@ export { ApiError, isApiError, errorMessage } from './ApiError';
 export { api, apiFetch, apiFetchBlob, buildUrl } from './http';
 export { sessionStore } from './session';
 export type { Session } from './session';
+export { schoolSelectionStore, useSchoolSelection } from './schoolSelection';
+export type { SchoolSelection } from './schoolSelection';
+export { staffSessionStore } from './staffSession';
+export type { StaffSession } from './staffSession';
 export { queryKeys } from './queryKeys';
 export { createQueryClient } from './queryClient';
-export { API_BASE_URL, SCHOOL_SUBDOMAIN, TERM_STORAGE_KEY } from './config';
+export {
+  API_BASE_URL, SCHOOL_SUBDOMAIN, TERM_STORAGE_KEY, MAIN_DOMAIN, isOnSchoolSubdomain,
+  DEMO_SUBDOMAIN, DEMO_SCHOOL_NAME, DEMO_IDENTIFIER, DEMO_PASSWORD,
+} from './config';
 
 export * as authApi from './resources/auth';
 export * as classesApi from './resources/classes';
@@ -17,3 +24,5 @@ export * as evaluationsApi from './resources/evaluations';
 export * as dashboardApi from './resources/dashboard';
 export * as parentApi from './resources/parent';
 export * as referentialsApi from './resources/referentials';
+export * as onboardingApi from './resources/onboarding';
+export * as staffApi from './resources/staff';
