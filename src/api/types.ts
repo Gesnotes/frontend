@@ -504,6 +504,14 @@ export type AdminDashboard = {
     notesDerniers7Jours: number;
     notesTotal: number;
   };
+  /** Présence du jour, école entière — indépendante de la période sélectionnée. */
+  presence: {
+    classesAvecAppel: number;
+    classesTotal: number;
+    absents: number;
+    retards: number;
+    classesSansAppel: string[];
+  };
   periode: TermRef | null;
   moyenneEcole: number | null;
   classes: DashboardClassRow[];

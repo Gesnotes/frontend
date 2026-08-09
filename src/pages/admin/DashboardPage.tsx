@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { dashboardApi, type AdminDashboard, type ID, type RecentGrade } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { formatCount, formatGrade, formatPercent, formatRelative } from '../../lib/format';
+import { formatCount, formatGrade, formatPercent, formatRelative, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
@@ -121,7 +121,7 @@ function OnboardingChecklist({ effectifs }: { effectifs: AdminDashboard['effecti
 }
 
 function DashboardBody({ data }: { data: AdminDashboard }) {
-  const { effectifs, activite, saisie, moyenneEcole } = data;
+  const { effectifs, activite, saisie, presence, moyenneEcole } = data;
 
   return (
     <div className="page-stack">
@@ -145,8 +145,86 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
         />
       </div>
 
+      <PresenceSummary presence={presence} />
       {saisie ? <GradingProgress saisie={saisie} /> : null}
     </div>
+  );
+}
+
+/**
+ * Présence du jour, école entière — indépendante de la période sélectionnée
+ * (contrairement aux autres cartes) : la présence se prend au jour le jour.
+ */
+function PresenceSummary({ presence }: { presence: AdminDashboard['presence'] }) {
+  const taux =
+    presence.classesTotal === 0
+      ? null
+      : Math.round((presence.classesAvecAppel / presence.classesTotal) * 100);
+
+  return (
+    <Card padded>
+      <SectionTitle
+        aside={
+          <span className="t-body-md" style={{ fontWeight: 700 }}>
+            {formatPercent(taux)}
+          </span>
+        }
+      >
+        Présence du jour
+      </SectionTitle>
+
+      <ProgressBar
+        value={presence.classesAvecAppel}
+        max={presence.classesTotal}
+        tone={taux !== null && taux >= 85 ? 'success' : 'info'}
+        label="Classes ayant fait l'appel aujourd'hui"
+      />
+
+      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
+        {formatCount(presence.classesAvecAppel)} {plural(presence.classesAvecAppel, 'classe')} sur{' '}
+        {formatCount(presence.classesTotal)}{' '}
+        {plural(presence.classesAvecAppel, 'a fait', 'ont fait')} l'appel aujourd'hui.
+      </p>
+
+      {presence.absents > 0 || presence.retards > 0 ? (
+        <div
+          style={{
+            marginTop: 'var(--space-3)',
+            display: 'flex',
+            gap: 'var(--space-2)',
+            flexWrap: 'wrap',
+          }}
+        >
+          {presence.absents > 0 ? (
+            <Chip tone="danger">
+              {formatCount(presence.absents)} {plural(presence.absents, 'absent')}
+            </Chip>
+          ) : null}
+          {presence.retards > 0 ? (
+            <Chip tone="warning">
+              {formatCount(presence.retards)} {plural(presence.retards, 'retard')}
+            </Chip>
+          ) : null}
+        </div>
+      ) : null}
+
+      {presence.classesSansAppel.length > 0 ? (
+        <div
+          style={{
+            marginTop: 'var(--space-3)',
+            display: 'flex',
+            gap: 'var(--space-2)',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span className="t-label-sm t-muted">Aucun appel :</span>
+          {presence.classesSansAppel.map((name) => (
+            <Chip key={name} tone="warning">{name}</Chip>
+          ))}
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
