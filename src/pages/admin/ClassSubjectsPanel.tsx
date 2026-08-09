@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 import { errorMessage, subjectsApi, type ID, type Subject } from '../../api';
 import { paths } from '../../routes/paths';
-import { Alert, Button, Card, Chip, SectionTitle, Skeleton, useToast } from '../../ui';
+import { Alert, Button, Card, Chip, SectionTitle, Skeleton, TextField, useToast } from '../../ui';
 
 /**
  * Matières rattachées à une classe, gérées depuis la fiche de la classe.
@@ -67,7 +67,6 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
   const setCoef = subjectsApi.useSetSubjectCoefficient();
 
   const [search, setSearch] = useState('');
-  const [addValue, setAddValue] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const { rows, addable } = useMemo(() => {
@@ -111,7 +110,6 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
       await setCoef.mutateAsync({ id: subject.id, classId, coefficient });
       toast.success(`${subject.name} rattachée à la classe (coef. ${coefficient})`);
       setSearch('');
-      setAddValue('');
     } catch (cause) {
       setError(errorMessage(cause));
     }
@@ -132,65 +130,33 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
       ) : null}
 
       {/*
-        Rattachement, pas création.
-        Ce champ ne cherche que parmi les matières déjà au programme de l'école
-        et leur donne un coefficient pour cette classe. Il ne crée aucune
-        matière : intitulé « Ajouter une matière », il promettait une action
-        que l'écran ne sait pas faire.
+        Rattachement, pas création : ce champ ne cherche que parmi les
+        matières déjà au programme de l'école. Le mode d'emploi se voit dans
+        l'écran (chercher → + Ajouter) plutôt que de se lire dans un
+        paragraphe : voir la maquette « Rattacher une matière ».
       */}
-      <div className="ui-field" style={{ marginBottom: 'var(--space-4)' }}>
-        <label className="ui-field__label" htmlFor="class-subject-search">
-          Rattacher une matière du programme
-        </label>
-        <input
-          id="class-subject-search"
-          className="ui-input"
-          placeholder="Rechercher parmi les matières de l'école…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        <span className="ui-field__hint">
-          Rattacher, c'est donner à la matière un coefficient propre à cette classe ; sans
-          coefficient, elle utilise celui de l'école. Pour créer une matière qui n'existe pas
-          encore, passez par <Link to={paths.admin.subjects}>Matières</Link>.
-        </span>
-      </div>
+      <TextField
+        label="Rattacher une matière"
+        placeholder="Rechercher parmi les matières de l'école…"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
+      />
 
       {search.trim() ? (
         matches.length === 0 ? (
-          <p className="t-body-md t-muted" style={{ marginBottom: 'var(--space-4)' }}>
-            Aucune matière du programme ne correspond à « {search.trim()} » : soit elle est déjà
-            rattachée, soit elle n'existe pas encore. Créez-la depuis{' '}
-            <Link to={paths.admin.subjects}>Matières</Link>.
+          <p className="t-body-md t-muted" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
+            Aucun résultat pour « {search.trim()} ». <Link to={paths.admin.subjects}>Créer une matière</Link>
           </p>
         ) : (
-          <div className="list-rows" style={{ marginBottom: 'var(--space-4)' }}>
+          <div className="list-rows" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
             {matches.slice(0, 6).map((subject) => (
               <div key={subject.id} className="list-row">
                 <div className="list-row__body">
                   <div className="list-row__title">{subject.name}</div>
-                  <div className="list-row__meta">Coefficient de l'école : × {subject.coefficient}</div>
+                  <div className="list-row__meta">coef. école × {subject.coefficient}</div>
                 </div>
-                <input
-                  className="ui-input"
-                  style={{ width: 84 }}
-                  type="number"
-                  min={0.01}
-                  max={99.99}
-                  step={0.5}
-                  aria-label={`Coefficient de ${subject.name} pour cette classe`}
-                  placeholder={String(subject.coefficient)}
-                  value={addValue}
-                  onChange={(e) => setAddValue(e.target.value)}
-                />
-                <Button
-                  size="sm"
-                  loading={setCoef.isPending}
-                  onClick={() =>
-                    void add(subject, addValue.trim() ? Number(addValue) : subject.coefficient)
-                  }
-                >
-                  Rattacher
+                <Button size="sm" loading={setCoef.isPending} onClick={() => void add(subject, subject.coefficient)}>
+                  + Ajouter
                 </Button>
               </div>
             ))}
