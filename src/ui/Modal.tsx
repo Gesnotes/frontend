@@ -16,19 +16,35 @@ export function Modal({ open, onClose, title, subtitle, width = 460, children, f
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
+  /**
+   * Focus et défilement : ne dépend que de `open`, pas de `onClose`. Un
+   * `onClose` recréé à chaque rendu du parent (cas courant, fonction fléchée
+   * inline) ferait sinon rejouer cet effet en boucle pendant que la modale
+   * reste ouverte — et capturerait alors le panneau lui-même comme « élément
+   * à refocaliser à la fermeture » au lieu du bouton qui l'a ouverte.
+   */
+  useEffect(() => {
+    if (!open) return;
+    const previouslyFocused = document.activeElement as HTMLElement | null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panelRef.current?.focus();
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      // Rend le focus à l'élément qui a ouvert la modale : sans ça, un
+      // utilisateur au clavier retombe sur `<body>` et doit re-tabuler
+      // depuis le haut de la page à chaque fermeture.
+      previouslyFocused?.focus();
+    };
+  }, [open]);
+
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-      document.body.style.overflow = previousOverflow;
-    };
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [open, onClose]);
 
   if (!open) return null;

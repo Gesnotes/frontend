@@ -197,7 +197,9 @@ function ClassCard({
           <p className="t-label-sm t-subtle" style={{ marginBottom: 'var(--space-1)', textTransform: 'none' }}>
             {pct !== null
               ? `${pct}% des notes saisies ce trimestre`
-              : 'Sélectionnez une période pour suivre la saisie.'}
+              : hasTerm
+                ? 'Aucun élève dans cette classe.'
+                : 'Sélectionnez une période pour suivre la saisie.'}
           </p>
           <ProgressBar value={pct ?? 0} max={100} tone="info" label={`Notes saisies pour ${item.name}`} />
         </div>
@@ -228,20 +230,34 @@ function ClassCardMenu({
 }: { onEdit: () => void; onArchive: () => void; className: string }) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  // Capturé au moment même de la fermeture, pas dans le nettoyage de l'effet
+  // ci-dessous : le panneau est déjà retiré du DOM à ce moment-là (le focus
+  // serait donc toujours retombé sur `<body>`, jamais détecté « dans le
+  // menu »), et on ne veut voler le focus au bouton déclencheur que si
+  // l'utilisateur interagissait réellement au clavier avec le menu.
+  const focusWasInsideRef = useRef(false);
+
+  function close() {
+    focusWasInsideRef.current = !!ref.current?.contains(document.activeElement);
+    setOpen(false);
+  }
 
   useEffect(() => {
     if (!open) return;
+    const trigger = triggerRef.current;
     function onPointerDown(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(event.target as Node)) close();
     }
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false);
+      if (event.key === 'Escape') close();
     }
     document.addEventListener('mousedown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
     return () => {
       document.removeEventListener('mousedown', onPointerDown);
       document.removeEventListener('keydown', onKeyDown);
+      if (focusWasInsideRef.current) trigger?.focus();
     };
   }, [open]);
 
@@ -249,6 +265,7 @@ function ClassCardMenu({
     <div className="class-card__menu" ref={ref}>
       <button
         type="button"
+        ref={triggerRef}
         className="class-card__menu-trigger"
         aria-label={`Actions pour ${className}`}
         aria-haspopup="true"
@@ -264,7 +281,7 @@ function ClassCardMenu({
             role="menuitem"
             className="class-card__menu-item"
             onClick={() => {
-              setOpen(false);
+              close();
               onEdit();
             }}
           >
@@ -275,7 +292,7 @@ function ClassCardMenu({
             role="menuitem"
             className="class-card__menu-item class-card__menu-item--danger"
             onClick={() => {
-              setOpen(false);
+              close();
               onArchive();
             }}
           >

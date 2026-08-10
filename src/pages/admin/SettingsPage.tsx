@@ -29,7 +29,26 @@ function PassingGradeCard({ current }: { current: number }) {
   const toast = useToast();
   const update = schoolApi.useUpdatePassingGrade();
   const [value, setValue] = useState(String(current));
+  // Distinct de `dirty` (qui compare juste value à current) : sert à ne
+  // resynchroniser automatiquement que tant que l'utilisateur n'a pas
+  // commencé à taper, pour ne jamais écraser une saisie en cours.
+  const [edited, setEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Resynchronise avec le serveur si `current` change pendant que la page
+   * reste ouverte (ex. refetch après une coupure réseau) — tant que
+   * l'utilisateur n'a pas touché au champ, sans quoi un enregistrement
+   * écraserait silencieusement une valeur plus récente qu'un autre admin
+   * aurait entre-temps enregistrée. Ajustement pendant le rendu (pas un
+   * effet) : le même style que `EvaluationSaisie` pour repartir d'un état
+   * neuf quand une prop externe change.
+   */
+  const [syncedCurrent, setSyncedCurrent] = useState(current);
+  if (current !== syncedCurrent && !edited) {
+    setSyncedCurrent(current);
+    setValue(String(current));
+  }
 
   const dirty = value.trim() !== String(current);
 
@@ -43,6 +62,7 @@ function PassingGradeCard({ current }: { current: number }) {
     try {
       const saved = await update.mutateAsync(parsed);
       setValue(String(saved.passingGrade));
+      setEdited(false);
       toast.success('Seuil de passage enregistré');
     } catch (cause) {
       setError(errorMessage(cause));
@@ -68,7 +88,10 @@ function PassingGradeCard({ current }: { current: number }) {
             max={20}
             step={0.25}
             value={value}
-            onChange={(e) => setValue(e.target.value)}
+            onChange={(e) => {
+              setValue(e.target.value);
+              setEdited(true);
+            }}
           />
           <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
             Enregistrer

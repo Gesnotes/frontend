@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { useQueryClient } from '@tanstack/react-query';
 
 import { authApi, sessionStore, TERM_STORAGE_KEY, type Session } from '../api';
+import { offlineQueue } from '../lib/offlineQueue';
 import { setMonitoringUser } from '../monitoring/monitoring';
 import { AuthContext, fullNameOf, type AuthContextValue } from './auth-context';
 
@@ -33,6 +34,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const result = await authApi.login(identifier, password);
       // Le cache appartient à l'utilisateur précédent : le vider évite qu'un
       // écran affiche brièvement les données de la session d'avant.
+      //
+      // La file hors-ligne, elle, n'est PAS vidée ici : une session qui
+      // expire pendant que l'enseignant est hors connexion le ramène
+      // justement sur cet écran, et il doit pouvoir se reconnecter sans
+      // perdre sa saisie en attente. Seule la déconnexion volontaire
+      // (`logout`, ci-dessous) la vide — c'est là qu'un poste change
+      // réellement de main.
       queryClient.clear();
       return result.user;
     },
@@ -75,6 +83,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Stockage indisponible : rien à purger.
     }
+
+    // Sur un poste partagé (salle des profs), une déconnexion volontaire est
+    // le moment où l'appareil change réellement de main : sans ça, les
+    // saisies encore en attente d'un enseignant restaient visibles — et
+    // envoyables sous son nom — par la personne suivante qui s'y connecte.
+    offlineQueue.clear();
   }, [queryClient]);
 
   const value = useMemo<AuthContextValue>(

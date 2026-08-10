@@ -1,7 +1,7 @@
 import { useState } from 'react';
 
 import { attendanceApi, errorMessage, type AttendanceSheetStudent, type AttendanceStatus, type ID } from '../api';
-import { formatDate, plural } from '../lib/format';
+import { formatDate, plural, todayLocalIso } from '../lib/format';
 import { Alert, attendanceTone, Avatar, Button, Skeleton, toneColor, useToast } from '../ui';
 import { QueryBoundary } from './QueryBoundary';
 
@@ -50,7 +50,7 @@ function summarize(students: AttendanceSheetStudent[], overrides: Record<ID, Att
  */
 export function AttendanceSheetPanel({ classId }: { classId: ID }) {
   const toast = useToast();
-  const [date, setDate] = useState(() => toIsoDay(new Date()));
+  const [date, setDate] = useState(todayLocalIso);
   const sheet = attendanceApi.useAttendanceSheet(classId, date);
   const save = attendanceApi.useSaveAttendance();
 
@@ -66,7 +66,7 @@ export function AttendanceSheetPanel({ classId }: { classId: ID }) {
     setOverrides({});
   }
 
-  const isToday = date === toIsoDay(new Date());
+  const isToday = date === todayLocalIso();
 
   async function onSave() {
     if (!sheet.data) return;
@@ -107,7 +107,7 @@ export function AttendanceSheetPanel({ classId }: { classId: ID }) {
           ›
         </Button>
         {!isToday ? (
-          <Button variant="secondary" size="sm" onClick={() => setDate(toIsoDay(new Date()))}>
+          <Button variant="secondary" size="sm" onClick={() => setDate(todayLocalIso())}>
             Revenir à aujourd'hui
           </Button>
         ) : null}
