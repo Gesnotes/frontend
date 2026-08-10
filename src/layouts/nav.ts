@@ -12,11 +12,14 @@ export type NavItem = {
 const adminNav: NavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: '▦', end: true },
   { to: paths.admin.classes, label: 'Classes', icon: '◫' },
+  { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: '✎' },
   { to: paths.admin.subjects, label: 'Matières', icon: '≣' },
   { to: paths.admin.teachers, label: 'Enseignants', icon: '☰' },
   { to: paths.admin.students, label: 'Élèves', icon: '⚇' },
   { to: paths.admin.periods, label: 'Périodes', icon: '◔' },
+  { to: paths.admin.schoolYears, label: 'Années scolaires', icon: '⟳' },
   { to: paths.admin.archives, label: 'Archives', icon: '⧉' },
+  { to: paths.admin.settings, label: 'Paramètres', icon: '⚙' },
 ];
 
 const teacherNav: NavItem[] = [

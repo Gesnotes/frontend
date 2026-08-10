@@ -17,6 +17,15 @@ export type IsoDate = string;
 
 export type Role = 'admin' | 'teacher' | 'parent';
 
+// -------------------------------------------------------------------- École
+
+/** `GET /school` — réglages de l'école courante. */
+export type SchoolSettings = {
+  name: string;
+  /** Moyenne à partir de laquelle l'école considère un élève admis. */
+  passingGrade: number;
+};
+
 // ------------------------------------------------------------------- Erreurs
 
 /** Format unique du gestionnaire d'erreurs backend. */
@@ -38,12 +47,21 @@ export type AuthUser = {
   lastName: string | null;
 };
 
-/** Réponse de `POST /auth/login` et `POST /auth/refresh`. */
+/** Réponse de `POST /auth/refresh`. */
 export type LoginResult = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
 };
+
+/**
+ * Réponse de `POST /auth/identify`, seule porte de connexion : aucune école
+ * n'est résolue au préalable, l'identifiant est cherché à travers toutes les
+ * écoles actives.
+ */
+export type IdentifyResult =
+  | (LoginResult & { status: 'ok'; school: { id: ID; name: string } })
+  | { status: 'ambiguous'; schools: { id: ID; name: string; city: string | null }[] };
 
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
@@ -107,7 +125,37 @@ export type GradeType = {
   position: number;
 };
 
+// -------------------------------------------------------- Années scolaires
+
+/** Élément de `GET /school-years`. */
+export type SchoolYear = {
+  id: ID;
+  label: string;
+  startDate: IsoDate | null;
+  endDate: IsoDate | null;
+  /** Année en cours à la date du jour. Au plus une l'est. */
+  isCurrent: boolean;
+  /** Non nul : l'année est sortie des sélecteurs, sans rien perdre. */
+  archivedAt: IsoDateTime | null;
+  /** Ce qu'une suppression définitive détacherait (pas ne détruirait pas). */
+  termCount: number;
+  classCount: number;
+};
+
+export type SchoolYearPayload = {
+  label: string;
+  startDate?: IsoDate | null;
+  endDate?: IsoDate | null;
+};
+
 // ------------------------------------------------------------------- Classes
+
+/**
+ * `notes` : devoirs et compositions notés, bulletin par période.
+ * `presence` : maternelle/garderie — la présence remplace la saisie de notes,
+ * aucune évaluation ne peut y être créée.
+ */
+export type ClassMode = 'notes' | 'presence';
 
 /** Élément de `GET /classes`. */
 export type ClassListItem = {
@@ -115,11 +163,26 @@ export type ClassListItem = {
   schoolId: ID;
   name: string;
   level: string;
+  mode: ClassMode;
+  /** Seul habilité, avec l'administration, à prendre la présence de cette classe. */
+  homeroomTeacherId: ID | null;
+  schoolYearId: ID | null;
+  /** Non nul : cette classe a déjà été préparée pour l'année scolaire suivante. */
+  promotesToId: ID | null;
   archivedAt: IsoDateTime | null;
   /** Nombre d'élèves non archivés. */
   effectif: number;
+  /** Élèves ayant une moyenne générale publiée sur la période. `null` sans période demandée. */
+  evalues: number | null;
   /** `null` si aucune période n'est demandée ou si aucune note n'existe. */
   average: number | null;
+};
+
+/** Corps de `POST /classes/:id/duplicate` — prépare la rentrée suivante. */
+export type DuplicateClassPayload = {
+  schoolYearId: ID;
+  name?: string;
+  level?: string;
 };
 
 /** Moyenne d'une matière pour un élève, avec le détail par catégorie. */
@@ -173,13 +236,64 @@ export type ClassDetail = {
 export type CreateClassPayload = {
   name: string;
   level: string;
+  mode?: ClassMode;
+  homeroomTeacherId?: ID;
+  schoolYearId?: ID;
   /** Reprend les coefficients d'une classe existante (gabarit de niveau). */
   copyCoefficientsFromClassId?: ID;
 };
 
-export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level'>>;
+export type UpdateClassPayload = Partial<Pick<CreateClassPayload, 'name' | 'level' | 'mode'>> & {
+  homeroomTeacherId?: ID | null;
+  schoolYearId?: ID | null;
+};
 
 export type BulletinExportFormat = 'eleves' | 'classe';
+
+// ------------------------------------------------------------------ Présence
+
+export type AttendanceStatus = 'present' | 'absent' | 'late';
+
+/** Élève d'une feuille de présence : son statut du jour, `null` si non encore saisi. */
+export type AttendanceSheetStudent = {
+  id: ID;
+  firstName: string;
+  lastName: string;
+  status: AttendanceStatus | null;
+  comment: string | null;
+};
+
+/** Réponse de `GET /teachers/me/attendance` : la classe entière, pour un jour donné. */
+export type AttendanceSheet = {
+  classId: ID;
+  className: string;
+  date: IsoDate;
+  students: AttendanceSheetStudent[];
+};
+
+export type AttendanceEntry = {
+  studentId: ID;
+  /** `null` efface l'enregistrement du jour pour cet élève. */
+  status: AttendanceStatus | null;
+  comment?: string | null;
+};
+
+/** Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour la classe. */
+export type AttendanceBatchPayload = {
+  classId: ID;
+  date: IsoDate;
+  entries: AttendanceEntry[];
+};
+
+export type AttendanceSkipReason = 'eleve_hors_classe';
+
+export type AttendanceBatchResult = {
+  created: number;
+  updated: number;
+  deleted: number;
+  unchanged: number;
+  skipped: { studentId: ID; reason: AttendanceSkipReason }[];
+};
 
 // ------------------------------------------------------------------ Matières
 
@@ -493,6 +607,7 @@ export type DashboardClassRow = {
  * à une période valent `null` ou un tableau vide, jamais `undefined`.
  */
 export type AdminDashboard = {
+  school: { name: string };
   effectifs: {
     eleves: number;
     classes: number;
@@ -503,6 +618,14 @@ export type AdminDashboard = {
   activite: {
     notesDerniers7Jours: number;
     notesTotal: number;
+  };
+  /** Présence du jour, école entière — indépendante de la période sélectionnée. */
+  presence: {
+    classesAvecAppel: number;
+    classesTotal: number;
+    absents: number;
+    retards: number;
+    classesSansAppel: string[];
   };
   periode: TermRef | null;
   moyenneEcole: number | null;
@@ -556,8 +679,126 @@ export type ChildDetail = StudentResult & {
   termLabel: string;
 };
 
+/** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */
+export type ChildAttendanceRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+  classId: ID;
+};
+
 export type Device = {
   id: ID;
   fcmToken: string;
   createdAt: IsoDateTime | null;
+};
+
+// -------------------------------------------------------------- Inscription
+
+/** Corps de `POST /signup-requests` — inscription hybride. */
+export type SignupRequestPayload = {
+  schoolName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  levels: string[];
+};
+
+// ------------------------------------------------------- Réinscription
+
+export type EnrollmentDecisionType = 'promotion' | 'redoublement' | 'autre';
+
+export type EnrollmentEntry = {
+  studentId: ID;
+  toClassId: ID;
+  decision: EnrollmentDecisionType;
+};
+
+/**
+ * Corps de `POST /classes/:id/enrollment-decisions`.
+ *
+ * Un élève qui quitte l'école n'y figure pas : cet endpoint ne connaît que des
+ * déplacements vers une classe réelle, jamais une sortie. La page appelle
+ * séparément l'archivage de l'élève pour ce cas-là.
+ */
+export type EnrollmentBatchPayload = {
+  entries: EnrollmentEntry[];
+};
+
+/** Motif pour lequel le backend laisse un élève de côté (déjà sorti de la classe source). */
+export type EnrollmentSkipReason = 'eleve_hors_classe';
+
+export type EnrollmentBatchResult = {
+  moved: number;
+  skipped: { studentId: ID; reason: EnrollmentSkipReason }[];
+};
+
+// ------------------------------------------------------ Équipe Gesnotes
+
+/** Compte de l'équipe Gesnotes — hors périmètre multi-écoles. */
+export type StaffAuthUser = {
+  id: ID;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+};
+
+/** Réponse de `POST /staff/login` et `POST /staff/refresh`. */
+export type StaffLoginResult = {
+  accessToken: string;
+  refreshToken: string;
+  staff: StaffAuthUser;
+};
+
+/** Réponse de `GET /staff/overview` : totaux plateforme, tous établissements confondus. */
+export type PlatformOverview = {
+  schools: number;
+  students: number;
+  classes: number;
+  pendingSignupRequests: number;
+  users: { admin: number; teacher: number; parent: number; total: number };
+};
+
+/** Élément de `GET /staff/schools`. */
+export type SchoolWithMetrics = {
+  id: ID;
+  name: string;
+  city: string | null;
+  createdAt: IsoDateTime | null;
+  /** Non nul : école suspendue par l'équipe Gesnotes, ses comptes ne peuvent plus se connecter. */
+  archivedAt: IsoDateTime | null;
+  students: number;
+  classes: number;
+  admins: number;
+  teachers: number;
+  parents: number;
+};
+
+export type SignupRequestStatus = 'nouveau' | 'traite';
+
+/** Élément de `GET /staff/signup-requests`. */
+export type SignupRequestRow = {
+  id: ID;
+  schoolName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string;
+  levels: string[];
+  status: SignupRequestStatus;
+  schoolId: ID | null;
+  createdAt: IsoDateTime | null;
+};
+
+/** Corps de `POST /staff/signup-requests/:id/accept` — tout facultatif, dérivé de la demande sinon. */
+export type AcceptSignupRequestPayload = {
+  schoolName?: string;
+  city?: string;
+};
+
+export type AcceptSignupRequestResult = {
+  school: { id: ID; name: string; city: string | null };
+  adminEmail: string;
 };

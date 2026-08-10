@@ -2,66 +2,171 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { dashboardApi, type AdminDashboard, type ID, type RecentGrade } from '../../api';
+import { useAuth } from '../../auth/auth-context';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { formatCount, formatGrade, formatPercent, formatRelative } from '../../lib/format';
+import { formatCount, formatGrade, formatPercent, formatRelative, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
+import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
 import {
-  Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
+  Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 export default function DashboardPage() {
+  const { displayName } = useAuth();
   const { termId, term } = useTermContext();
   const dashboard = dashboardApi.useDashboard(termId);
   const recent = dashboardApi.useRecentGrades(8);
 
   return (
-    <>
-      <PageHeader
-        title="Tableau de bord"
-        subtitle={term ? `Vue d'ensemble · ${term.label}` : "Vue d'ensemble de l'établissement"}
-        actions={<TermSelect />}
-      />
-      <PageContent>
-        <div className="page-stack">
-          <QueryBoundary query={dashboard} loading={<StatsSkeleton />}>
-            {(data) => <DashboardBody data={data} />}
-          </QueryBoundary>
+    <QueryBoundary
+      query={dashboard}
+      loading={
+        <>
+          <PageHeader
+            title="Tableau de bord"
+            subtitle="Vue d'ensemble de l'établissement"
+            actions={<TermSelect />}
+          />
+          <PageContent>
+            <StatsSkeleton />
+          </PageContent>
+        </>
+      }
+    >
+      {(data) => (
+        <>
+          <PageHeader
+            title={`Bonjour, ${displayName}`}
+            subtitle={term ? `${data.school.name} · ${term.label}` : data.school.name}
+            actions={<TermSelect />}
+          />
+          <PageContent>
+            <div className="page-stack">
+              <InstallCard compact />
 
-          <div className="grid-split">
-            <Card padded>
-              <SectionTitle>Dernières notes saisies</SectionTitle>
-              <QueryBoundary query={recent} loading={<RowsSkeleton />}>
-                {(grades) => <RecentGrades grades={grades} />}
-              </QueryBoundary>
-            </Card>
+              {isSetupIncomplete(data) ? (
+                <OnboardingChecklist data={data} />
+              ) : (
+                <div className="page-stack">
+                  <DashboardBody data={data} />
 
-            <Card padded>
-              <SectionTitle
-                aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
-              >
-                Moyennes par classe
-              </SectionTitle>
-              <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
-                Cliquez sur une classe pour voir les matières, les notes et les rangs.
-              </p>
-              <QueryBoundary query={dashboard} loading={<RowsSkeleton />}>
-                {(data) => <ClassAverages data={data} termId={termId} />}
-              </QueryBoundary>
-            </Card>
+                  <div className="grid-split">
+                    <Card padded>
+                      <SectionTitle>Dernières notes saisies</SectionTitle>
+                      <QueryBoundary query={recent} loading={<RowsSkeleton />}>
+                        {(grades) => <RecentGrades grades={grades} />}
+                      </QueryBoundary>
+                    </Card>
+
+                    <Card padded>
+                      <SectionTitle
+                        aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
+                      >
+                        Moyennes par classe
+                      </SectionTitle>
+                      <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
+                        Cliquez sur une classe pour voir les matières, les notes et les rangs.
+                      </p>
+                      <ClassAverages data={data} termId={termId} />
+                    </Card>
+                  </div>
+                </div>
+              )}
+            </div>
+          </PageContent>
+        </>
+      )}
+    </QueryBoundary>
+  );
+}
+
+/**
+ * Liste de tâches d'accueil (DESIGN.md §6) : remplace un tableau de bord
+ * vide à la première connexion, plutôt que d'afficher des moyennes et des
+ * effectifs à zéro qui n'apprennent rien à l'administration.
+ *
+ * Couvre aussi les matières et la période : sans elles, la saisie de notes
+ * échoue silencieusement une fois les classes/enseignants/élèves en place —
+ * mieux vaut le dire ici que laisser l'administration le découvrir plus tard,
+ * bloquée, sans configuration à portée de main.
+ */
+function isSetupIncomplete({ effectifs, periode }: AdminDashboard): boolean {
+  return (
+    effectifs.classes === 0 ||
+    effectifs.matieres === 0 ||
+    effectifs.enseignants === 0 ||
+    effectifs.eleves === 0 ||
+    periode === null
+  );
+}
+
+function OnboardingChecklist({ data }: { data: AdminDashboard }) {
+  const { effectifs, periode } = data;
+  const steps = [
+    {
+      done: effectifs.classes > 0,
+      label: 'Ajouter vos classes, avec leur mode (notes ou présence)',
+      cta: 'Commencer par les classes',
+      to: paths.admin.classes,
+    },
+    {
+      done: effectifs.matieres > 0,
+      label: 'Ajouter vos matières',
+      cta: 'Ajouter vos matières',
+      to: paths.admin.subjects,
+    },
+    {
+      done: effectifs.enseignants > 0,
+      label: 'Inviter vos enseignants',
+      cta: 'Inviter vos enseignants',
+      to: paths.admin.teachers,
+    },
+    {
+      done: effectifs.eleves > 0,
+      label: 'Importer la liste de vos élèves',
+      cta: 'Importer vos élèves',
+      to: paths.admin.students,
+    },
+    {
+      done: periode !== null,
+      label: 'Ouvrir une période (trimestre ou semestre)',
+      cta: 'Ouvrir une période',
+      to: paths.admin.periods,
+    },
+  ];
+  const doneCount = steps.filter((step) => step.done).length;
+  const next = steps.find((step) => !step.done) ?? steps[0]!;
+
+  return (
+    <Card padded>
+      <SectionTitle>Bienvenue, configurons votre école</SectionTitle>
+      <p className="t-body-md t-muted" style={{ marginBottom: 'var(--space-4)' }}>
+        {doneCount} sur {steps.length} terminé
+      </p>
+
+      <div className="checklist">
+        {steps.map((step) => (
+          <div key={step.label} className={`checklist__row${step.done ? ' is-done' : ''}`}>
+            <span className="checklist__box" aria-hidden="true">{step.done ? '✓' : ''}</span>
+            {step.label}
           </div>
-        </div>
-      </PageContent>
-    </>
+        ))}
+      </div>
+
+      <Link to={next.to}>
+        <Button variant="primary">{next.cta}</Button>
+      </Link>
+    </Card>
   );
 }
 
 function DashboardBody({ data }: { data: AdminDashboard }) {
-  const { effectifs, activite, saisie, moyenneEcole } = data;
+  const { effectifs, activite, saisie, presence, moyenneEcole } = data;
 
   return (
     <div className="page-stack">
@@ -85,8 +190,88 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
         />
       </div>
 
+      <PresenceSummary presence={presence} />
       {saisie ? <GradingProgress saisie={saisie} /> : null}
     </div>
+  );
+}
+
+/**
+ * Présence du jour, école entière — indépendante de la période sélectionnée
+ * (contrairement aux autres cartes) : la présence se prend au jour le jour.
+ */
+function PresenceSummary({ presence }: { presence: AdminDashboard['presence'] }) {
+  const taux =
+    presence.classesTotal === 0
+      ? null
+      : Math.round((presence.classesAvecAppel / presence.classesTotal) * 100);
+
+  return (
+    <Card padded>
+      <SectionTitle
+        aside={
+          <span className="t-body-md" style={{ fontWeight: 700 }}>
+            {formatPercent(taux)}
+          </span>
+        }
+      >
+        Présence du jour
+      </SectionTitle>
+
+      <ProgressBar
+        value={presence.classesAvecAppel}
+        max={presence.classesTotal}
+        tone={taux !== null && taux >= 85 ? 'success' : 'info'}
+        label="Classes ayant fait l'appel aujourd'hui"
+      />
+
+      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
+        {formatCount(presence.classesAvecAppel)} {plural(presence.classesAvecAppel, 'classe')} sur{' '}
+        {formatCount(presence.classesTotal)}{' '}
+        {plural(presence.classesAvecAppel, 'a fait', 'ont fait')} l'appel aujourd'hui.
+      </p>
+
+      {presence.absents > 0 || presence.retards > 0 ? (
+        <div
+          style={{
+            marginTop: 'var(--space-3)',
+            display: 'flex',
+            gap: 'var(--space-2)',
+            flexWrap: 'wrap',
+          }}
+        >
+          {presence.absents > 0 ? (
+            <Chip tone="danger">
+              {formatCount(presence.absents)} {plural(presence.absents, 'absent')}
+            </Chip>
+          ) : null}
+          {presence.retards > 0 ? (
+            <Chip tone="warning">
+              {formatCount(presence.retards)} {plural(presence.retards, 'retard')}
+            </Chip>
+          ) : null}
+        </div>
+      ) : null}
+
+      {presence.classesSansAppel.length > 0 ? (
+        <div
+          style={{
+            marginTop: 'var(--space-3)',
+            display: 'flex',
+            gap: 'var(--space-2)',
+            flexWrap: 'wrap',
+            alignItems: 'center',
+          }}
+        >
+          <span className="t-label-sm t-muted">Aucun appel :</span>
+          {presence.classesSansAppel.map((name, index) => (
+            // Deux classes homonymes sont possibles (ex. deux « 6e A » après
+            // une préparation de rentrée) : le nom seul ne suffit pas comme clé.
+            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
+          ))}
+        </div>
+      ) : null}
+    </Card>
   );
 }
 
@@ -128,8 +313,8 @@ function GradingProgress({ saisie }: { saisie: NonNullable<AdminDashboard['saisi
           }}
         >
           <span className="t-label-sm t-muted">Aucune note :</span>
-          {late.map((name) => (
-            <Chip key={name} tone="warning">{name}</Chip>
+          {late.map((name, index) => (
+            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
           ))}
         </div>
       ) : null}

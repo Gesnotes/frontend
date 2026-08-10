@@ -1,5 +1,5 @@
 import { ApiError } from './ApiError';
-import { API_BASE_URL, SCHOOL_SUBDOMAIN } from './config';
+import { API_BASE_URL } from './config';
 import { sessionStore } from './session';
 import type { LoginResult } from './types';
 
@@ -31,7 +31,6 @@ export function buildUrl(path: string, query?: Query): string {
 
 function baseHeaders(anonymous: boolean): Headers {
   const headers = new Headers({ Accept: 'application/json' });
-  if (SCHOOL_SUBDOMAIN) headers.set('X-School-Subdomain', SCHOOL_SUBDOMAIN);
   if (!anonymous) {
     const token = sessionStore.getAccessToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);

@@ -1,13 +1,20 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import { errorMessage, isApiError } from '../../api';
+import { errorMessage, isApiError, type IdentifyResult } from '../../api';
 import { useAuth } from '../../auth/auth-context';
 import { homePathFor, paths } from '../../routes/paths';
 import { Alert, Button, TextField } from '../../ui';
 import { AuthLayout } from './AuthLayout';
 
-type LocationState = { from?: { pathname: string } };
+type LocationState = {
+  from?: { pathname: string };
+  /** Posés par la vitrine (« Voir une démo ») : préremplissent sans soumettre. */
+  demoIdentifier?: string;
+  demoPassword?: string;
+};
+
+type AmbiguousSchool = Extract<IdentifyResult, { status: 'ambiguous' }>['schools'][number];
 
 /**
  * Message d'échec de connexion.
@@ -26,35 +33,94 @@ function loginErrorMessage(cause: unknown): string {
 }
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { identify } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const state = location.state as LocationState | null;
 
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [identifier, setIdentifier] = useState(state?.demoIdentifier ?? '');
+  const [password, setPassword] = useState(state?.demoPassword ?? '');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [hint, setHint] = useState(false);
+  /**
+   * Identifiant et mot de passe valables dans plusieurs écoles à la fois (un
+   * parent avec un enfant dans chacune, par exemple) : impossible de deviner
+   * laquelle, il faut la faire choisir.
+   */
+  const [schools, setSchools] = useState<AmbiguousSchool[] | null>(null);
+
+  function goHome(role: Parameters<typeof homePathFor>[0]) {
+    navigate(state?.from?.pathname ?? homePathFor(role), { replace: true });
+  }
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setHint(false);
     setSubmitting(true);
 
     try {
-      const user = await login(identifier.trim(), password);
-      const from = (location.state as LocationState | null)?.from?.pathname;
-      navigate(from ?? homePathFor(user.role), { replace: true });
+      const result = await identify(identifier.trim(), password);
+      if (result.status === 'ambiguous') {
+        setSchools(result.schools);
+        return;
+      }
+      goHome(result.user.role);
     } catch (cause) {
       setError(loginErrorMessage(cause));
-      // En développement seulement : le backend trace dans ses logs si le
-      // compte existe dans une autre école, cause la plus fréquente d'un
-      // échec avec des identifiants pourtant corrects.
-      setHint(import.meta.env.DEV && isApiError(cause) && cause.isUnauthorized);
     } finally {
       setSubmitting(false);
     }
+  }
+
+  /** École choisie dans la liste ambiguë : termine la connexion sur celle-ci. */
+  async function chooseSchool(school: AmbiguousSchool) {
+    setError(null);
+    setSubmitting(true);
+    try {
+      const result = await identify(identifier.trim(), password, school.id);
+      if (result.status === 'ambiguous') {
+        // Ne devrait pas arriver : un schoolId choisi dans la liste
+        // précédente referme toujours le choix côté serveur.
+        setSchools(result.schools);
+        return;
+      }
+      goHome(result.user.role);
+    } catch (cause) {
+      setError(loginErrorMessage(cause));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (schools) {
+    return (
+      <AuthLayout
+        title="Quelle est votre école ?"
+        lead="Ces identifiants correspondent à plusieurs établissements. Choisissez le vôtre."
+      >
+        <div className="auth__form">
+          {error ? <Alert tone="danger">{error}</Alert> : null}
+
+          <div className="list-rows">
+            {schools.map((school) => (
+              <div key={school.id} className="list-row">
+                <div className="list-row__body">
+                  <div className="list-row__title">{school.name}</div>
+                  {school.city ? <div className="list-row__meta">{school.city}</div> : null}
+                </div>
+                <Button size="sm" variant="tonal" loading={submitting} onClick={() => chooseSchool(school)}>
+                  Choisir
+                </Button>
+              </div>
+            ))}
+          </div>
+
+          <Button variant="secondary" block type="button" onClick={() => setSchools(null)}>
+            Revenir
+          </Button>
+        </div>
+      </AuthLayout>
+    );
   }
 
   return (
@@ -66,10 +132,9 @@ export default function LoginPage() {
       <form className="auth__form" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
-        {hint ? (
+        {state?.demoIdentifier ? (
           <Alert tone="info">
-            En développement : si ces identifiants sont bons, le compte appartient peut-être à une
-            autre école. Le terminal du backend indique laquelle.
+            Identifiants de démonstration déjà renseignés — il ne reste qu'à vous connecter.
           </Alert>
         ) : null}
 

@@ -5,8 +5,14 @@
 interface ImportMetaEnv {
   /** Racine de l'API backend, ex. `http://localhost:3000`. */
   readonly VITE_API_BASE_URL?: string;
-  /** Sous-domaine d'école envoyé en développement via `X-School-Subdomain`. */
-  readonly VITE_SCHOOL_SUBDOMAIN?: string;
+
+  /**
+   * Compte de démonstration public affiché sur la vitrine. Facultatif : le
+   * bouton « Voir une démo » n'apparaît que si les deux valeurs sont
+   * renseignées.
+   */
+  readonly VITE_DEMO_IDENTIFIER?: string;
+  readonly VITE_DEMO_PASSWORD?: string;
 
   /**
    * Configuration web Firebase — Console → Paramètres du projet → Général →

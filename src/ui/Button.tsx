@@ -35,7 +35,14 @@ export function Button({
 
   return (
     <button type={type} className={classes} disabled={disabled || loading} aria-busy={loading} {...rest}>
-      {loading ? <span className="ui-spinner" aria-hidden="true" /> : icon}
+      {loading ? (
+        <span className="ui-spinner" aria-hidden="true" />
+      ) : icon ? (
+        // Élément à part entière, pas du texte brut adjacent au libellé : le
+        // `gap` du bouton ne sépare que des enfants distincts, deux textes
+        // bruts collés fusionnent en une seule boîte anonyme sans espace.
+        <span className="ui-btn__icon" aria-hidden="true">{icon}</span>
+      ) : null}
       {children}
     </button>
   );

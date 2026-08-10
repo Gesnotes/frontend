@@ -50,11 +50,16 @@ export function useEvaluations(
 
 /**
  * Créer, renommer ou supprimer une évaluation change la liste des évaluations,
- * la grille de saisie et l'avancement affiché sur le tableau de bord.
+ * la grille de saisie, et — dès qu'elle porte des notes — l'avancement de la
+ * saisie affiché sur les cartes classe et le tableau de bord admin.
  */
 function useInvalidateEvaluations() {
   const queryClient = useQueryClient();
-  return () => queryClient.invalidateQueries({ queryKey: queryKeys.teacherMe.all });
+  return () => {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.teacherMe.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.classes.all });
+    void queryClient.invalidateQueries({ queryKey: queryKeys.dashboard.all });
+  };
 }
 
 export function useCreateEvaluation() {

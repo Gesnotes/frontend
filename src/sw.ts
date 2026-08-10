@@ -45,10 +45,19 @@ if (import.meta.env.PROD) {
   );
 }
 
-registerRoute(
-  ({ request }) => request.destination === 'style' || request.destination === 'script',
-  new StaleWhileRevalidate({ cacheName: 'gesnotes-assets' }),
-);
+/**
+ * Réservé à la production, comme la route de navigation ci-dessus : en dev,
+ * Vite sert déjà chaque module à jour sur chaque requête (HMR compris). Le
+ * cache stale-while-revalidate rejouerait par-dessus un ancien bundle après
+ * chaque redémarrage du serveur — un onglet resterait bloqué sur un JS
+ * périmé (nav incomplète, page blanche) jusqu'à une revalidation manuelle.
+ */
+if (import.meta.env.PROD) {
+  registerRoute(
+    ({ request }) => request.destination === 'style' || request.destination === 'script',
+    new StaleWhileRevalidate({ cacheName: 'gesnotes-assets' }),
+  );
+}
 
 registerRoute(
   ({ url }) => url.origin === 'https://fonts.gstatic.com',

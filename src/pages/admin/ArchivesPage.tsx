@@ -1,8 +1,8 @@
 import { useState } from 'react';
 
 import {
-  classesApi, errorMessage, referentialsApi, studentsApi, subjectsApi, teachersApi,
-  type ID, type Term,
+  classesApi, errorMessage, referentialsApi, schoolYearsApi, studentsApi, subjectsApi, teachersApi,
+  type ID, type SchoolYear, type Term,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -11,9 +11,9 @@ import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import {
   Alert, Button, Card, Chip, DataTable, EmptyState, Skeleton, useToast, type Column,
 } from '../../ui';
-import { PermanentDeleteDialog } from './PermanentDeleteDialog';
+import { PermanentDeleteDialog } from '../../components/PermanentDeleteDialog';
 
-type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms';
+type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'classes', label: 'Classes' },
@@ -21,6 +21,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'teachers', label: 'Enseignants' },
   { id: 'students', label: 'Élèves' },
   { id: 'terms', label: 'Périodes' },
+  { id: 'schoolYears', label: 'Années scolaires' },
 ];
 
 /**
@@ -46,7 +47,8 @@ export default function ArchivesPage() {
           <Alert tone="info">
             Archiver ne supprime rien : les notes et l'historique sont conservés. Un élément
             restauré réapparaît immédiatement dans les listes. La suppression définitive, elle,
-            est refusée tant que des notes ou des élèves en dépendent.
+            est irréversible et efface avec elle tout ce qui en dépend — élèves, notes,
+            évaluations compris selon l'élément supprimé.
           </Alert>
 
           <div className="page-toolbar" role="tablist" aria-label="Type d'élément archivé">
@@ -69,6 +71,7 @@ export default function ArchivesPage() {
           {tab === 'teachers' ? <ArchivedTeachers /> : null}
           {tab === 'students' ? <ArchivedStudents /> : null}
           {tab === 'terms' ? <ArchivedTerms /> : null}
+          {tab === 'schoolYears' ? <ArchivedSchoolYears /> : null}
         </div>
       </PageContent>
     </>
@@ -172,14 +175,15 @@ function ArchivedClasses() {
         title={`Supprimer ${toDelete?.name ?? ''} définitivement ?`}
         description={
           toDelete && toDelete.effectif > 0
-            ? `${formatCount(toDelete.effectif)} ${plural(toDelete.effectif, 'élève')} y ${toDelete.effectif > 1 ? 'sont' : 'est'} rattaché${toDelete.effectif > 1 ? 's' : ''} : la suppression sera refusée. Réaffectez-les d'abord à une autre classe.`
+            ? `${formatCount(toDelete.effectif)} ${plural(toDelete.effectif, 'élève')} y ${toDelete.effectif > 1 ? 'sont' : 'est'} rattaché${toDelete.effectif > 1 ? 's' : ''} : ${toDelete.effectif > 1 ? 'ils seront supprimés' : 'il sera supprimé'} avec la classe, notes et présences comprises. Réaffectez-les d'abord à une autre classe pour les conserver.`
             : 'La classe et ses coefficients sont effacés.'
         }
+        confirmName={toDelete?.name}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success(`${toDelete.name} supprimée définitivement`);
           setToDelete(null);
         }}
@@ -246,12 +250,13 @@ function ArchivedSubjects() {
       <PermanentDeleteDialog
         open={toDelete !== null}
         title={`Supprimer ${toDelete?.name ?? ''} définitivement ?`}
-        description="La matière est effacée du programme. La suppression est refusée si des notes y sont rattachées, pour ne pas les effacer en cascade."
+        description="La matière est effacée du programme, avec ses évaluations et toutes les notes qui s'y rattachent."
+        confirmName={toDelete?.name}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success(`${toDelete.name} supprimée définitivement`);
           setToDelete(null);
         }}
@@ -266,7 +271,9 @@ function ArchivedTeachers() {
   const restore = teachersApi.useRestoreTeacher();
   const remove = teachersApi.useDeleteTeacher();
 
-  const [toDelete, setToDelete] = useState<{ id: ID; name: string } | null>(null);
+  const [toDelete, setToDelete] = useState<{ id: ID; name: string; confirmName: string } | null>(
+    null,
+  );
 
   async function runRestore(id: ID, name: string) {
     try {
@@ -307,7 +314,16 @@ function ArchivedTeachers() {
                   restoreLabel="Réactiver"
                   restoring={restore.isPending}
                   onRestore={() => void runRestore(row.id, personName(row))}
-                  onDelete={() => setToDelete({ id: row.id, name: personName(row, row.email) })}
+                  onDelete={() =>
+                    setToDelete({
+                      id: row.id,
+                      name: personName(row, row.email),
+                      // Le backend compare au nom brut (prénom + nom, sans
+                      // repli sur l'email) : un compte sans nom n'a donc rien
+                      // à confirmer, la boîte de dialogue le laisse passant.
+                      confirmName: [row.firstName, row.lastName].filter(Boolean).join(' '),
+                    })
+                  }
                 />
               ),
             },
@@ -328,12 +344,13 @@ function ArchivedTeachers() {
       <PermanentDeleteDialog
         open={toDelete !== null}
         title={`Supprimer le compte de ${toDelete?.name ?? ''} ?`}
-        description="Le compte est effacé. La suppression est refusée si cet enseignant a saisi des notes : elles doivent rester attribuées."
+        description="Le compte est effacé. Les notes et présences déjà saisies par cet enseignant restent, mais sans auteur attribué."
+        confirmName={toDelete?.confirmName || undefined}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
-        onConfirm={async () => {
+        onConfirm={async (typedName) => {
           if (!toDelete) return;
-          await remove.mutateAsync({ id: toDelete.id, permanent: true });
+          await remove.mutateAsync({ id: toDelete.id, permanent: true, confirmLabel: typedName });
           toast.success('Compte supprimé définitivement');
           setToDelete(null);
         }}
@@ -532,6 +549,109 @@ function ArchivedTerms() {
         }
         // Effacer un trimestre détruit le travail de saisie d'une équipe
         // entière : le backend exige le libellé exact.
+        confirmName={toDelete?.label}
+        pending={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={async (typedLabel) => {
+          if (!toDelete) return;
+          await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
+          toast.success(`« ${toDelete.label} » supprimée définitivement`);
+          setToDelete(null);
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Années scolaires archivées.
+ *
+ * La suppression définitive emporte en cascade tout ce que l'année
+ * contient : ses périodes (et leurs évaluations, leurs notes), ses classes
+ * (et leurs élèves, notes, présences, historique de réinscription).
+ */
+function ArchivedSchoolYears() {
+  const toast = useToast();
+  const years = schoolYearsApi.useSchoolYears(true);
+  const restore = schoolYearsApi.useRestoreSchoolYear();
+  const remove = schoolYearsApi.useDeleteSchoolYearPermanently();
+
+  const [toDelete, setToDelete] = useState<SchoolYear | null>(null);
+
+  async function runRestore(year: SchoolYear) {
+    try {
+      await restore.mutateAsync(year.id);
+      toast.success(`« ${year.label} » restaurée`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <>
+      <QueryBoundary query={years} loading={<TableSkeleton />}>
+        {(items) => {
+          const rows = onlyArchived(items);
+          const columns: Column<SchoolYear>[] = [
+            { key: 'label', header: 'Année', render: (row) => <strong>{row.label}</strong> },
+            {
+              key: 'dates',
+              header: 'Dates',
+              render: (row) => (
+                <span className="t-muted">
+                  {row.startDate ? `${formatDate(row.startDate)} → ${formatDate(row.endDate)}` : '—'}
+                </span>
+              ),
+            },
+            {
+              key: 'content',
+              header: 'Contenu',
+              render: (row) => (
+                <Chip tone={row.classCount > 0 || row.termCount > 0 ? 'warning' : 'neutral'}>
+                  {formatCount(row.classCount)} {plural(row.classCount, 'classe')} ·{' '}
+                  {formatCount(row.termCount)} {plural(row.termCount, 'période')}
+                </Chip>
+              ),
+            },
+            {
+              key: 'archivedAt',
+              header: 'Archivée le',
+              render: (row) => <span className="t-muted">{formatDate(row.archivedAt)}</span>,
+            },
+            {
+              key: 'actions',
+              srHeader: 'Actions',
+              align: 'numeric',
+              render: (row) => (
+                <RowActions
+                  restoring={restore.isPending}
+                  onRestore={() => void runRestore(row)}
+                  onDelete={() => setToDelete(row)}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <DataTable
+              caption="Années scolaires archivées"
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => String(row.id)}
+              empty={<Empty what="année scolaire" />}
+            />
+          );
+        }}
+      </QueryBoundary>
+
+      <PermanentDeleteDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
+        description={
+          toDelete && (toDelete.classCount > 0 || toDelete.termCount > 0)
+            ? `${formatCount(toDelete.classCount)} ${plural(toDelete.classCount, 'classe')} et ${formatCount(toDelete.termCount)} ${plural(toDelete.termCount, 'période')} seront supprimées avec cette année, élèves et notes compris.`
+            : "L'année est effacée. Elle ne regroupe aucune classe ni aucune période."
+        }
         confirmName={toDelete?.label}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}

@@ -17,21 +17,20 @@
 export const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '/api').replace(/\/+$/, '');
 
 /**
- * Sous-domaine de l'école, envoyé via `X-School-Subdomain`.
+ * Compte de démonstration public, montré sur la vitrine (« Voir une démo »).
  *
- * **À laisser vide en développement.** Le backend sait déjà quelle école
- * utiliser : son `DEFAULT_SCHOOL_SUBDOMAIN`, ou la seule école présente en
- * base. Renseigner la variable ici crée une seconde source de vérité, et deux
- * fichiers `.env` non versionnés qui divergent produisent un
- * « Identifiants invalides » sur des identifiants corrects.
- *
- * À ne remplir que pour viser volontairement une école précise parmi
- * plusieurs. En production, le nom d'hôte fait autorité.
+ * Facultatif : le bouton ne s'affiche que si l'identifiant et le mot de passe
+ * sont renseignés. Le mot de passe est un identifiant public assumé (le
+ * compte est fait pour ça), jamais celui d'un établissement réel.
  */
-export const SCHOOL_SUBDOMAIN = import.meta.env.VITE_SCHOOL_SUBDOMAIN ?? '';
+export const DEMO_IDENTIFIER = import.meta.env.VITE_DEMO_IDENTIFIER ?? '';
+export const DEMO_PASSWORD = import.meta.env.VITE_DEMO_PASSWORD ?? '';
 
 /** Clé de stockage de la session dans `localStorage`. */
 export const SESSION_STORAGE_KEY = 'gesnotes.session';
+
+/** Session de l'équipe Gesnotes — clé distincte : les deux mondes ne se mélangent jamais. */
+export const STAFF_SESSION_STORAGE_KEY = 'gesnotes.staff-session';
 
 /**
  * Clé de stockage de la période choisie.

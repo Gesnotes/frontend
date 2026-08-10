@@ -232,6 +232,92 @@
   min-width: 0;
 }
 
+/* Trois actions pleine largeur, empilées plutôt qu'en rangée : à cinq ou six
+   lettres près, "Voir les notes" et "Présence" côte à côte s'écrasaient sur
+   une carte de largeur variable. */
+.card-actions--stacked {
+  flex-direction: column;
+}
+
+/* Menu « … » de la carte classe (renommer, archiver) : gestes rares, repliés
+   plutôt qu'en rangée permanente à côté des actions du quotidien. */
+.class-card__menu {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.class-card__menu-trigger {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: none;
+  background: none;
+  border-radius: var(--radius-full);
+  color: var(--on-surface-variant);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.class-card__menu-trigger:hover {
+  background: var(--surface-container-low);
+}
+
+.class-card__menu-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  padding: var(--space-2);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius);
+  box-shadow: var(--elevation-2);
+}
+
+.class-card__menu-item {
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  border-radius: var(--radius-sm);
+  text-align: left;
+  font-size: var(--body-md-size);
+  font-weight: 500;
+  color: var(--on-surface);
+  cursor: pointer;
+}
+
+.class-card__menu-item:hover {
+  background: var(--surface-container-low);
+}
+
+.class-card__menu-item--danger {
+  color: var(--error);
+}
+
+/* Pastille de niveau, en tête de carte classe — même famille visuelle que
+   l'avatar des personnes (pastille ronde, initiales), mais pour un niveau
+   scolaire, qui ne tient pas toujours en deux lettres ("Terminale"). */
+.class-card__badge {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+  font-size: var(--label-sm-size);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
 .grid-split {
   display: grid;
   grid-template-columns: 1.4fr 1fr;
@@ -310,6 +396,71 @@
   justify-content: flex-end;
 }
 
+/* Choix du mode d'une classe (notes ou présence) : deux cartes larges plutôt
+   qu'une case perdue dans un formulaire — un choix qui se voit, pas qu'on coche. */
+.mode-picker {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.mode-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: 2px solid var(--outline-variant);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+}
+
+.mode-card--selected {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary);
+}
+
+.mode-card__title {
+  font-weight: 700;
+  font-size: var(--body-md-size);
+}
+
+.mode-card__body {
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+.mode-card--selected .mode-card__body {
+  color: color-mix(in srgb, var(--on-primary) 82%, transparent);
+}
+
+/* Trois statuts côte à côte (feuille de présence) plutôt qu'une liste
+   déroulante à ouvrir — le cas fréquent (présent) se voit sans clic. */
+.attendance-toggle {
+  display: inline-flex;
+  border: 1px solid var(--outline-variant);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.attendance-toggle__option {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--label-sm-size);
+  font-weight: 600;
+  color: var(--on-surface-variant);
+  background: none;
+  border: none;
+  border-right: 1px solid var(--outline-variant);
+  cursor: pointer;
+}
+
+.attendance-toggle__option:last-child {
+  border-right: none;
+}
+
 .list-rows {
   display: flex;
   flex-direction: column;
@@ -330,6 +481,48 @@
 .list-row__body {
   flex: 1;
   min-width: 0;
+}
+
+/* ---------------- Liste de tâches d'accueil (DESIGN.md §6) ---------------- */
+
+.checklist {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.checklist__row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--surface-container-low);
+  border-radius: var(--radius);
+  font-size: var(--body-md-size);
+  font-weight: 500;
+}
+
+.checklist__row.is-done {
+  color: var(--on-surface-variant);
+}
+
+.checklist__box {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-sm);
+  border: 2px solid var(--outline);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.checklist__row.is-done .checklist__box {
+  background: var(--secondary);
+  border-color: var(--secondary);
+  color: var(--on-secondary);
 }
 
 .list-row__title {

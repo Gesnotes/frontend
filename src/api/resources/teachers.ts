@@ -29,11 +29,16 @@ export function updateTeacher(id: ID, payload: UpdateTeacherPayload) {
 }
 
 /**
- * Désactivation par défaut, les notes saisies étant conservées.
- * `permanent` supprime réellement et échoue si des notes existent.
+ * Désactivation par défaut, les notes saisies étant conservées. La
+ * suppression définitive est réservée à un compte déjà désactivé et exige,
+ * côté backend, le nom exact en confirmation ; refusée aussi si des notes
+ * existent.
  */
-export function deleteTeacher(id: ID, permanent = false) {
-  return api.delete<void>(`/teachers/${id}`, { permanent: permanent ? 'true' : 'false' });
+export function deleteTeacher(id: ID, permanent = false, confirmLabel = '') {
+  return api.delete<void>(`/teachers/${id}`, {
+    permanent: permanent ? 'true' : 'false',
+    confirm_label: confirmLabel,
+  });
 }
 
 export function restoreTeacher(id: ID) {
@@ -76,7 +81,8 @@ export function useUpdateTeacher() {
 export function useDeleteTeacher() {
   const invalidate = useInvalidateTeachers();
   return useMutation({
-    mutationFn: ({ id, permanent }: { id: ID; permanent?: boolean }) => deleteTeacher(id, permanent),
+    mutationFn: ({ id, permanent, confirmLabel }: { id: ID; permanent?: boolean; confirmLabel?: string }) =>
+      deleteTeacher(id, permanent, confirmLabel),
     onSuccess: invalidate,
   });
 }

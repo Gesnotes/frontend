@@ -1,5 +1,12 @@
 export type ChipTone = 'neutral' | 'info' | 'success' | 'warning' | 'danger';
 
+/** Tonalité d'un statut de présence : présent en vert, retard en orange, absent en rouge. */
+export function attendanceTone(status: 'present' | 'absent' | 'late'): ChipTone {
+  if (status === 'present') return 'success';
+  if (status === 'late') return 'warning';
+  return 'danger';
+}
+
 /**
  * Tonalité d'une note ramenée sur son barème.
  * Le vert « succès » est réservé aux notes ≥ 85 % conformément au design system.
