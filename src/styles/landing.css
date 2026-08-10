@@ -4,6 +4,10 @@
 .landing {
   min-height: 100%;
   background: var(--background);
+  /* La page ne doit jamais défiler horizontalement : un seul débordement
+     (texte trop large, grille mal contrainte) sur un petit écran suffit à
+     casser l'impression de fiabilité dès la première seconde. */
+  overflow-x: hidden;
 }
 
 .landing__header {
@@ -18,11 +22,11 @@
 .landing__header-inner {
   max-width: var(--container-max);
   margin: 0 auto;
-  padding: var(--space-4) var(--margin-mobile);
+  padding: var(--space-3) var(--margin-mobile);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-4);
+  gap: var(--space-3);
 }
 
 .landing__brand {
@@ -32,12 +36,27 @@
   font-weight: 800;
   font-size: var(--title-md-size);
   color: var(--on-background);
+  flex-shrink: 0;
 }
 
 .landing__header-actions {
   display: flex;
   align-items: center;
   gap: var(--space-3);
+}
+
+/* Discret par nature : ce n'est pas ce que vient chercher un visiteur qui
+   découvre le produit, seulement une porte pour la cliente déjà équipée. */
+.landing__login-link {
+  color: var(--on-surface-variant);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color var(--motion-fast);
+}
+
+.landing__login-link:hover {
+  color: var(--on-background);
 }
 
 .landing__section {
@@ -48,21 +67,27 @@
 
 .landing__hero {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: var(--space-10);
-  padding-top: var(--space-10);
-  padding-bottom: var(--space-10);
+  text-align: center;
+  gap: var(--space-5);
+  padding-top: clamp(var(--space-8), 8vw, var(--space-12));
+  padding-bottom: clamp(var(--space-8), 8vw, var(--space-12));
+  animation: gn-rise var(--motion-slow) ease both;
 }
 
 .landing__hero-copy {
-  flex: 1 1 420px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   gap: var(--space-5);
 }
 
 .landing__hero-title {
-  font-size: 44px;
+  /* Fluide plutôt qu'un saut brutal à un point de rupture : le titre reste
+     toujours dimensionné pour sa largeur de conteneur réelle. */
+  font-size: clamp(28px, 6vw, 44px);
   line-height: 1.1;
   font-weight: 800;
   letter-spacing: -0.02em;
@@ -72,39 +97,20 @@
 .landing__hero-actions {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
   gap: var(--space-3);
   margin-top: var(--space-2);
 }
 
-.landing__hero-visual {
-  flex: 1 1 380px;
-  display: flex;
-  justify-content: center;
+.landing__hero-login {
+  color: var(--on-surface-variant);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  transition: color var(--motion-fast);
 }
 
-/* Aperçu illustratif du tableau de bord — de vrais composants, de fausses données. */
-.landing__preview {
-  width: 100%;
-  max-width: 420px;
-  padding: var(--space-6);
-  border-radius: var(--radius-xl);
-  background: var(--surface-container-lowest);
-  box-shadow: var(--elevation-2);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.landing__preview-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.landing__preview-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-3);
+.landing__hero-login:hover {
+  color: var(--primary);
 }
 
 .landing__section-head {
@@ -130,6 +136,12 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
+  transition: transform var(--motion-fast), box-shadow var(--motion-fast);
+}
+
+.landing__feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--elevation-2);
 }
 
 .landing__feature-card--highlight {
@@ -150,6 +162,11 @@
   place-items: center;
   font-size: 22px;
   background: var(--surface-container-high);
+  transition: transform var(--motion-base);
+}
+
+.landing__feature-card:hover .landing__feature-icon {
+  transform: scale(1.1) rotate(-6deg);
 }
 
 .landing__feature-card--highlight .landing__feature-icon {
@@ -165,11 +182,28 @@
 .landing__audience-item {
   display: flex;
   gap: var(--space-3);
+  transition: transform var(--motion-fast);
+}
+
+.landing__audience-item:hover {
+  transform: translateX(4px);
 }
 
 .landing__audience-icon {
   font-size: 24px;
   flex-shrink: 0;
+}
+
+.landing__cta {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+  max-width: 640px;
+  margin: 0 auto;
+  padding-top: var(--space-10);
+  padding-bottom: var(--space-10);
 }
 
 .landing__footer {
@@ -203,17 +237,46 @@
   color: var(--inverse-on-surface);
 }
 
+/* ---- Révélation au défilement ----
+   État initial appliqué en JS (useRevealOnScroll) pour qu'un utilisateur
+   sans JavaScript, ou avant l'hydratation, voie tout de suite le contenu
+   plutôt qu'une page vide. */
+.landing--pre-reveal {
+  opacity: 0;
+  transform: translateY(24px);
+}
+
+.landing--visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--motion-slow) ease, transform var(--motion-slow) ease;
+}
+
+.landing--visible .landing__feature-card,
+.landing--visible .landing__audience-item {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity var(--motion-slow) ease, transform var(--motion-slow) ease;
+}
+
+.landing__feature-card,
+.landing__audience-item {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing__hero,
+  .landing--pre-reveal,
+  .landing__feature-card,
+  .landing__audience-item {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+}
+
 @media (max-width: 900px) {
-  .landing__hero {
-    flex-direction: column;
-    align-items: stretch;
-    text-align: center;
-  }
-
-  .landing__hero-actions {
-    justify-content: center;
-  }
-
   .landing__features,
   .landing__audience {
     grid-template-columns: 1fr;
@@ -221,7 +284,29 @@
 }
 
 @media (max-width: 560px) {
-  .landing__hero-title {
-    font-size: 32px;
+  .landing__header-inner {
+    padding-block: var(--space-2);
+  }
+
+  /* « Se connecter » reste joignable depuis le bas du hero : sur un écran
+     étroit, le disputer à la marque et au bouton principal dans une seule
+     ligne les faisait tous les trois se chevaucher ou déborder. */
+  .landing__login-link {
+    display: none;
+  }
+
+  /* Empile les CTA plutôt que de les faire coexister à l'étroit : deux
+     boutons larges côte à côte sur 360-390px de large se retrouvaient soit
+     tronqués, soit disproportionnés par rapport au texte qu'ils portent.
+     `.ui-btn` est en `inline-flex` : stretch le lien qui le porte ne suffit
+     pas, il lui faut sa propre largeur explicite. */
+  .landing__hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .landing__hero-actions .ui-btn {
+    width: 100%;
   }
 }
