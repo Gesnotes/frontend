@@ -18,10 +18,19 @@ export const queryKeys = {
     all: ['grade-types'] as const,
   },
 
+  school: {
+    all: ['school'] as const,
+  },
+
+  schoolYears: {
+    all: ['school-years'] as const,
+    list: (includeArchived?: boolean) => ['school-years', 'list', includeArchived ?? false] as const,
+  },
+
   classes: {
     all: ['classes'] as const,
-    list: (termId?: ID, includeArchived?: boolean) =>
-      ['classes', 'list', termId ?? null, includeArchived ?? false] as const,
+    list: (termId?: ID, includeArchived?: boolean, schoolYearId?: ID) =>
+      ['classes', 'list', termId ?? null, includeArchived ?? false, schoolYearId ?? null] as const,
     detail: (id: ID, termId: ID) => ['classes', 'detail', id, termId] as const,
     bulletin: (id: ID, termId: ID) => ['classes', 'bulletin', id, termId] as const,
   },
@@ -77,10 +86,12 @@ export const queryKeys = {
     detail: (id: ID, termId: ID) => ['children', 'detail', id, termId] as const,
     grades: (id: ID, termId?: ID, subjectId?: ID) =>
       ['children', 'grades', id, termId ?? null, subjectId ?? null] as const,
+    attendance: (id: ID) => ['children', 'attendance', id] as const,
   },
 
-  onboarding: {
-    schoolSearch: (query: string) => ['onboarding', 'school-search', query] as const,
+  attendance: {
+    all: ['attendance'] as const,
+    sheet: (classId: ID, date: string) => ['attendance', 'sheet', classId, date] as const,
   },
 
   staff: {

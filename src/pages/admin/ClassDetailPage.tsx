@@ -42,6 +42,9 @@ export default function ClassDetailPage() {
         actions={
           <>
             <TermSelect />
+            <Link to={paths.admin.classEnrollment(id)}>
+              <Button variant="secondary">Réinscrire</Button>
+            </Link>
             <Link to={paths.admin.classBulletin(id)}>
               <Button variant="secondary">Bulletin de classe</Button>
             </Link>

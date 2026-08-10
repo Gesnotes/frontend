@@ -29,9 +29,18 @@ export default function StudentsPage() {
   });
 
   const [creating, setCreating] = useState(false);
+  // Le formulaire est partagé entre création et modification : sans ce
+  // compteur, sa clé ne changeait qu'en passant d'un élève à un autre, jamais
+  // entre deux créations d'affilée — le précédent élève saisi restait affiché.
+  const [creationKey, setCreationKey] = useState(0);
   const [importing, setImporting] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [editing, setEditing] = useState<Student | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
 
   /**
    * L'export porte le filtre de classe affiché, mais jamais la pagination :
@@ -134,7 +143,7 @@ export default function StudentsPage() {
             <Button variant="secondary" onClick={() => setImporting(true)}>
               Importer une liste
             </Button>
-            <Button onClick={() => setCreating(true)}>Ajouter un élève</Button>
+            <Button onClick={openCreate}>Ajouter un élève</Button>
           </>
         }
       />
@@ -172,7 +181,7 @@ export default function StudentsPage() {
                       icon="⚇"
                       title={classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
                       description="Ajoutez un élève et associez-lui un parent pour qu'il reçoive les notes."
-                      action={{ label: 'Ajouter un élève', onClick: () => setCreating(true) }}
+                      action={{ label: 'Ajouter un élève', onClick: openCreate }}
                     />
                   }
                 />
@@ -209,7 +218,7 @@ export default function StudentsPage() {
       </PageContent>
 
       <StudentModal
-        key={editing?.id ?? 'new'}
+        key={editing ? editing.id : `new-${creationKey}`}
         open={creating || editing !== null}
         student={editing}
         classes={classes.data ?? []}

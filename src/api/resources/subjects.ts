@@ -18,9 +18,16 @@ export function updateSubject(id: ID, payload: UpdateSubjectPayload) {
   return api.patch<Subject>(`/subjects/${id}`, payload);
 }
 
-/** Archivage par défaut : les notes déjà saisies restent lisibles. */
-export function deleteSubject(id: ID, permanent = false) {
-  return api.delete<void>(`/subjects/${id}`, { permanent: permanent ? 'true' : 'false' });
+/**
+ * Archivage par défaut : les notes déjà saisies restent lisibles. La
+ * suppression définitive est réservée à une matière déjà archivée et exige,
+ * côté backend, le nom exact en confirmation.
+ */
+export function deleteSubject(id: ID, permanent = false, confirmLabel = '') {
+  return api.delete<void>(`/subjects/${id}`, {
+    permanent: permanent ? 'true' : 'false',
+    confirm_label: confirmLabel,
+  });
 }
 
 export function restoreSubject(id: ID) {
@@ -67,7 +74,8 @@ export function useUpdateSubject() {
 export function useDeleteSubject() {
   const invalidate = useInvalidateSubjects();
   return useMutation({
-    mutationFn: ({ id, permanent }: { id: ID; permanent?: boolean }) => deleteSubject(id, permanent),
+    mutationFn: ({ id, permanent, confirmLabel }: { id: ID; permanent?: boolean; confirmLabel?: string }) =>
+      deleteSubject(id, permanent, confirmLabel),
     onSuccess: invalidate,
   });
 }

@@ -15,7 +15,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 const API_TARGET = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000';
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ command, isPreview }) => ({
   server: {
     // Écoute sur toutes les interfaces : nécessaire pour ouvrir l'application
     // depuis un téléphone du même réseau.
@@ -45,7 +45,22 @@ export default defineConfig({
       srcDir: 'src',
       filename: 'sw.ts',
       injectRegister: null,
-      registerType: 'prompt',
+      /**
+       * `prompt` en production (y compris `vite preview`, qui la simule) : on
+       * ne recharge jamais l'application sous les pieds d'un parent en train
+       * de lire un bulletin sans lui demander.
+       *
+       * `autoUpdate` seulement en dev réel (`vite dev`) : sans ça, le service
+       * worker généré à chaque redémarrage du serveur reste inactif tant que
+       * personne ne clique sur « Mettre à jour », et sert le bundle de la
+       * session précédente — écran de chargement qui traîne, page blanche,
+       * nav qui n'affiche pas les derniers écrans ajoutés. Aucun utilisateur
+       * réel n'est concerné par un rechargement silencieux pendant le
+       * développement. `command` vaut `'serve'` pour `vite dev` ET
+       * `vite preview` (voir `ConfigEnv` dans les types de Vite) — `isPreview`
+       * est le seul moyen de les distinguer.
+       */
+      registerType: command === 'serve' && !isPreview ? 'autoUpdate' : 'prompt',
       devOptions: { enabled: true, type: 'module' },
       injectManifest: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
@@ -88,4 +103,4 @@ export default defineConfig({
       },
     }),
   ],
-});
+}));

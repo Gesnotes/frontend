@@ -42,39 +42,18 @@ parent.<nom>.<id>@famille.bj   / demo1234
 `ecole-lumiere`). Un compte de l'une ne peut pas se connecter à l'autre —
 c'est l'isolation multi-établissements, elle est volontaire.
 
-## Le sous-domaine, et pourquoi il ne devrait plus vous gêner
+## Connexion
 
-Le backend rattache chaque requête à une école, normalement déduite du
-sous-domaine (`ecole-x.gesnotes.app`). En local, `localhost` ne désigne
-évidemment aucune école.
+Pas de sous-domaine ni d'école à configurer côté frontend : l'écran de
+connexion demande un email (ou un téléphone) et un mot de passe, et l'API
+(`POST /auth/identify`) cherche cet identifiant à travers toutes les écoles.
+Si le même identifiant/mot de passe est valable dans plusieurs écoles à la
+fois, l'écran de connexion propose de choisir laquelle avant de continuer.
 
-**Vous n'avez rien à configurer.** Le backend résout dans cet ordre :
-
-1. le sous-domaine du nom d'hôte, s'il correspond à une école ;
-2. l'en-tête `X-School-Subdomain`, s'il est envoyé ;
-3. `DEFAULT_SCHOOL_SUBDOMAIN` du `.env` backend ;
-4. **la seule école présente en base**, s'il n'y en a qu'une.
-
-`VITE_SCHOOL_SUBDOMAIN` doit donc rester **vide** côté frontend : le remplir
-crée une seconde source de vérité, et deux fichiers `.env` non versionnés qui
-divergent produisent un « Identifiants invalides » sur des identifiants
-pourtant corrects.
-
-Ne le renseignez que si vous avez plusieurs écoles en base et voulez en viser
-une précise.
-
-### Si la connexion échoue quand même
-
-| Message | Cause | Correctif |
-|---|---|---|
-| « École … introuvable. Écoles disponibles : … » | Sous-domaine demandé inexistant | Videz `VITE_SCHOOL_SUBDOMAIN`, ou reprenez un des sous-domaines listés |
-| « Aucune école en base » | Seed jamais lancé | `npm run prisma:seed` |
-| « Identifiants invalides » avec de bons identifiants | Le compte appartient à l'autre école | **Regardez le terminal du backend** : il nomme l'école du compte |
-
-Le backend ne peut pas écrire cette dernière information dans sa réponse HTTP :
-distinguer « mauvais mot de passe » de « compte d'une autre école »
-permettrait d'énumérer les comptes d'une instance. Le diagnostic part donc
-dans ses logs, que seul le développeur voit.
+Si la connexion échoue avec de bons identifiants, vérifiez d'abord que le
+seed a bien été lancé (`npm run prisma:seed`) — le message renvoyé reste
+volontairement générique (« Email, téléphone ou mot de passe incorrect »)
+pour ne jamais permettre d'énumérer les comptes existants.
 
 ## Pas de CORS : le proxy
 

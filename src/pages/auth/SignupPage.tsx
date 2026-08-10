@@ -81,7 +81,7 @@ export default function SignupPage() {
       lead="Deux minutes. On vous rappelle."
       footnote={
         <>
-          Déjà cliente ? <Link to={paths.schoolPicker}>Connectez-vous</Link>
+          Déjà cliente ? <Link to={paths.login}>Connectez-vous</Link>
         </>
       }
     >

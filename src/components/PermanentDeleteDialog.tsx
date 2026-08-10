@@ -1,15 +1,15 @@
 import { useState } from 'react';
 
-import { errorMessage } from '../../api';
-import { Alert, Button, Modal, TextField } from '../../ui';
+import { errorMessage } from '../api';
+import { Alert, Button, Modal, TextField } from '../ui';
 
 /**
  * Suppression définitive d'un élément archivé.
  *
- * Le backend refuse l'opération dès que des données en dépendent — élèves
- * rattachés à une classe, notes saisies dans une matière ou par un enseignant —
- * et renvoie alors un 409 portant le décompte exact. Ce message est plus utile
- * que n'importe quelle formulation générique : il est affiché tel quel.
+ * Le backend emporte en cascade tout ce qui en dépend — élèves rattachés à
+ * une classe, notes saisies dans une matière ou une période — sans jamais
+ * refuser l'opération : `description` doit donc annoncer précisément ce que
+ * l'appelant sait être sur le point de disparaître.
  */
 export function PermanentDeleteDialog({
   open, title, description, confirmName, pending, onCancel, onConfirm,

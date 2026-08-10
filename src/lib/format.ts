@@ -10,6 +10,23 @@ const integerFormatter = new Intl.NumberFormat('fr-FR');
 
 export const EM_DASH = '—';
 
+/**
+ * Jour local du navigateur, au format ISO (`YYYY-MM-DD`).
+ *
+ * Jamais `new Date().toISOString().slice(0, 10)` : `toISOString()` convertit
+ * en UTC, qui n'est le jour réel de l'utilisateur qu'à Greenwich. Une école à
+ * l'est de Greenwich (ex. Afrique de l'Ouest/Centrale) verrait sa présence
+ * prise en début de soirée locale datée « demain » côté serveur, jusqu'à
+ * minuit UTC.
+ */
+export function todayLocalIso(): string {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 /** Note ou moyenne : `13.1` → `13,10`. */
 export function formatGrade(value: number | null | undefined): string {
   return value == null || Number.isNaN(value) ? EM_DASH : gradeFormatter.format(value);

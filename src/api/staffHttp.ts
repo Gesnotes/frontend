@@ -6,9 +6,8 @@ import type { StaffLoginResult } from './types';
 /**
  * Client HTTP de l'espace staff — doublon volontaire de `http.ts`.
  *
- * Ni `X-School-Subdomain` (les routes `/staff` sont hors périmètre
- * multi-écoles), ni `sessionStore` (jeton et rafraîchissement propres à ce
- * monde). Dupliquer ce fichier, plutôt que généraliser `http.ts` pour les
+ * Ne partage pas `sessionStore` : jeton et rafraîchissement propres à ce
+ * monde. Dupliquer ce fichier, plutôt que généraliser `http.ts` pour les
  * deux mondes à la fois, garde le client existant — déjà bien testé —
  * intact ; le pendant serveur fait le même choix (`staff-auth.service.ts`
  * distinct de `auth.service.ts`).

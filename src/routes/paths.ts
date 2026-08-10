@@ -5,7 +5,6 @@ export const paths = {
   login: '/connexion',
   forgotPassword: '/mot-de-passe-oublie',
   resetPassword: '/reinitialiser-mot-de-passe',
-  schoolPicker: '/mon-ecole',
   signup: '/inscription',
 
   admin: {
@@ -14,17 +13,23 @@ export const paths = {
     classes: '/admin/classes',
     classDetail: (id: number | string) => `/admin/classes/${id}`,
     classBulletin: (id: number | string) => `/admin/classes/${id}/bulletin`,
+    classAttendance: (id: number | string) => `/admin/classes/${id}/presence`,
+    classEnrollment: (id: number | string) => `/admin/classes/${id}/reinscription`,
+    gradeEntry: '/admin/saisie',
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
     periods: '/admin/periodes',
+    schoolYears: '/admin/annees-scolaires',
     archives: '/admin/archives',
+    settings: '/admin/parametres',
   },
 
   teacher: {
     root: '/enseignant',
     dashboard: '/enseignant',
     gradeEntry: '/enseignant/saisie',
+    attendance: '/enseignant/presence',
     history: '/enseignant/historique',
   },
 
@@ -35,6 +40,7 @@ export const paths = {
     child: (id: number | string) => `/parent/enfants/${id}`,
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
+    attendance: '/parent/presence',
     notifications: '/parent/alertes',
   },
 
