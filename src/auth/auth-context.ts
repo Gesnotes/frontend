@@ -8,9 +8,12 @@ export type AuthContextValue = {
   isAuthenticated: boolean;
   /** Nom affichable : identité si connue, sinon l'email. */
   displayName: string;
-  login: (identifier: string, password: string) => Promise<AuthUser>;
-  /** Connexion sans sous-domaine connu — voir `authApi.identify`. */
-  identify: (identifier: string, password: string) => Promise<IdentifyResult>;
+  /**
+   * Connexion : seule porte d'entrée, aucune école n'est résolue au
+   * préalable. `schoolId` tranche le cas où plusieurs comptes correspondent
+   * (voir `authApi.identify`).
+   */
+  identify: (identifier: string, password: string, schoolId?: number) => Promise<IdentifyResult>;
   logout: () => Promise<void>;
 };
 

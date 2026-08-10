@@ -3,15 +3,13 @@ export { ApiError, isApiError, errorMessage } from './ApiError';
 export { api, apiFetch, apiFetchBlob, buildUrl } from './http';
 export { sessionStore } from './session';
 export type { Session } from './session';
-export { schoolSelectionStore, useSchoolSelection } from './schoolSelection';
-export type { SchoolSelection } from './schoolSelection';
 export { staffSessionStore } from './staffSession';
 export type { StaffSession } from './staffSession';
 export { queryKeys } from './queryKeys';
 export { createQueryClient } from './queryClient';
 export {
-  API_BASE_URL, SCHOOL_SUBDOMAIN, TERM_STORAGE_KEY, MAIN_DOMAIN, isOnSchoolSubdomain,
-  DEMO_SUBDOMAIN, DEMO_SCHOOL_NAME, DEMO_IDENTIFIER, DEMO_PASSWORD,
+  API_BASE_URL, TERM_STORAGE_KEY,
+  DEMO_IDENTIFIER, DEMO_PASSWORD,
 } from './config';
 
 export * as authApi from './resources/auth';

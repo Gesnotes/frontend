@@ -1,6 +1,5 @@
 import { ApiError } from './ApiError';
-import { API_BASE_URL, SCHOOL_SUBDOMAIN } from './config';
-import { schoolSelectionStore } from './schoolSelection';
+import { API_BASE_URL } from './config';
 import { sessionStore } from './session';
 import type { LoginResult } from './types';
 
@@ -32,11 +31,6 @@ export function buildUrl(path: string, query?: Query): string {
 
 function baseHeaders(anonymous: boolean): Headers {
   const headers = new Headers({ Accept: 'application/json' });
-  // `SCHOOL_SUBDOMAIN` (confort de développement) prime sur l'école choisie
-  // par l'utilisateur : sur une vraie adresse d'école, le nom d'hôte fait de
-  // toute façon autorité côté serveur, l'en-tête ne sert que hors sous-domaine.
-  const subdomain = SCHOOL_SUBDOMAIN || schoolSelectionStore.get()?.subdomain;
-  if (subdomain) headers.set('X-School-Subdomain', subdomain);
   if (!anonymous) {
     const token = sessionStore.getAccessToken();
     if (token) headers.set('Authorization', `Bearer ${token}`);

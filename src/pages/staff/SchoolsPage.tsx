@@ -49,8 +49,7 @@ export default function SchoolsPage() {
         <div>
           <div style={{ fontWeight: 600 }}>{school.name}</div>
           <div className="list-row__meta">
-            {school.subdomain}
-            {school.city ? ` · ${school.city}` : ''}
+            {school.city ?? ''}
           </div>
         </div>
       ),

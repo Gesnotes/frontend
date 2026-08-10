@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-import { errorMessage, isApiError, isOnSchoolSubdomain, schoolSelectionStore, type IdentifyResult } from '../../api';
+import { errorMessage, isApiError, type IdentifyResult } from '../../api';
 import { useAuth } from '../../auth/auth-context';
 import { homePathFor, paths } from '../../routes/paths';
 import { Alert, Button, TextField } from '../../ui';
@@ -33,22 +33,19 @@ function loginErrorMessage(cause: unknown): string {
 }
 
 export default function LoginPage() {
-  const { login, identify } = useAuth();
+  const { identify } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState | null;
-  /** Vrai sous-domaine d'école : le nom d'hôte fait autorité, comme avant. */
-  const onSchoolSubdomain = isOnSchoolSubdomain();
 
   const [identifier, setIdentifier] = useState(state?.demoIdentifier ?? '');
   const [password, setPassword] = useState(state?.demoPassword ?? '');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [hint, setHint] = useState(false);
   /**
-   * Domaine principal, identifiant et mot de passe valables dans plusieurs
-   * écoles à la fois (un parent avec un enfant dans chacune, par exemple) :
-   * impossible de deviner laquelle, il faut la faire choisir.
+   * Identifiant et mot de passe valables dans plusieurs écoles à la fois (un
+   * parent avec un enfant dans chacune, par exemple) : impossible de deviner
+   * laquelle, il faut la faire choisir.
    */
   const [schools, setSchools] = useState<AmbiguousSchool[] | null>(null);
 
@@ -59,15 +56,9 @@ export default function LoginPage() {
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
-    setHint(false);
     setSubmitting(true);
 
     try {
-      if (onSchoolSubdomain) {
-        goHome((await login(identifier.trim(), password)).role);
-        return;
-      }
-
       const result = await identify(identifier.trim(), password);
       if (result.status === 'ambiguous') {
         setSchools(result.schools);
@@ -76,22 +67,24 @@ export default function LoginPage() {
       goHome(result.user.role);
     } catch (cause) {
       setError(loginErrorMessage(cause));
-      // En développement seulement : le backend trace dans ses logs si le
-      // compte existe dans une autre école, cause la plus fréquente d'un
-      // échec avec des identifiants pourtant corrects.
-      setHint(import.meta.env.DEV && isApiError(cause) && cause.isUnauthorized);
     } finally {
       setSubmitting(false);
     }
   }
 
-  /** École choisie dans la liste ambiguë : termine la connexion sur son sous-domaine. */
+  /** École choisie dans la liste ambiguë : termine la connexion sur celle-ci. */
   async function chooseSchool(school: AmbiguousSchool) {
     setError(null);
     setSubmitting(true);
     try {
-      schoolSelectionStore.set({ subdomain: school.subdomain, name: school.name, city: school.city });
-      goHome((await login(identifier.trim(), password)).role);
+      const result = await identify(identifier.trim(), password, school.id);
+      if (result.status === 'ambiguous') {
+        // Ne devrait pas arriver : un schoolId choisi dans la liste
+        // précédente referme toujours le choix côté serveur.
+        setSchools(result.schools);
+        return;
+      }
+      goHome(result.user.role);
     } catch (cause) {
       setError(loginErrorMessage(cause));
     } finally {
@@ -110,7 +103,7 @@ export default function LoginPage() {
 
           <div className="list-rows">
             {schools.map((school) => (
-              <div key={school.subdomain} className="list-row">
+              <div key={school.id} className="list-row">
                 <div className="list-row__body">
                   <div className="list-row__title">{school.name}</div>
                   {school.city ? <div className="list-row__meta">{school.city}</div> : null}
@@ -142,13 +135,6 @@ export default function LoginPage() {
         {state?.demoIdentifier ? (
           <Alert tone="info">
             Identifiants de démonstration déjà renseignés — il ne reste qu'à vous connecter.
-          </Alert>
-        ) : null}
-
-        {hint ? (
-          <Alert tone="info">
-            En développement : si ces identifiants sont bons, le compte appartient peut-être à une
-            autre école. Le terminal du backend indique laquelle.
           </Alert>
         ) : null}
 

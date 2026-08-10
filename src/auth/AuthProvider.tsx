@@ -29,9 +29,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMonitoringUser(session ? { id: session.user.id, role: session.user.role } : null);
   }, [session]);
 
-  const login = useCallback(
-    async (identifier: string, password: string) => {
-      const result = await authApi.login(identifier, password);
+  const identify = useCallback(
+    async (identifier: string, password: string, schoolId?: number) => {
+      const result = await authApi.identify(identifier, password, schoolId);
       // Le cache appartient à l'utilisateur précédent : le vider évite qu'un
       // écran affiche brièvement les données de la session d'avant.
       //
@@ -41,15 +41,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // perdre sa saisie en attente. Seule la déconnexion volontaire
       // (`logout`, ci-dessous) la vide — c'est là qu'un poste change
       // réellement de main.
-      queryClient.clear();
-      return result.user;
-    },
-    [queryClient],
-  );
-
-  const identify = useCallback(
-    async (identifier: string, password: string) => {
-      const result = await authApi.identify(identifier, password);
       if (result.status === 'ok') queryClient.clear();
       return result;
     },
@@ -97,11 +88,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: session?.user.role ?? null,
       isAuthenticated: session !== null,
       displayName: session ? fullNameOf(session.user) : '',
-      login,
       identify,
       logout,
     }),
-    [session, login, identify, logout],
+    [session, identify, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

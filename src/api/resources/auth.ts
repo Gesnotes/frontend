@@ -1,33 +1,24 @@
 import { api } from '../http';
-import { schoolSelectionStore } from '../schoolSelection';
 import { sessionStore } from '../session';
-import type { AuthContextPayload, IdentifyResult, LoginResult, MessageResponse } from '../types';
-
-/** `POST /auth/login` — identifiant = email **ou** téléphone. */
-export async function login(identifier: string, password: string): Promise<LoginResult> {
-  const result = await api.anonymous<LoginResult>('/auth/login', { identifier, password });
-  sessionStore.set(result);
-  return result;
-}
+import type { AuthContextPayload, IdentifyResult, MessageResponse } from '../types';
 
 /**
- * `POST /auth/identify` — connexion sans sous-domaine connu : l'identifiant
- * est cherché à travers toutes les écoles actives, plutôt que dans une seule
- * déjà résolue par l'adresse.
+ * `POST /auth/identify` — seule porte de connexion : aucune école n'est
+ * résolue au préalable, l'identifiant est cherché à travers toutes les écoles
+ * actives.
  *
- * Un seul compte correspond : la session s'ouvre directement, et l'école
- * résolue est mémorisée (comme si elle avait été choisie à la main) pour que
- * les requêtes suivantes posent le bon `X-School-Subdomain`. Plusieurs
+ * Un seul compte correspond : la session s'ouvre directement. Plusieurs
  * comptes correspondent (même email/téléphone + mot de passe dans deux
  * écoles) : aucune session n'est ouverte, l'appelant doit faire choisir
- * l'école puis compléter avec `login()`.
+ * l'école puis rappeler avec son `schoolId` pour trancher.
  */
-export async function identify(identifier: string, password: string): Promise<IdentifyResult> {
-  const result = await api.anonymous<IdentifyResult>('/auth/identify', { identifier, password });
-  if (result.status === 'ok') {
-    sessionStore.set(result);
-    schoolSelectionStore.set({ subdomain: result.school.subdomain, name: result.school.name, city: null });
-  }
+export async function identify(
+  identifier: string,
+  password: string,
+  schoolId?: number,
+): Promise<IdentifyResult> {
+  const result = await api.anonymous<IdentifyResult>('/auth/identify', { identifier, password, schoolId });
+  if (result.status === 'ok') sessionStore.set(result);
   return result;
 }
 

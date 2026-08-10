@@ -107,9 +107,9 @@ export default function SignupRequestsPage() {
 }
 
 /**
- * Nom, ville et sous-domaine sont préremplis depuis la demande, modifiables
- * avant de créer l'école pour de bon — le staff garde la main sur ce que le
- * formulaire public a saisi sans supervision.
+ * Nom et ville sont préremplis depuis la demande, modifiables avant de créer
+ * l'école pour de bon — le staff garde la main sur ce que le formulaire
+ * public a saisi sans supervision.
  */
 function AcceptModal({ request, onClose }: { request: SignupRequestRow; onClose: () => void }) {
   const toast = useToast();
@@ -117,7 +117,6 @@ function AcceptModal({ request, onClose }: { request: SignupRequestRow; onClose:
 
   const [schoolName, setSchoolName] = useState(request.schoolName);
   const [city, setCity] = useState(request.city);
-  const [subdomain, setSubdomain] = useState('');
 
   async function onConfirm() {
     try {
@@ -126,10 +125,9 @@ function AcceptModal({ request, onClose }: { request: SignupRequestRow; onClose:
         payload: {
           schoolName: schoolName.trim(),
           city: city.trim(),
-          subdomain: subdomain.trim() || undefined,
         },
       });
-      toast.success(`${result.school.name} créée (${result.school.subdomain}) — invitation envoyée à ${result.adminEmail}`);
+      toast.success(`${result.school.name} créée — invitation envoyée à ${result.adminEmail}`);
       onClose();
     } catch (cause) {
       toast.error(errorMessage(cause));
@@ -155,13 +153,6 @@ function AcceptModal({ request, onClose }: { request: SignupRequestRow; onClose:
       <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
         <TextField label="Nom de l'école" value={schoolName} onChange={(e) => setSchoolName(e.target.value)} />
         <TextField label="Ville" value={city} onChange={(e) => setCity(e.target.value)} />
-        <TextField
-          label="Sous-domaine"
-          hint="Laissez vide pour le déduire du nom de l'école."
-          placeholder="ecole-la-colombe"
-          value={subdomain}
-          onChange={(e) => setSubdomain(e.target.value)}
-        />
         <p className="t-body-md t-muted">
           Le premier compte administrateur sera <strong>{request.email}</strong>, invité à définir son mot
           de passe.

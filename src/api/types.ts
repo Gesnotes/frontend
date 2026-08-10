@@ -47,17 +47,21 @@ export type AuthUser = {
   lastName: string | null;
 };
 
-/** Réponse de `POST /auth/login` et `POST /auth/refresh`. */
+/** Réponse de `POST /auth/refresh`. */
 export type LoginResult = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
 };
 
-/** Réponse de `POST /auth/identify` — connexion sans sous-domaine connu. */
+/**
+ * Réponse de `POST /auth/identify`, seule porte de connexion : aucune école
+ * n'est résolue au préalable, l'identifiant est cherché à travers toutes les
+ * écoles actives.
+ */
 export type IdentifyResult =
-  | (LoginResult & { status: 'ok'; school: { subdomain: string; name: string } })
-  | { status: 'ambiguous'; schools: { subdomain: string; name: string; city: string | null }[] };
+  | (LoginResult & { status: 'ok'; school: { id: ID; name: string } })
+  | { status: 'ambiguous'; schools: { id: ID; name: string; city: string | null }[] };
 
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
@@ -761,7 +765,6 @@ export type PlatformOverview = {
 export type SchoolWithMetrics = {
   id: ID;
   name: string;
-  subdomain: string;
   city: string | null;
   createdAt: IsoDateTime | null;
   /** Non nul : école suspendue par l'équipe Gesnotes, ses comptes ne peuvent plus se connecter. */
@@ -791,12 +794,11 @@ export type SignupRequestRow = {
 
 /** Corps de `POST /staff/signup-requests/:id/accept` — tout facultatif, dérivé de la demande sinon. */
 export type AcceptSignupRequestPayload = {
-  subdomain?: string;
   schoolName?: string;
   city?: string;
 };
 
 export type AcceptSignupRequestResult = {
-  school: { id: ID; name: string; subdomain: string; city: string | null };
+  school: { id: ID; name: string; city: string | null };
   adminEmail: string;
 };
