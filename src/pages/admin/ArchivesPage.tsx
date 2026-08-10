@@ -47,7 +47,8 @@ export default function ArchivesPage() {
           <Alert tone="info">
             Archiver ne supprime rien : les notes et l'historique sont conservés. Un élément
             restauré réapparaît immédiatement dans les listes. La suppression définitive, elle,
-            est refusée tant que des notes ou des élèves en dépendent.
+            est irréversible et efface avec elle tout ce qui en dépend — élèves, notes,
+            évaluations compris selon l'élément supprimé.
           </Alert>
 
           <div className="page-toolbar" role="tablist" aria-label="Type d'élément archivé">
@@ -174,7 +175,7 @@ function ArchivedClasses() {
         title={`Supprimer ${toDelete?.name ?? ''} définitivement ?`}
         description={
           toDelete && toDelete.effectif > 0
-            ? `${formatCount(toDelete.effectif)} ${plural(toDelete.effectif, 'élève')} y ${toDelete.effectif > 1 ? 'sont' : 'est'} rattaché${toDelete.effectif > 1 ? 's' : ''} : la suppression sera refusée. Réaffectez-les d'abord à une autre classe.`
+            ? `${formatCount(toDelete.effectif)} ${plural(toDelete.effectif, 'élève')} y ${toDelete.effectif > 1 ? 'sont' : 'est'} rattaché${toDelete.effectif > 1 ? 's' : ''} : ${toDelete.effectif > 1 ? 'ils seront supprimés' : 'il sera supprimé'} avec la classe, notes et présences comprises. Réaffectez-les d'abord à une autre classe pour les conserver.`
             : 'La classe et ses coefficients sont effacés.'
         }
         confirmName={toDelete?.name}
@@ -249,7 +250,7 @@ function ArchivedSubjects() {
       <PermanentDeleteDialog
         open={toDelete !== null}
         title={`Supprimer ${toDelete?.name ?? ''} définitivement ?`}
-        description="La matière est effacée du programme. La suppression est refusée si des notes y sont rattachées, pour ne pas les effacer en cascade."
+        description="La matière est effacée du programme, avec ses évaluations et toutes les notes qui s'y rattachent."
         confirmName={toDelete?.name}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
@@ -343,7 +344,7 @@ function ArchivedTeachers() {
       <PermanentDeleteDialog
         open={toDelete !== null}
         title={`Supprimer le compte de ${toDelete?.name ?? ''} ?`}
-        description="Le compte est effacé. La suppression est refusée si cet enseignant a saisi des notes : elles doivent rester attribuées."
+        description="Le compte est effacé. Les notes et présences déjà saisies par cet enseignant restent, mais sans auteur attribué."
         confirmName={toDelete?.confirmName || undefined}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}
@@ -565,10 +566,9 @@ function ArchivedTerms() {
 /**
  * Années scolaires archivées.
  *
- * `terms.school_year_id` et `classes.school_year_id` sont en RESTRICT : la
- * suppression définitive détache d'abord les périodes et les classes plutôt
- * que d'échouer en base. Elles gardent leur historique, seulement leur
- * regroupement par année disparaît.
+ * La suppression définitive emporte en cascade tout ce que l'année
+ * contient : ses périodes (et leurs évaluations, leurs notes), ses classes
+ * (et leurs élèves, notes, présences, historique de réinscription).
  */
 function ArchivedSchoolYears() {
   const toast = useToast();
@@ -649,7 +649,7 @@ function ArchivedSchoolYears() {
         title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
         description={
           toDelete && (toDelete.classCount > 0 || toDelete.termCount > 0)
-            ? `${formatCount(toDelete.classCount)} ${plural(toDelete.classCount, 'classe')} et ${formatCount(toDelete.termCount)} ${plural(toDelete.termCount, 'période')} seront détachées de cette année — elles gardent leur historique, seul leur regroupement disparaît.`
+            ? `${formatCount(toDelete.classCount)} ${plural(toDelete.classCount, 'classe')} et ${formatCount(toDelete.termCount)} ${plural(toDelete.termCount, 'période')} seront supprimées avec cette année, élèves et notes compris.`
             : "L'année est effacée. Elle ne regroupe aucune classe ni aucune période."
         }
         confirmName={toDelete?.label}
