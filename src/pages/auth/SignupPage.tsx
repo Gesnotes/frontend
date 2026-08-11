@@ -62,7 +62,7 @@ export default function SignupPage() {
           <>
             Une question avant l’appel ?
             <br />
-            contact@gesnotes.app
+            contact@gesnotes.bj
           </>
         }
       >
