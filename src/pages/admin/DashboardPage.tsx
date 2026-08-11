@@ -48,6 +48,7 @@ export default function DashboardPage() {
           <PageContent>
             <div className="page-stack">
               <InstallCard compact />
+              <SupportCard />
 
               {isSetupIncomplete(data) ? (
                 <OnboardingChecklist data={data} />
@@ -82,6 +83,32 @@ export default function DashboardPage() {
         </>
       )}
     </QueryBoundary>
+  );
+}
+
+/**
+ * Contact rapide de l'équipe Gesnotes. Une école n'a souvent qu'une seule
+ * personne pour la dépanner en cas de blocage (import raté, période
+ * introuvable...) : mieux vaut que le moyen de la joindre soit visible dès
+ * l'arrivée sur le tableau de bord plutôt qu'enterré dans un menu.
+ */
+function SupportCard() {
+  return (
+    <Card padded>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: 22 }} aria-hidden="true">☎</span>
+        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
+          <div style={{ fontWeight: 600 }}>Besoin d'aide ?</div>
+          <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
+            L'équipe Gesnotes répond par email ou par téléphone.
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', fontWeight: 600 }}>
+          <a href="mailto:contact@gesnotes.bj">contact@gesnotes.bj</a>
+          <a href="tel:+2290160888668">+229 01 60 88 86 68</a>
+        </div>
+      </div>
+    </Card>
   );
 }
 

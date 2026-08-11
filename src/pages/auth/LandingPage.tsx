@@ -157,7 +157,7 @@ export default function LandingPage() {
         <div className="landing__footer-inner">
           <span className="landing__footer-brand">Gesnotes</span>
           <span className="landing__footer-meta">
-            <a href="mailto:contact@gesnotes.app">contact@gesnotes.app</a>
+            <a href="mailto:contact@gesnotes.bj">contact@gesnotes.bj</a>
           </span>
         </div>
       </footer>
