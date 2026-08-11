@@ -1,8 +1,10 @@
+import type { CSSProperties, ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { DEMO_IDENTIFIER, DEMO_PASSWORD } from '../../api';
+import { useRevealOnScroll } from '../../hooks/useRevealOnScroll';
 import { paths } from '../../routes/paths';
-import { Button, BrandMark, StatTile } from '../../ui';
+import { Button, BrandMark } from '../../ui';
 
 const HAS_DEMO = Boolean(DEMO_IDENTIFIER && DEMO_PASSWORD);
 
@@ -47,7 +49,8 @@ const AUDIENCE = [
  * Racine publique. Un visiteur qui arrive sur le domaine principal sans
  * session doit trouver tout de suite comment essayer Gesnotes — pas
  * atterrir directement sur un formulaire de connexion qui suppose déjà un
- * compte.
+ * compte. « Se connecter » reste accessible, mais discret : ce n'est pas ce
+ * que vient chercher un visiteur qui découvre le produit.
  */
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -68,11 +71,9 @@ export default function LandingPage() {
             Gesnotes
           </div>
           <div className="landing__header-actions">
-            <Link to={paths.login}>
-              <Button variant="ghost">Se connecter</Button>
-            </Link>
+            <Link to={paths.login} className="landing__login-link">Se connecter</Link>
             <Link to={paths.signup}>
-              <Button>Essayer Gesnotes</Button>
+              <Button>Demander un accès</Button>
             </Link>
           </div>
         </div>
@@ -88,10 +89,7 @@ export default function LandingPage() {
             </p>
             <div className="landing__hero-actions">
               <Link to={paths.signup}>
-                <Button size="lg">Essayer Gesnotes dans mon école</Button>
-              </Link>
-              <Link to={paths.login}>
-                <Button size="lg" variant="secondary">Se connecter</Button>
+                <Button size="lg">Demander à essayer Gesnotes</Button>
               </Link>
               {HAS_DEMO ? (
                 <Button size="lg" variant="ghost" onClick={openDemo} type="button">
@@ -99,37 +97,23 @@ export default function LandingPage() {
                 </Button>
               ) : null}
             </div>
-          </div>
-
-          <div className="landing__hero-visual" aria-hidden="true">
-            <div className="landing__preview">
-              <div className="landing__preview-header">
-                <span className="t-title-md" style={{ fontWeight: 700 }}>Tableau de bord</span>
-                <span className="t-label-sm t-subtle">École de la Colombe</span>
-              </div>
-              <div className="landing__preview-grid">
-                <StatTile label="Élèves inscrits" value="128" />
-                <StatTile label="Classes" value="12" />
-                <StatTile label="Moyenne de l'école" value="13,8" unit="/ 20" />
-                <StatTile label="Présents aujourd'hui" value="96%" />
-              </div>
-              <span className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
-                Aperçu à titre d'exemple.
-              </span>
-            </div>
+            <Link to={paths.login} className="landing__hero-login">
+              Déjà cliente ? Se connecter →
+            </Link>
           </div>
         </section>
 
-        <section className="landing__section" style={{ background: 'var(--surface-container-low)' }}>
+        <RevealSection className="landing__section" style={{ background: 'var(--surface-container-low)' }}>
           <div className="landing__section-head">
             <h2 className="t-headline-lg">Fonctionnalités clés</h2>
             <p className="t-body-lg t-muted">Ce que Gesnotes change au quotidien pour votre établissement.</p>
           </div>
           <div className="landing__features">
-            {FEATURES.map((feature) => (
+            {FEATURES.map((feature, index) => (
               <div
                 key={feature.title}
                 className={`landing__feature-card${feature.highlight ? ' landing__feature-card--highlight' : ''}`}
+                style={{ transitionDelay: `${index * 80}ms` }}
               >
                 <span className="landing__feature-icon" aria-hidden="true">{feature.icon}</span>
                 <h3 className="t-title-md" style={{ fontWeight: 700 }}>{feature.title}</h3>
@@ -137,15 +121,15 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </section>
+        </RevealSection>
 
-        <section className="landing__section">
+        <RevealSection className="landing__section">
           <div className="landing__section-head">
             <h2 className="t-headline-lg">Une solution pour chaque rôle</h2>
           </div>
           <div className="landing__audience">
-            {AUDIENCE.map((item) => (
-              <div key={item.title} className="landing__audience-item">
+            {AUDIENCE.map((item, index) => (
+              <div key={item.title} className="landing__audience-item" style={{ transitionDelay: `${index * 80}ms` }}>
                 <span className="landing__audience-icon" aria-hidden="true">{item.icon}</span>
                 <div>
                   <h4 className="t-title-md" style={{ fontWeight: 700, marginBottom: 'var(--space-1)' }}>
@@ -156,17 +140,47 @@ export default function LandingPage() {
               </div>
             ))}
           </div>
-        </section>
+        </RevealSection>
+
+        <RevealSection className="landing__section landing__cta">
+          <h2 className="t-headline-lg">Prête à essayer Gesnotes dans votre école ?</h2>
+          <p className="t-body-lg" style={{ opacity: 0.85 }}>
+            Décrivez votre établissement, l'équipe Gesnotes vous recontacte pour la mise en route.
+          </p>
+          <Link to={paths.signup}>
+            <Button size="lg" variant="secondary">Demander un accès</Button>
+          </Link>
+        </RevealSection>
       </main>
 
       <footer className="landing__footer">
         <div className="landing__footer-inner">
           <span className="landing__footer-brand">Gesnotes</span>
           <span className="landing__footer-meta">
-            <a href="mailto:contact@gesnotes.app">contact@gesnotes.app</a>
+            <a href="mailto:contact@gesnotes.bj">contact@gesnotes.bj</a>
           </span>
         </div>
       </footer>
     </div>
+  );
+}
+
+/** Fait glisser une section vers le haut la première fois qu'elle entre dans le viewport. */
+function RevealSection({
+  className, style, children,
+}: {
+  className: string;
+  style?: CSSProperties;
+  children: ReactNode;
+}) {
+  const [ref, visible] = useRevealOnScroll<HTMLElement>();
+  return (
+    <section
+      ref={ref}
+      className={`${className}${visible ? ' landing--visible' : ' landing--pre-reveal'}`}
+      style={style}
+    >
+      {children}
+    </section>
   );
 }
