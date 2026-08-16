@@ -264,10 +264,16 @@ export type AttendanceSheetStudent = {
   comment: string | null;
 };
 
-/** Réponse de `GET /teachers/me/attendance` : la classe entière, pour un jour donné. */
+/**
+ * Réponse de `GET /teachers/me/attendance` : la classe (mode `presence`) ou
+ * le créneau (mode `notes`) entier, pour un jour donné. `slot` porte la
+ * matière et l'horaire quand la cible est un créneau, `null` sinon.
+ */
 export type AttendanceSheet = {
   classId: ID;
   className: string;
+  slotId: ID | null;
+  slot: { subjectName: string; startTime: string; endTime: string } | null;
   date: IsoDate;
   students: AttendanceSheetStudent[];
 };
@@ -279,9 +285,14 @@ export type AttendanceEntry = {
   comment?: string | null;
 };
 
-/** Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour la classe. */
+/**
+ * Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour
+ * la classe (mode `presence`) ou le créneau (mode `notes`) — l'un ou
+ * l'autre, jamais les deux.
+ */
 export type AttendanceBatchPayload = {
-  classId: ID;
+  classId?: ID;
+  slotId?: ID;
   date: IsoDate;
   entries: AttendanceEntry[];
 };
@@ -655,13 +666,27 @@ export type AdminDashboard = {
     notesDerniers7Jours: number;
     notesTotal: number;
   };
-  /** Présence du jour, école entière — indépendante de la période sélectionnée. */
+  /** Présence du jour, classes mode `presence` — indépendante de la période. */
   presence: {
     classesAvecAppel: number;
     classesTotal: number;
     absents: number;
     retards: number;
     classesSansAppel: string[];
+  };
+  /** Appel du jour, classes mode `notes`, par créneau plutôt que par classe. */
+  creneaux: {
+    creneauxCouverts: number;
+    creneauxTotal: number;
+    absents: number;
+    retards: number;
+    creneauxNonCouverts: {
+      slotId: ID;
+      className: string;
+      subjectName: string;
+      startTime: string;
+      endTime: string;
+    }[];
   };
   periode: TermRef | null;
   moyenneEcole: number | null;
@@ -722,6 +747,8 @@ export type ChildAttendanceRecord = {
   status: AttendanceStatus;
   comment: string | null;
   classId: ID;
+  /** Matière du créneau (classe mode `notes`), `null` pour un appel classique. */
+  subjectName: string | null;
 };
 
 export type Device = {

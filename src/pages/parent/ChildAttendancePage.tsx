@@ -54,7 +54,10 @@ function AttendanceList({ records }: { records: ChildAttendanceRecord[] }) {
           <div key={record.id} className="ui-card parent__row">
             <Chip tone={attendanceTone(record.status)}>{LABELS[record.status]}</Chip>
             <span className="parent__row-body">
-              <span className="parent__row-title">{formatDate(record.date)}</span>
+              <span className="parent__row-title">
+                {formatDate(record.date)}
+                {record.subjectName ? ` · ${record.subjectName}` : ''}
+              </span>
               {record.comment ? <span className="parent__row-meta">{record.comment}</span> : null}
             </span>
           </div>

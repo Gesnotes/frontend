@@ -193,7 +193,7 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
 }
 
 function DashboardBody({ data }: { data: AdminDashboard }) {
-  const { effectifs, activite, saisie, presence, moyenneEcole } = data;
+  const { effectifs, activite, saisie, presence, creneaux, moyenneEcole } = data;
 
   return (
     <div className="page-stack">
@@ -218,6 +218,7 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
       </div>
 
       <PresenceSummary presence={presence} />
+      <CreneauxSummary creneaux={creneaux} />
       {saisie ? <GradingProgress saisie={saisie} /> : null}
     </div>
   );
@@ -295,6 +296,75 @@ function PresenceSummary({ presence }: { presence: AdminDashboard['presence'] })
             // Deux classes homonymes sont possibles (ex. deux « 6e A » après
             // une préparation de rentrée) : le nom seul ne suffit pas comme clé.
             <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
+          ))}
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
+ * Appel du jour, classes mode `notes`, par créneau plutôt que par classe —
+ * chaque enseignant y fait son propre appel, voir `PresenceSummary` pour le
+ * pendant mode `presence`.
+ */
+function CreneauxSummary({ creneaux }: { creneaux: AdminDashboard['creneaux'] }) {
+  const taux =
+    creneaux.creneauxTotal === 0
+      ? null
+      : Math.round((creneaux.creneauxCouverts / creneaux.creneauxTotal) * 100);
+
+  return (
+    <Card padded>
+      <SectionTitle
+        aside={
+          <span className="t-body-md" style={{ fontWeight: 700 }}>
+            {formatPercent(taux)}
+          </span>
+        }
+      >
+        Appel du jour par créneau
+      </SectionTitle>
+
+      <ProgressBar
+        value={creneaux.creneauxCouverts}
+        max={creneaux.creneauxTotal}
+        tone={taux !== null && taux >= 85 ? 'success' : 'info'}
+        label="Créneaux ayant fait l'appel aujourd'hui"
+      />
+
+      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
+        {formatCount(creneaux.creneauxCouverts)} {plural(creneaux.creneauxCouverts, 'créneau')} sur{' '}
+        {formatCount(creneaux.creneauxTotal)}{' '}
+        {plural(creneaux.creneauxCouverts, 'a fait', 'ont fait')} l'appel aujourd'hui.
+      </p>
+
+      {creneaux.absents > 0 || creneaux.retards > 0 ? (
+        <div style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
+          {creneaux.absents > 0 ? (
+            <Chip tone="danger">
+              {formatCount(creneaux.absents)} {plural(creneaux.absents, 'absent')}
+            </Chip>
+          ) : null}
+          {creneaux.retards > 0 ? (
+            <Chip tone="warning">
+              {formatCount(creneaux.retards)} {plural(creneaux.retards, 'retard')}
+            </Chip>
+          ) : null}
+        </div>
+      ) : null}
+
+      {creneaux.creneauxNonCouverts.length > 0 ? (
+        <div
+          style={{
+            marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center',
+          }}
+        >
+          <span className="t-label-sm t-muted">Aucun appel :</span>
+          {creneaux.creneauxNonCouverts.map((slot) => (
+            <Chip key={slot.slotId} tone="warning">
+              {slot.className} · {slot.subjectName} {slot.startTime}
+            </Chip>
           ))}
         </div>
       ) : null}

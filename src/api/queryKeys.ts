@@ -91,13 +91,15 @@ export const queryKeys = {
 
   attendance: {
     all: ['attendance'] as const,
-    sheet: (classId: ID, date: string) => ['attendance', 'sheet', classId, date] as const,
+    sheet: (target: { classId?: ID; slotId?: ID }, date: string) =>
+      ['attendance', 'sheet', target.classId ?? null, target.slotId ?? null, date] as const,
   },
 
   schedule: {
     all: ['schedule'] as const,
     class: (classId: ID, includeArchived?: boolean) =>
       ['schedule', 'class', classId, includeArchived ?? false] as const,
+    mine: (date: string) => ['schedule', 'mine', date] as const,
   },
 
   staff: {
