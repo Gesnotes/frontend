@@ -7,14 +7,21 @@ import type {
 } from '../types';
 
 /**
- * Présence : un statut par élève et par jour, saisie par l'administration ou
- * l'enseignant référent de la classe (voir `attendance.service.ts` côté
- * backend — jamais « un des professeurs qui y enseignent », pour qu'une
- * classe à plusieurs intervenants ait toujours un responsable de l'appel).
+ * Présence : un statut par élève, par jour, et — pour les classes mode
+ * `notes` — par créneau (voir `attendance.service.ts` côté backend). Les
+ * classes mode `presence` (maternelle/garderie) gardent le flux classique
+ * (admin ou référent, un appel par jour, sans créneau).
  */
 
-export function fetchAttendanceSheet(classId: ID, date: IsoDate): Promise<AttendanceSheet> {
-  return api.get<AttendanceSheet>('/teachers/me/attendance', { class_id: classId, date });
+/** Classe (mode `presence`) ou créneau (mode `notes`) — jamais les deux. */
+export type AttendanceTarget = { classId: ID; slotId?: undefined } | { classId?: undefined; slotId: ID };
+
+export function fetchAttendanceSheet(target: AttendanceTarget, date: IsoDate): Promise<AttendanceSheet> {
+  return api.get<AttendanceSheet>('/teachers/me/attendance', {
+    class_id: target.classId,
+    slot_id: target.slotId,
+    date,
+  });
 }
 
 export function saveAttendanceBatch(payload: AttendanceBatchPayload): Promise<AttendanceBatchResult> {
@@ -31,11 +38,11 @@ export function fetchChildAttendance(
 
 // ------------------------------------------------------------------- Hooks
 
-export function useAttendanceSheet(classId: ID | undefined, date: IsoDate) {
+export function useAttendanceSheet(target: AttendanceTarget | undefined, date: IsoDate) {
   return useQuery({
-    queryKey: queryKeys.attendance.sheet(classId ?? 0, date),
-    queryFn: () => fetchAttendanceSheet(classId!, date),
-    enabled: classId !== undefined,
+    queryKey: queryKeys.attendance.sheet(target ?? {}, date),
+    queryFn: () => fetchAttendanceSheet(target!, date),
+    enabled: target !== undefined,
   });
 }
 
@@ -45,7 +52,7 @@ export function useSaveAttendance() {
     mutationFn: saveAttendanceBatch,
     onSuccess: (_result, variables) => {
       void queryClient.invalidateQueries({
-        queryKey: queryKeys.attendance.sheet(variables.classId, variables.date),
+        queryKey: queryKeys.attendance.sheet(variables, variables.date),
       });
     },
   });
