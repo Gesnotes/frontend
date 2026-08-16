@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import { classesApi, type ClassDetail, type ID, type RankedStudentResult } from '../../api';
@@ -9,12 +10,14 @@ import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
   Avatar, Button, Card, Chip, DataTable, EmptyState, ProgressBar, SectionTitle, Skeleton,
-  StatTile, gradeTone, type Column,
+  StatTile, Tabs, TabPanel, gradeTone, type Column, type TabItem,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 import { ClassSchedulePanel } from './ClassSchedulePanel';
 import { ClassSubjectsPanel } from './ClassSubjectsPanel';
 import { TermRequired } from './TermRequired';
+
+type TabKey = 'vue' | 'eleves' | 'matieres' | 'emploi';
 
 export default function ClassDetailPage() {
   const { classId } = useParams();
@@ -65,6 +68,16 @@ export default function ClassDetailPage() {
 
 function ClassBody({ data, termId }: { data: ClassDetail; termId: ID | undefined }) {
   const { stats } = data;
+  const hasSchedule = data.mode === 'notes';
+
+  const [tab, setTab] = useState<TabKey>('vue');
+
+  const items: TabItem[] = [
+    { key: 'vue', label: "Vue d'ensemble" },
+    { key: 'eleves', label: 'Élèves', badge: formatCount(stats.effectif) },
+    { key: 'matieres', label: 'Matières' },
+    ...(hasSchedule ? [{ key: 'emploi', label: 'Emploi du temps' } as TabItem] : []),
+  ];
 
   const columns: Column<RankedStudentResult>[] = [
     {
@@ -117,48 +130,60 @@ function ClassBody({ data, termId }: { data: ClassDetail; termId: ID | undefined
 
   return (
     <div className="page-stack">
-      <div className="grid-stats">
-        <StatTile label="Effectif" value={formatCount(stats.effectif)} />
-        <StatTile
-          label="Élèves évalués"
-          value={formatCount(stats.evalues)}
-          hint={`sur ${formatCount(stats.effectif)}`}
-        />
-        <StatTile label="Moyenne de classe" value={formatGrade(stats.average)} unit="/ 20" />
-        <StatTile
-          label="Meilleure / plus faible"
-          value={`${formatGrade(stats.meilleure)} · ${formatGrade(stats.plusFaible)}`}
-        />
-      </div>
+      <Tabs items={items} activeKey={tab} onChange={(key) => setTab(key as TabKey)} />
 
-      {/*
-        Les notes par matière, à même la fiche.
-        Le tableau ci-dessous classe les élèves mais ne dit pas *dans quelle
-        matière* l'un décroche : il fallait ouvrir le bulletin en pleine page
-        pour le savoir.
-      */}
-      <Card padded>
-        <SectionTitle>Notes par matière</SectionTitle>
-        <ClassBulletinPanel classId={data.classId} termId={termId} />
-      </Card>
-
-      <ClassSubjectsPanel classId={data.classId} />
-
-      {data.mode === 'notes' ? <ClassSchedulePanel classId={data.classId} /> : null}
-
-      <DataTable
-        caption={`Élèves de ${data.className}, classés par moyenne`}
-        columns={columns}
-        rows={data.students}
-        rowKey={(student) => String(student.studentId)}
-        empty={
-          <EmptyState
-            icon="⚇"
-            title="Aucun élève dans cette classe"
-            description="Inscrivez des élèves depuis l'écran Élèves pour voir apparaître leurs résultats."
+      <TabPanel tabKey="vue" activeKey={tab}>
+        <div className="grid-stats">
+          <StatTile label="Effectif" value={formatCount(stats.effectif)} />
+          <StatTile
+            label="Élèves évalués"
+            value={formatCount(stats.evalues)}
+            hint={`sur ${formatCount(stats.effectif)}`}
           />
-        }
-      />
+          <StatTile label="Moyenne de classe" value={formatGrade(stats.average)} unit="/ 20" />
+          <StatTile
+            label="Meilleure / plus faible"
+            value={`${formatGrade(stats.meilleure)} · ${formatGrade(stats.plusFaible)}`}
+          />
+        </div>
+      </TabPanel>
+
+      <TabPanel tabKey="eleves" activeKey={tab}>
+        {/*
+          Les notes par matière, à même la fiche.
+          Le tableau ci-dessous classe les élèves mais ne dit pas *dans quelle
+          matière* l'un décroche : il fallait ouvrir le bulletin en pleine page
+          pour le savoir.
+        */}
+        <Card padded>
+          <SectionTitle>Notes par matière</SectionTitle>
+          <ClassBulletinPanel classId={data.classId} termId={termId} />
+        </Card>
+
+        <DataTable
+          caption={`Élèves de ${data.className}, classés par moyenne`}
+          columns={columns}
+          rows={data.students}
+          rowKey={(student) => String(student.studentId)}
+          empty={
+            <EmptyState
+              icon="⚇"
+              title="Aucun élève dans cette classe"
+              description="Inscrivez des élèves depuis l'écran Élèves pour voir apparaître leurs résultats."
+            />
+          }
+        />
+      </TabPanel>
+
+      <TabPanel tabKey="matieres" activeKey={tab}>
+        <ClassSubjectsPanel classId={data.classId} />
+      </TabPanel>
+
+      {hasSchedule ? (
+        <TabPanel tabKey="emploi" activeKey={tab}>
+          <ClassSchedulePanel classId={data.classId} />
+        </TabPanel>
+      ) : null}
     </div>
   );
 }
