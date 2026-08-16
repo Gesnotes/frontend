@@ -479,6 +479,37 @@ export type AttachParentPayload =
   | { parentUserId: ID }
   | { email: string; firstName?: string; lastName?: string; phone?: string };
 
+/** Présence d'un élève, telle que renvoyée par la fiche élève (`GET /students/:id/detail`). */
+export type StudentAttendanceRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+};
+
+/** Note d'un élève, telle que renvoyée par la fiche élève. */
+export type StudentRecentGrade = {
+  id: ID;
+  value: number;
+  maxValue: number;
+  createdAt: IsoDateTime | null;
+  matiere: { id: ID; name: string };
+  type: { label: string };
+  periode: { id: ID; label: string };
+};
+
+/**
+ * Fiche complète d'un élève (`GET /students/:id/detail`) : identité et
+ * parents déjà portés par `Student`, complétés du bulletin de la période
+ * choisie (`null` sans période), de la présence et des notes les plus
+ * récentes.
+ */
+export type StudentDetail = Student & {
+  bulletin: StudentResult | null;
+  presence: StudentAttendanceRecord[];
+  dernieresNotes: StudentRecentGrade[];
+};
+
 // --------------------------------------------------------------------- Notes
 
 /** Note telle que renvoyée aux enseignants (`/grades`, `/teachers/me/grades`). */

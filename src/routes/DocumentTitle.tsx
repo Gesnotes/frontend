@@ -69,6 +69,7 @@ function dynamicTitle(pathname: string): string | undefined {
   if (/^\/admin\/classes\/[^/]+\/presence$/.test(pathname)) return 'Présence';
   if (/^\/admin\/classes\/[^/]+\/reinscription$/.test(pathname)) return 'Réinscription';
   if (/^\/admin\/classes\/[^/]+$/.test(pathname)) return 'Détail de la classe';
+  if (/^\/admin\/eleves\/[^/]+$/.test(pathname)) return "Fiche de l'élève";
   if (/^\/parent\/enfants\/[^/]+$/.test(pathname)) return 'Résultats de mon enfant';
   if (/^\/parent\/notes\/[^/]+$/.test(pathname)) return 'Détail de la note';
   return undefined;
