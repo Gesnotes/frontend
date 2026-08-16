@@ -28,6 +28,11 @@ export function restoreSlot(classId: ID, slotId: ID): Promise<TimetableSlot> {
   return api.post<TimetableSlot>(`/classes/${classId}/schedule/${slotId}/restore`);
 }
 
+/** `GET /teachers/me/schedule` — mes créneaux du jour (classes mode `notes`). */
+export function fetchMySchedule(date: string): Promise<TimetableSlot[]> {
+  return api.get<TimetableSlot[]>('/teachers/me/schedule', { date });
+}
+
 // ------------------------------------------------------------------- Hooks
 
 export function useSchedule(classId: ID | undefined, includeArchived = false) {
@@ -35,6 +40,13 @@ export function useSchedule(classId: ID | undefined, includeArchived = false) {
     queryKey: queryKeys.schedule.class(classId ?? 0, includeArchived),
     queryFn: () => fetchSchedule(classId!, includeArchived),
     enabled: classId !== undefined,
+  });
+}
+
+export function useMySchedule(date: string) {
+  return useQuery({
+    queryKey: queryKeys.schedule.mine(date),
+    queryFn: () => fetchMySchedule(date),
   });
 }
 
