@@ -12,6 +12,7 @@ import {
   StatTile, gradeTone, type Column,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
+import { ClassSchedulePanel } from './ClassSchedulePanel';
 import { ClassSubjectsPanel } from './ClassSubjectsPanel';
 import { TermRequired } from './TermRequired';
 
@@ -142,6 +143,8 @@ function ClassBody({ data, termId }: { data: ClassDetail; termId: ID | undefined
       </Card>
 
       <ClassSubjectsPanel classId={data.classId} />
+
+      {data.mode === 'notes' ? <ClassSchedulePanel classId={data.classId} /> : null}
 
       <DataTable
         caption={`Élèves de ${data.className}, classés par moyenne`}
