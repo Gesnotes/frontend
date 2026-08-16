@@ -94,6 +94,12 @@ export const queryKeys = {
     sheet: (classId: ID, date: string) => ['attendance', 'sheet', classId, date] as const,
   },
 
+  schedule: {
+    all: ['schedule'] as const,
+    class: (classId: ID, includeArchived?: boolean) =>
+      ['schedule', 'class', classId, includeArchived ?? false] as const,
+  },
+
   staff: {
     all: ['staff'] as const,
     overview: ['staff', 'overview'] as const,

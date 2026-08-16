@@ -14,6 +14,7 @@ export {
 
 export * as authApi from './resources/auth';
 export * as attendanceApi from './resources/attendance';
+export * as scheduleApi from './resources/schedule';
 export * as classesApi from './resources/classes';
 export * as schoolYearsApi from './resources/schoolYears';
 export * as enrollmentApi from './resources/enrollment';

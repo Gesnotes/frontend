@@ -226,6 +226,7 @@ export type ClassDetail = {
   classId: ID;
   className: string;
   level: string;
+  mode: ClassMode;
   termId: ID;
   termLabel: string;
   students: RankedStudentResult[];
@@ -360,6 +361,41 @@ export type UpdateTeacherPayload = {
   phone?: string | null;
   assignments?: AssignmentInput[];
 };
+
+// ------------------------------------------------------------- Emploi du temps
+
+export type Weekday = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
+
+/**
+ * Créneau récurrent (jour + horaire) d'une affectation enseignant × classe ×
+ * matière. Ne concerne que les classes en mode `notes` — voir `Class.mode`.
+ */
+export type TimetableSlot = {
+  id: ID;
+  teacherAssignmentId: ID;
+  classId: ID;
+  className: string;
+  subjectId: ID;
+  subjectName: string;
+  teacherUserId: ID;
+  teacherFirstName: string | null;
+  teacherLastName: string | null;
+  dayOfWeek: Weekday;
+  /** "HH:MM" */
+  startTime: string;
+  /** "HH:MM" */
+  endTime: string;
+  archivedAt: IsoDateTime | null;
+};
+
+export type CreateSlotPayload = {
+  teacherAssignmentId: ID;
+  dayOfWeek: Weekday;
+  startTime: string;
+  endTime: string;
+};
+
+export type UpdateSlotPayload = Partial<CreateSlotPayload>;
 
 // -------------------------------------------------------------------- Élèves
 
