@@ -2,7 +2,7 @@ export * from './types';
 export { ApiError, isApiError, errorMessage } from './ApiError';
 export { api, apiFetch, apiFetchBlob, buildUrl } from './http';
 export { sessionStore } from './session';
-export type { Session } from './session';
+export type { Session, StoredAccount } from './session';
 export { staffSessionStore } from './staffSession';
 export type { StaffSession } from './staffSession';
 export { queryKeys } from './queryKeys';

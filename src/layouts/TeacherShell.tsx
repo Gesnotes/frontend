@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { useAuth } from '../auth/auth-context';
 import { TermProvider } from '../context/TermProvider';
 import { OfflineBar } from '../pwa/OfflineBar';
@@ -36,6 +37,7 @@ export function TeacherShell() {
             <span className="tshell__brand-name">Gesnotes</span>
           </div>
           <div className="tshell__top-actions">
+            <AccountSwitcher />
             <TermSelect />
             <button className="tshell__logout" onClick={() => void logout()} title="Déconnexion" aria-label="Se déconnecter">
               ⎋

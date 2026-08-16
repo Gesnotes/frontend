@@ -61,6 +61,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [queryClient],
   );
 
+  /**
+   * Bascule vers un autre compte connu : le cache appartient au compte
+   * précédent (même raisonnement que `identify`, ci-dessus) et doit disparaître
+   * avant que la nouvelle session ne charge ses propres écrans.
+   */
+  const switchAccount = useCallback(
+    async (userId: number) => {
+      await authApi.switchAccount(userId);
+      queryClient.clear();
+    },
+    [queryClient],
+  );
+
+  const linkAccount = useCallback(async (identifier: string, password: string) => {
+    await authApi.linkAccount(identifier, password);
+  }, []);
+
   const logout = useCallback(async () => {
     /**
      * Le jeton push identifie l'appareil, pas le compte : le laisser
@@ -103,10 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: session?.user.role ?? null,
       isAuthenticated: session !== null,
       displayName: session ? fullNameOf(session.user) : '',
+      schoolName: session?.schoolName ?? '',
+      accounts: session?.accounts ?? [],
       identify,
+      switchAccount,
+      linkAccount,
       logout,
     }),
-    [session, identify, logout],
+    [session, identify, switchAccount, linkAccount, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

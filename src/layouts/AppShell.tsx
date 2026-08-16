@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { useAuth } from '../auth/auth-context';
 import { TermProvider } from '../context/TermProvider';
 import { OfflineBar } from '../pwa/OfflineBar';
@@ -26,6 +27,10 @@ export function AppShell() {
               <div className="shell__brand-name">Gesnotes</div>
               <div className="shell__brand-role">{spaceLabel(role)}</div>
             </div>
+          </div>
+
+          <div style={{ padding: '0 var(--space-2)' }}>
+            <AccountSwitcher />
           </div>
 
           <nav className="shell__nav" aria-label="Navigation principale">

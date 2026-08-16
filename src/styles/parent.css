@@ -25,6 +25,22 @@
   gap: var(--space-8);
 }
 
+/*
+ * Barre fine au-dessus de l'accueil de chaque page : seul endroit de
+ * l'espace parent où l'école courante est visible, et seul point d'entrée
+ * du sélecteur de compte. Volontairement distincte de `.parent__topbar`
+ * (titre de page, répété par chaque écran) : celle-ci vit une fois, au
+ * niveau de la coquille.
+ */
+.parent__shell-top {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: var(--space-3) var(--margin-mobile) 0;
+}
+
 .parent__topbar {
   display: flex;
   align-items: center;

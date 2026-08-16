@@ -123,6 +123,117 @@
   color: var(--on-primary);
 }
 
+/* ---------------- Sélecteur de compte / d'école ---------------- */
+
+.account-switcher {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.account-switcher__trigger {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius);
+  background: var(--surface-container-lowest);
+  color: var(--on-surface);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 220px;
+}
+
+.account-switcher__school {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-switcher__badge {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--primary-fixed);
+  color: var(--on-primary-fixed-variant);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.account-switcher__panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 240px;
+  padding: var(--space-2);
+  background: var(--surface-container-lowest);
+  border: 1px solid var(--surface-container-high);
+  border-radius: var(--radius);
+  box-shadow: var(--elevation-2);
+}
+
+.account-switcher__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: none;
+  text-align: left;
+  cursor: default;
+}
+
+.account-switcher__item--button {
+  cursor: pointer;
+}
+
+.account-switcher__item--button:hover:not(:disabled) {
+  background: var(--surface-container-low);
+}
+
+.account-switcher__item--button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.account-switcher__item--active {
+  background: var(--surface-container-low);
+}
+
+.account-switcher__item-school {
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.account-switcher__item-role {
+  font-size: var(--label-sm-size);
+  color: var(--on-surface-variant);
+}
+
+.account-switcher__item--link {
+  margin-top: var(--space-1);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--surface-container-low);
+  font-size: var(--body-md-size);
+  font-weight: 600;
+  color: var(--primary-container);
+  cursor: pointer;
+}
+
+.account-switcher__item--link:hover {
+  background: var(--surface-container-low);
+}
+
 /* ---------------- Contenu ---------------- */
 
 .shell__main {

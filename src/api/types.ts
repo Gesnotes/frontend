@@ -55,18 +55,40 @@ export type LoginResult = {
 };
 
 /**
+ * Un autre compte accessible à la même personne : soit détecté
+ * automatiquement (même identifiant + mot de passe valides dans une autre
+ * école), soit lié explicitement (`POST /auth/link-account`). Porte son
+ * propre `refreshToken`, prêt à l'emploi pour basculer via
+ * `POST /auth/refresh` sans ressaisir de mot de passe.
+ */
+export type OtherAccount = {
+  userId: ID;
+  schoolId: ID;
+  schoolName: string;
+  role: Role;
+  refreshToken: string;
+};
+
+/**
  * Réponse de `POST /auth/identify`, seule porte de connexion : aucune école
  * n'est résolue au préalable, l'identifiant est cherché à travers toutes les
  * écoles actives.
  */
+export type IdentifyOk = LoginResult & {
+  status: 'ok';
+  school: { id: ID; name: string };
+  otherAccounts: OtherAccount[];
+};
+
 export type IdentifyResult =
-  | (LoginResult & { status: 'ok'; school: { id: ID; name: string } })
+  | IdentifyOk
   | { status: 'ambiguous'; schools: { id: ID; name: string; city: string | null }[] };
 
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
   userId: ID;
   schoolId: ID;
+  schoolName: string;
   role: Role;
 };
 

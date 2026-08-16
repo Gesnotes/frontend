@@ -1,13 +1,36 @@
 import { SESSION_STORAGE_KEY } from './config';
-import type { AuthUser, LoginResult } from './types';
+import type { AuthUser, IdentifyOk, LoginResult, OtherAccount, Role } from './types';
+
+/** Un autre compte connu, prêt à activer via `POST /auth/refresh`. */
+export type StoredAccount = {
+  userId: AuthUser['id'];
+  schoolId: number;
+  schoolName: string;
+  role: Role;
+  refreshToken: string;
+};
 
 export type Session = {
   accessToken: string;
   refreshToken: string;
   user: AuthUser;
+  schoolId: number;
+  schoolName: string;
+  /** Les AUTRES comptes accessibles à la même personne — jamais le compte actif. */
+  accounts: StoredAccount[];
 };
 
 type Listener = (session: Session | null) => void;
+
+function toStoredAccount(account: OtherAccount): StoredAccount {
+  return {
+    userId: account.userId,
+    schoolId: account.schoolId,
+    schoolName: account.schoolName,
+    role: account.role,
+    refreshToken: account.refreshToken,
+  };
+}
 
 /**
  * Dépôt de session, hors React.
@@ -32,12 +55,44 @@ class SessionStore {
     return this.session?.refreshToken ?? null;
   }
 
-  set(result: LoginResult): Session {
-    const session: Session = {
+  /** Connexion complète (`POST /auth/identify`, statut `ok`) : remplace tout. */
+  setFromIdentify(result: IdentifyOk): Session {
+    return this.replace({
       accessToken: result.accessToken,
       refreshToken: result.refreshToken,
       user: result.user,
-    };
+      schoolId: result.school.id,
+      schoolName: result.school.name,
+      accounts: result.otherAccounts.map(toStoredAccount),
+    });
+  }
+
+  /**
+   * Rafraîchissement du même compte (401 rejoué par le client HTTP) : seuls
+   * les jetons et l'identité changent, l'école et les autres comptes connus
+   * restent ceux de la session en cours. N'est jamais appelé sans session
+   * existante — `getRefreshToken()` en amont le garantit.
+   */
+  setFromRefresh(result: LoginResult): Session {
+    const current = this.session;
+    if (!current) throw new Error('setFromRefresh appelé sans session active');
+    return this.replace({
+      accessToken: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: result.user,
+      schoolId: current.schoolId,
+      schoolName: current.schoolName,
+      accounts: current.accounts,
+    });
+  }
+
+  /**
+   * Remplacement complet et déjà construit — utilisé par `authApi.switchAccount`
+   * (bascule vers un autre compte connu, `accounts` recalculé par l'appelant
+   * pour y ranger le compte qu'on quitte) et `authApi.linkAccount` (ajout d'un
+   * compte fraîchement lié à la liste existante).
+   */
+  replace(session: Session): Session {
     this.session = session;
     writeToStorage(session);
     this.emit();
@@ -67,7 +122,20 @@ function readFromStorage(): Session | null {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw) as Partial<Session>;
-    if (!parsed.accessToken || !parsed.refreshToken || !parsed.user) return null;
+    // `schoolId`/`schoolName`/`accounts` sont apparus après coup : une session
+    // stockée par une version antérieure du client ne les a pas. Mieux vaut
+    // redemander une connexion que de garder une session dont ces champs
+    // manquent — tout le code qui suit les suppose toujours présents.
+    if (
+      !parsed.accessToken ||
+      !parsed.refreshToken ||
+      !parsed.user ||
+      !parsed.schoolId ||
+      !parsed.schoolName ||
+      !Array.isArray(parsed.accounts)
+    ) {
+      return null;
+    }
     return parsed as Session;
   } catch {
     // Stockage indisponible (mode privé) ou contenu corrompu : session absente.
