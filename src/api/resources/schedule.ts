@@ -28,8 +28,12 @@ export function restoreSlot(classId: ID, slotId: ID): Promise<TimetableSlot> {
   return api.post<TimetableSlot>(`/classes/${classId}/schedule/${slotId}/restore`);
 }
 
-/** `GET /teachers/me/schedule` — mes créneaux du jour (classes mode `notes`). */
-export function fetchMySchedule(date: string): Promise<TimetableSlot[]> {
+/**
+ * `GET /teachers/me/schedule` — mes créneaux (classes mode `notes`).
+ * Avec `date`, restreint au jour (sélecteur de présence) ; omis, toute la
+ * semaine récurrente (vue « mon emploi du temps »).
+ */
+export function fetchMySchedule(date?: string): Promise<TimetableSlot[]> {
   return api.get<TimetableSlot[]>('/teachers/me/schedule', { date });
 }
 
@@ -43,7 +47,7 @@ export function useSchedule(classId: ID | undefined, includeArchived = false) {
   });
 }
 
-export function useMySchedule(date: string) {
+export function useMySchedule(date?: string) {
   return useQuery({
     queryKey: queryKeys.schedule.mine(date),
     queryFn: () => fetchMySchedule(date),

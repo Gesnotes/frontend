@@ -31,6 +31,7 @@ export const paths = {
     root: '/enseignant',
     dashboard: '/enseignant',
     gradeEntry: '/enseignant/saisie',
+    schedule: '/enseignant/emploi-du-temps',
     attendance: '/enseignant/presence',
     history: '/enseignant/historique',
   },
@@ -43,6 +44,7 @@ export const paths = {
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
     attendance: '/parent/presence',
+    schedule: '/parent/emploi-du-temps',
     notifications: '/parent/alertes',
   },
 

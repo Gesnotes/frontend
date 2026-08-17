@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, apiFetchBlob } from '../http';
 import { queryKeys } from '../queryKeys';
-import type { ChildDetail, ChildSummary, Device, ID, ParentGrade } from '../types';
+import type { ChildDetail, ChildSummary, Device, ID, ParentGrade, TimetableSlot } from '../types';
 
 /** `GET /parents/me/children` — sans `term_id`, les moyennes valent `null`. */
 export function fetchMyChildren(termId?: ID): Promise<ChildSummary[]> {
@@ -21,6 +21,11 @@ export function fetchChildGrades(
     term_id: filters.termId,
     subject_id: filters.subjectId,
   });
+}
+
+/** Emploi du temps de la classe de l'enfant — vide si la classe est en mode présence. */
+export function fetchChildSchedule(id: ID): Promise<TimetableSlot[]> {
+  return api.get<TimetableSlot[]>(`/children/${id}/schedule`);
 }
 
 /** Bulletin PDF d'un seul enfant, sans exposer les résultats de sa classe. */
@@ -63,6 +68,14 @@ export function useChildGrades(id: ID | undefined, filters: { termId?: ID; subje
   return useQuery({
     queryKey: queryKeys.children.grades(id ?? 0, filters.termId, filters.subjectId),
     queryFn: () => fetchChildGrades(id!, filters),
+    enabled: id !== undefined,
+  });
+}
+
+export function useChildSchedule(id: ID | undefined) {
+  return useQuery({
+    queryKey: queryKeys.children.schedule(id ?? 0),
+    queryFn: () => fetchChildSchedule(id!),
     enabled: id !== undefined,
   });
 }
