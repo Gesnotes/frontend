@@ -19,6 +19,11 @@ export const queryKeys = {
     list: (includeArchived?: boolean) => ['holidays', 'list', includeArchived ?? false] as const,
   },
 
+  auditLogs: {
+    all: ['audit-logs'] as const,
+    list: (limit: number) => ['audit-logs', 'list', limit] as const,
+  },
+
   gradeTypes: {
     all: ['grade-types'] as const,
   },

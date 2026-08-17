@@ -28,6 +28,7 @@ export * as dashboardApi from './resources/dashboard';
 export * as parentApi from './resources/parent';
 export * as referentialsApi from './resources/referentials';
 export * as holidaysApi from './resources/holidays';
+export * as auditLogsApi from './resources/auditLogs';
 export * as onboardingApi from './resources/onboarding';
 export * as staffApi from './resources/staff';
 export * as schoolApi from './resources/school';

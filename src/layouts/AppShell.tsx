@@ -1,6 +1,7 @@
 import {
   Archive, BookOpen, CalendarClock, CalendarDays, CalendarOff, CalendarRange, Contact,
-  GraduationCap, LayoutDashboard, LogOut, NotebookPen, School, Settings, Users, type LucideIcon,
+  GraduationCap, LayoutDashboard, LogOut, NotebookPen, School, ScrollText, Settings, Users,
+  type LucideIcon,
 } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -26,6 +27,7 @@ const adminNav: AdminNavItem[] = [
   { to: paths.admin.schoolYears, label: 'Années scolaires', icon: CalendarDays },
   { to: paths.admin.holidays, label: 'Calendrier scolaire', icon: CalendarOff },
   { to: paths.admin.archives, label: 'Archives', icon: Archive },
+  { to: paths.admin.auditLog, label: "Journal d'audit", icon: ScrollText },
   { to: paths.admin.settings, label: 'Paramètres', icon: Settings },
 ];
 

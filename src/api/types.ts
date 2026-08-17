@@ -820,6 +820,31 @@ export type AbsenceTrendPoint = {
   retards: number;
 };
 
+/**
+ * Action tracée par le journal d'audit — volontairement borné à quelques
+ * actions sensibles, pas une trace générique de toute mutation.
+ */
+export type AuditAction =
+  | 'grade.updated'
+  | 'grade.deleted'
+  | 'student.moved'
+  | 'account.archived'
+  | 'account.restored'
+  | 'account.permanently_deleted';
+
+/** Élément de `GET /admin/audit-logs`. */
+export type AuditLogEntry = {
+  id: ID;
+  actorName: string;
+  actorRole: Role;
+  action: AuditAction;
+  targetType: string;
+  targetId: ID | null;
+  targetLabel: string | null;
+  metadata: unknown;
+  createdAt: IsoDateTime;
+};
+
 // -------------------------------------------------------------- Espace parent
 
 /** Élément de `GET /parents/me/children`. */
