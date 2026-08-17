@@ -1,3 +1,4 @@
+import { NotebookPen } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
@@ -101,7 +102,7 @@ export default function GradeEntryPage() {
         {(items) =>
           items.length === 0 ? (
             <EmptyState
-              icon="✎"
+              icon={<NotebookPen size={28} />}
               title="Aucune classe affectée"
               description="Sans affectation classe × matière, la saisie de notes n'est pas autorisée."
             />

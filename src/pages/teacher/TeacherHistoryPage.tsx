@@ -1,3 +1,4 @@
+import { History } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -98,7 +99,7 @@ export default function TeacherHistoryPage() {
         {(rows) =>
           rows.length === 0 ? (
             <EmptyState
-              icon="↺"
+              icon={<History size={28} />}
               title="Aucune note saisie"
               description="Les notes que vous enregistrerez apparaîtront ici, avec la possibilité de les corriger."
             />

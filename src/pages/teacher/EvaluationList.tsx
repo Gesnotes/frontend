@@ -1,3 +1,4 @@
+import { NotebookPen } from 'lucide-react';
 import { useState } from 'react';
 
 import {
@@ -89,7 +90,7 @@ export function EvaluationList({
         {(items) =>
           items.length === 0 ? (
             <EmptyState
-              icon="✎"
+              icon={<NotebookPen size={28} />}
               title="Aucune évaluation"
               description="Créez une première évaluation (interrogation, devoir, composition) pour commencer la saisie."
               action={locked ? undefined : { label: 'Nouvelle évaluation', onClick: () => onCreatingChange(true) }}
