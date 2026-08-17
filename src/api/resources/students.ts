@@ -10,6 +10,7 @@ import type {
   ImportReport,
   ParentContact,
   Student,
+  StudentDetail,
   StudentPage,
   UpdateStudentPayload,
 } from '../types';
@@ -34,6 +35,11 @@ export function fetchStudents({
 
 export function fetchStudent(id: ID): Promise<Student> {
   return api.get<Student>(`/students/${id}`);
+}
+
+/** Fiche complète : identité, parents, bulletin de la période, présence et notes récentes. */
+export function fetchStudentDetail(id: ID, termId?: ID): Promise<StudentDetail> {
+  return api.get<StudentDetail>(`/students/${id}/detail`, { term_id: termId });
 }
 
 export function createStudent(payload: CreateStudentPayload) {
@@ -115,6 +121,14 @@ export function useStudent(id: ID | undefined) {
   return useQuery({
     queryKey: queryKeys.students.detail(id ?? 0),
     queryFn: () => fetchStudent(id!),
+    enabled: id !== undefined,
+  });
+}
+
+export function useStudentDetail(id: ID | undefined, termId: ID | undefined) {
+  return useQuery({
+    queryKey: queryKeys.students.detailFull(id ?? 0, termId),
+    queryFn: () => fetchStudentDetail(id!, termId),
     enabled: id !== undefined,
   });
 }

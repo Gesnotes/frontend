@@ -50,6 +50,7 @@ export const queryKeys = {
     list: (classId?: ID, page?: number, includeArchived?: boolean) =>
       ['students', 'list', classId ?? null, page ?? 1, includeArchived ?? false] as const,
     detail: (id: ID) => ['students', 'detail', id] as const,
+    detailFull: (id: ID, termId?: ID) => ['students', 'detail-full', id, termId ?? null] as const,
     parentSearch: (query: string) => ['students', 'parent-search', query] as const,
   },
 
