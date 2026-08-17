@@ -80,7 +80,7 @@ function refreshSession(): Promise<boolean> {
         sessionStore.clear();
         return false;
       }
-      sessionStore.set((await response.json()) as LoginResult);
+      sessionStore.setFromRefresh((await response.json()) as LoginResult);
       return true;
     } catch {
       sessionStore.clear();

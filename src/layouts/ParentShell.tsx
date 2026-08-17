@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { ChildProvider } from '../context/ChildProvider';
 import { TermProvider } from '../context/TermProvider';
 import { OfflineBar } from '../pwa/OfflineBar';
@@ -24,6 +25,9 @@ export function ParentShell() {
       <ChildProvider>
         <div className="parent">
           <OfflineBar />
+          <div className="parent__shell-top">
+            <AccountSwitcher />
+          </div>
           <Outlet />
 
           <nav className="parent__nav" aria-label="Navigation">
