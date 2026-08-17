@@ -1,4 +1,4 @@
-import { FolderInput, Pencil, Trash2, UserRoundPlus } from 'lucide-react';
+import { FolderInput, Pencil, Search, Trash2, UserRoundPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,6 +7,7 @@ import {
   type ID, type Student,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { downloadBlob } from '../../lib/download';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
@@ -26,9 +27,12 @@ export default function StudentsPage() {
 
   const [classFilter, setClassFilter] = useState<ID | ''>('');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim());
   const students = studentsApi.useStudents({
     classId: classFilter === '' ? undefined : classFilter,
     page,
+    search: debouncedSearch || undefined,
   });
 
   const [creating, setCreating] = useState(false);
@@ -106,23 +110,34 @@ export default function StudentsPage() {
       </div>
 
       <div className="space-y-6 p-8">
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <label className="flex max-w-xs flex-col gap-1.5">
-            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filtrer par classe</span>
-            <select
-              className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              value={classFilter}
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <label className="relative min-w-[220px] flex-1">
+            <span className="sr-only">Rechercher un élève</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher un élève par nom ou prénom…"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={search}
               onChange={(e) => {
-                setClassFilter(e.target.value ? Number(e.target.value) : '');
+                setSearch(e.target.value);
                 setPage(1);
               }}
-            >
-              <option value="">Toutes les classes</option>
-              {(classes.data ?? []).map((klass) => (
-                <option key={klass.id} value={klass.id}>{klass.name}</option>
-              ))}
-            </select>
+            />
           </label>
+          <select
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={classFilter}
+            onChange={(e) => {
+              setClassFilter(e.target.value ? Number(e.target.value) : '');
+              setPage(1);
+            }}
+          >
+            <option value="">Toutes les classes</option>
+            {(classes.data ?? []).map((klass) => (
+              <option key={klass.id} value={klass.id}>{klass.name}</option>
+            ))}
+          </select>
         </div>
 
         <QueryBoundary query={students} loading={<TableSkeleton />}>
@@ -130,12 +145,16 @@ export default function StudentsPage() {
             data.students.length === 0 ? (
               <div className="rounded-xl border border-gray-100 bg-white p-12 text-center shadow-sm">
                 <p className="font-semibold text-gray-900">
-                  {classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
+                  {debouncedSearch
+                    ? `Aucun résultat pour « ${debouncedSearch} »`
+                    : classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
                 </p>
                 <p className="mt-1 text-sm text-gray-500">
-                  Ajoutez un élève et associez-lui un parent pour qu'il reçoive les notes.
+                  {debouncedSearch
+                    ? 'Vérifiez l’orthographe, ou affinez avec le nom de famille seul.'
+                    : 'Ajoutez un élève et associez-lui un parent pour qu’il reçoive les notes.'}
                 </p>
-                <Button className="mt-4" onClick={openCreate}>Ajouter un élève</Button>
+                {debouncedSearch ? null : <Button className="mt-4" onClick={openCreate}>Ajouter un élève</Button>}
               </div>
             ) : (
               <>

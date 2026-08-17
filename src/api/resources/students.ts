@@ -19,17 +19,20 @@ type StudentFilters = {
   classId?: ID;
   page?: number;
   includeArchived?: boolean;
+  search?: string;
 };
 
 export function fetchStudents({
   classId,
   page = 1,
   includeArchived = false,
+  search,
 }: StudentFilters = {}): Promise<StudentPage> {
   return api.get<StudentPage>('/students', {
     class_id: classId,
     page,
     include_archived: includeArchived ? 'true' : 'false',
+    search: search?.trim() || undefined,
   });
 }
 
@@ -112,7 +115,7 @@ export function searchParents(query: string): Promise<ParentContact[]> {
 
 export function useStudents(filters: StudentFilters = {}) {
   return useQuery({
-    queryKey: queryKeys.students.list(filters.classId, filters.page, filters.includeArchived),
+    queryKey: queryKeys.students.list(filters.classId, filters.page, filters.includeArchived, filters.search),
     queryFn: () => fetchStudents(filters),
   });
 }
