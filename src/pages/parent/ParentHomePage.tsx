@@ -1,3 +1,4 @@
+import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { parentApi, type ChildDetail, type ChildSummary } from '../../api';
@@ -87,7 +88,7 @@ function ChildOverview({ data, termLabel }: { data: ChildDetail; termLabel: stri
 
         {data.subjects.length === 0 ? (
           <EmptyState
-            icon="▤"
+            icon={<ClipboardList size={28} />}
             title="Aucune note pour l'instant"
             description="Les notes apparaîtront ici dès que les enseignants les auront saisies pour cette période."
           />

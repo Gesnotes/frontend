@@ -1,3 +1,4 @@
+import { ClipboardList } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -71,7 +72,7 @@ function SubjectList({ data }: { data: ChildDetail }) {
   if (data.subjects.length === 0) {
     return (
       <EmptyState
-        icon="▤"
+        icon={<ClipboardList size={28} />}
         title="Aucune note sur cette période"
         description="Choisissez une autre période, ou revenez lorsque les enseignants auront saisi leurs notes."
       />

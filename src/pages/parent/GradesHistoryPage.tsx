@@ -1,3 +1,4 @@
+import { ClipboardList } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { parentApi, type ParentGrade } from '../../api';
@@ -42,7 +43,7 @@ function GradeList({ grades }: { grades: ParentGrade[] }) {
   if (grades.length === 0) {
     return (
       <EmptyState
-        icon="▤"
+        icon={<ClipboardList size={28} />}
         title="Aucune note sur cette période"
         description="Vous serez notifié dès qu'un enseignant saisira une note."
       />

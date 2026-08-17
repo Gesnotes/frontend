@@ -1,3 +1,4 @@
+import { ClipboardCheck } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
 import { classesApi, scheduleApi } from '../../api';
@@ -89,7 +90,7 @@ export default function TeacherAttendancePage() {
 
       {hasNothing ? (
         <EmptyState
-          icon="✓"
+          icon={<ClipboardCheck size={28} />}
           title="Rien à saisir aujourd'hui"
           description="Aucun créneau ne vous est affecté aujourd'hui, et vous n'êtes référent d'aucune classe."
         />

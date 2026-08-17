@@ -1,3 +1,4 @@
+import { GraduationCap } from 'lucide-react';
 import { useCallback, useMemo, useState } from 'react';
 
 import {
@@ -197,7 +198,7 @@ export function EvaluationSaisie({
         {(data) =>
           data.students.length === 0 ? (
             <EmptyState
-              icon="⚇"
+              icon={<GraduationCap size={28} />}
               title="Aucun élève dans cette classe"
               description="L'administration doit y inscrire des élèves avant toute saisie."
             />
