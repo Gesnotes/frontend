@@ -1,3 +1,4 @@
+import { ChevronLeft } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
@@ -9,12 +10,10 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatDate, formatGrade, formatRelative } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Avatar, Button, Card, Chip, EmptyState, SectionTitle, Skeleton,
-  attendanceTone, gradeTone,
+  Avatar, Button, Skeleton, attendanceTone, gradeTone, toneClasses,
 } from '../../ui';
 import { LinkParentModal } from './LinkParentModal';
 
@@ -30,25 +29,33 @@ export default function StudentDetailPage() {
 
   return (
     <>
-      <PageHeader
-        title={detail.data ? `${detail.data.firstName} ${detail.data.lastName}` : 'Élève'}
-        subtitle={
-          detail.data
-            ? `${detail.data.classe.name} · ${term ? term.label : 'Aucune période sélectionnée'}`
-            : 'Fiche élève'
-        }
-        back={
-          <Link to={paths.admin.students}>
-            <Button variant="ghost" aria-label="Retour aux élèves">‹</Button>
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+        <div className="flex items-center gap-3">
+          <Link
+            to={paths.admin.students}
+            aria-label="Retour aux élèves"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+          >
+            <ChevronLeft size={20} aria-hidden="true" />
           </Link>
-        }
-        actions={<TermSelect />}
-      />
-      <PageContent>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">
+              {detail.data ? `${detail.data.firstName} ${detail.data.lastName}` : 'Élève'}
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              {detail.data
+                ? `${detail.data.classe.name} · ${term ? term.label : 'Aucune période sélectionnée'}`
+                : 'Fiche élève'}
+            </p>
+          </div>
+        </div>
+        <TermSelect />
+      </div>
+      <div className="p-8">
         <QueryBoundary query={detail} loading={<DetailSkeleton />}>
           {(data) => <StudentBody data={data} onManageParents={() => setLinking(true)} />}
         </QueryBoundary>
-      </PageContent>
+      </div>
 
       <LinkParentModal student={linking ? (detail.data ?? null) : null} onClose={() => setLinking(false)} />
     </>
@@ -57,56 +64,57 @@ export default function StudentDetailPage() {
 
 function StudentBody({ data, onManageParents }: { data: StudentDetail; onManageParents: () => void }) {
   return (
-    <div className="page-stack">
-      <div className="grid-split">
-        <Card padded>
-          <SectionTitle
-            aside={<Button size="sm" variant="secondary" onClick={onManageParents}>Gérer les parents</Button>}
-          >
-            Parents
-          </SectionTitle>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-base font-bold text-gray-900">Parents</h2>
+            <Button size="sm" variant="secondary" onClick={onManageParents}>Gérer les parents</Button>
+          </div>
           {data.parents.length === 0 ? (
-            <Chip tone="danger">Aucun parent associé</Chip>
+            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('danger')}`}>
+              Aucun parent associé
+            </span>
           ) : (
-            <div className="list-rows">
+            <div className="space-y-3">
               {data.parents.map((parent) => (
-                <div key={parent.id} className="list-row">
+                <div key={parent.id} className="flex items-center gap-3">
                   <Avatar name={personName(parent)} size={32} />
-                  <div className="list-row__body">
-                    <div className="list-row__title">{personName(parent)}</div>
-                    <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-gray-900">{personName(parent)}</div>
+                    <div className="truncate text-xs text-gray-500">{parent.email ?? parent.phone ?? '—'}</div>
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </Card>
+        </div>
 
-        <Card padded>
-          <SectionTitle>Identité</SectionTitle>
-          <div className="page-stack" style={{ gap: 'var(--space-2)' }}>
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-bold text-gray-900">Identité</h2>
+          <div className="space-y-2">
             <IdentityRow label="Classe" value={data.classe.name} />
             <IdentityRow label="Niveau" value={data.classe.level ?? '—'} />
             <IdentityRow label="Date de naissance" value={data.birthDate ? formatDate(data.birthDate) : '—'} />
           </div>
-        </Card>
+        </div>
       </div>
 
-      <Card padded>
-        <SectionTitle>Bulletin de la période</SectionTitle>
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-bold text-gray-900">Bulletin de la période</h2>
         <BulletinSection bulletin={data.bulletin} />
-      </Card>
+      </div>
 
-      <div className="grid-split">
-        <Card padded>
-          <SectionTitle>Présence récente</SectionTitle>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-bold text-gray-900">Présence récente</h2>
           <AttendanceList records={data.presence} />
-        </Card>
+        </div>
 
-        <Card padded>
-          <SectionTitle>Notes récentes</SectionTitle>
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-base font-bold text-gray-900">Notes récentes</h2>
           <RecentGradesList grades={data.dernieresNotes} />
-        </Card>
+        </div>
       </div>
     </div>
   );
@@ -114,9 +122,9 @@ function StudentBody({ data, onManageParents }: { data: StudentDetail; onManageP
 
 function IdentityRow({ label, value }: { label: string; value: string }) {
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-3)' }}>
-      <span className="t-body-md t-muted">{label}</span>
-      <span className="t-body-md" style={{ fontWeight: 600 }}>{value}</span>
+    <div className="flex items-center justify-between gap-3 text-sm">
+      <span className="text-gray-500">{label}</span>
+      <span className="font-semibold text-gray-900">{value}</span>
     </div>
   );
 }
@@ -124,7 +132,7 @@ function IdentityRow({ label, value }: { label: string; value: string }) {
 function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
   if (!bulletin) {
     return (
-      <p className="t-body-md t-muted">
+      <p className="text-sm text-gray-500">
         Sélectionnez une période, dans l'en-tête, pour voir le bulletin de cet élève.
       </p>
     );
@@ -132,35 +140,38 @@ function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
 
   if (bulletin.subjects.length === 0) {
     return (
-      <EmptyState
-        icon="▤"
-        title="Aucune note sur cette période"
-        description="Le bulletin apparaîtra dès les premières saisies des enseignants."
-      />
+      <div className="py-8 text-center">
+        <p className="font-semibold text-gray-900">Aucune note sur cette période</p>
+        <p className="mt-1 text-sm text-gray-500">
+          Le bulletin apparaîtra dès les premières saisies des enseignants.
+        </p>
+      </div>
     );
   }
 
   return (
     <>
-      <div className="dash-bulletin__scroll">
-        <table className="ui-table">
+      <div className="overflow-x-auto rounded-lg border border-gray-100">
+        <table className="w-full text-left text-sm">
           <caption className="sr-only">
             Bulletin de {bulletin.firstName} {bulletin.lastName}
           </caption>
           <thead>
-            <tr>
-              <th scope="col">Matière</th>
-              <th scope="col" className="is-center">Coefficient</th>
-              <th scope="col" className="is-center">Moyenne</th>
+            <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+              <th className="px-4 py-2.5">Matière</th>
+              <th className="px-4 py-2.5 text-center">Coefficient</th>
+              <th className="px-4 py-2.5 text-center">Moyenne</th>
             </tr>
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-gray-100">
             {bulletin.subjects.map((subject) => (
               <tr key={subject.subjectId}>
-                <td>{subject.subjectName}</td>
-                <td className="is-center">{subject.coefficient}</td>
-                <td className="is-center">
-                  <Chip tone={gradeTone(subject.average)}>{formatGrade(subject.average)}</Chip>
+                <td className="px-4 py-2.5 font-semibold text-gray-900">{subject.subjectName}</td>
+                <td className="px-4 py-2.5 text-center text-gray-700">{subject.coefficient}</td>
+                <td className="px-4 py-2.5 text-center">
+                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(gradeTone(subject.average))}`}>
+                    {formatGrade(subject.average)}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -168,7 +179,7 @@ function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
         </table>
       </div>
 
-      <p className="t-body-md" style={{ marginTop: 'var(--space-4)', fontWeight: 700 }}>
+      <p className="mt-4 text-sm font-bold text-gray-900">
         Moyenne générale : {formatGrade(bulletin.average)}
       </p>
     </>
@@ -177,17 +188,19 @@ function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
 
 function AttendanceList({ records }: { records: StudentAttendanceRecord[] }) {
   if (records.length === 0) {
-    return <p className="t-body-md t-muted">Aucune présence enregistrée récemment.</p>;
+    return <p className="text-sm text-gray-500">Aucune présence enregistrée récemment.</p>;
   }
 
   return (
-    <div className="list-rows">
+    <div className="space-y-3">
       {records.map((record) => (
-        <div key={record.id} className="list-row">
-          <Chip tone={attendanceTone(record.status)}>{ATTENDANCE_LABEL[record.status]}</Chip>
-          <div className="list-row__body">
-            <div className="list-row__title">{formatDate(record.date)}</div>
-            {record.comment ? <div className="list-row__meta">{record.comment}</div> : null}
+        <div key={record.id} className="flex items-center gap-3">
+          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(attendanceTone(record.status))}`}>
+            {ATTENDANCE_LABEL[record.status]}
+          </span>
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900">{formatDate(record.date)}</div>
+            {record.comment ? <div className="truncate text-xs text-gray-500">{record.comment}</div> : null}
           </div>
         </div>
       ))}
@@ -197,21 +210,21 @@ function AttendanceList({ records }: { records: StudentAttendanceRecord[] }) {
 
 function RecentGradesList({ grades }: { grades: StudentRecentGrade[] }) {
   if (grades.length === 0) {
-    return <p className="t-body-md t-muted">Aucune note saisie récemment.</p>;
+    return <p className="text-sm text-gray-500">Aucune note saisie récemment.</p>;
   }
 
   return (
-    <div className="list-rows">
+    <div className="space-y-3">
       {grades.map((grade) => (
-        <div key={grade.id} className="list-row">
-          <Chip tone={gradeTone(grade.value, grade.maxValue)}>
+        <div key={grade.id} className="flex items-center gap-3">
+          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(gradeTone(grade.value, grade.maxValue))}`}>
             {grade.value} / {grade.maxValue}
-          </Chip>
-          <div className="list-row__body">
-            <div className="list-row__title">{grade.matiere.name} · {grade.periode.label}</div>
-            <div className="list-row__meta">{grade.type.label}</div>
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-gray-900">{grade.matiere.name} · {grade.periode.label}</div>
+            <div className="truncate text-xs text-gray-500">{grade.type.label}</div>
           </div>
-          <span className="list-row__meta">{formatRelative(grade.createdAt)}</span>
+          <span className="shrink-0 text-xs text-gray-400">{formatRelative(grade.createdAt)}</span>
         </div>
       ))}
     </div>
@@ -220,12 +233,12 @@ function RecentGradesList({ grades }: { grades: StudentRecentGrade[] }) {
 
 function DetailSkeleton() {
   return (
-    <div className="page-stack">
-      <div className="grid-split">
-        <Card padded><Skeleton height={80} /></Card>
-        <Card padded><Skeleton height={80} /></Card>
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><Skeleton height={80} /></div>
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><Skeleton height={80} /></div>
       </div>
-      <Card padded><Skeleton height={140} /></Card>
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm"><Skeleton height={140} /></div>
     </div>
   );
 }

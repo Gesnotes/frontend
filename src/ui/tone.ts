@@ -19,6 +19,25 @@ export function gradeTone(value: number | null | undefined, max = 20): ChipTone 
   return 'danger';
 }
 
+/**
+ * Classes Tailwind d'un badge de tonalité — pour les écrans admin reconstruits
+ * en Tailwind/DaisyUI (cf. maquette Front-Admin), hors du système `ui-chip`.
+ */
+export function toneClasses(tone: ChipTone): string {
+  switch (tone) {
+    case 'success':
+      return 'bg-emerald-100 text-emerald-700';
+    case 'danger':
+      return 'bg-red-100 text-red-700';
+    case 'warning':
+      return 'bg-amber-100 text-amber-700';
+    case 'info':
+      return 'bg-blue-100 text-blue-700';
+    default:
+      return 'bg-gray-100 text-gray-600';
+  }
+}
+
 /** Couleur CSS associée à une tonalité, pour les éléments non textuels (barres, jauges). */
 export function toneColor(tone: ChipTone): string {
   switch (tone) {
