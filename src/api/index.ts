@@ -20,6 +20,7 @@ export * as schoolYearsApi from './resources/schoolYears';
 export * as enrollmentApi from './resources/enrollment';
 export * as subjectsApi from './resources/subjects';
 export * as teachersApi from './resources/teachers';
+export * as usersApi from './resources/users';
 export * as studentsApi from './resources/students';
 export * as gradesApi from './resources/grades';
 export * as evaluationsApi from './resources/evaluations';

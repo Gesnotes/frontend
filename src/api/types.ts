@@ -389,6 +389,18 @@ export type Teacher = {
 
 export type AssignmentInput = { classId: ID; subjectId: ID };
 
+/** `GET /users` — vue unifiée des comptes de l'école (admin + enseignant + parent). */
+export type UserAccount = {
+  id: ID;
+  role: Role;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  phone: string | null;
+  archivedAt: IsoDateTime | null;
+  createdAt: IsoDateTime | null;
+};
+
 export type CreateTeacherPayload = {
   email: string;
   firstName?: string;
