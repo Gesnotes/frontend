@@ -45,6 +45,7 @@ const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 
+const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
 const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
 const TeacherSchedulePage = lazy(() => import('./pages/teacher/TeacherSchedulePage'));
@@ -167,12 +168,7 @@ export default function App() {
 
             <Route element={<RequireRole allow={['teacher']} />}>
               <Route path={paths.teacher.root} element={<TeacherShell />}>
-                {/*
-                  « Mes classes » a fusionné dans « Saisie » : le choix de la
-                  classe ouvre la saisie et porte déjà l'avancement. La racine
-                  redirige donc, plutôt que de dupliquer cet écran.
-                */}
-                <Route index element={<Navigate to={paths.teacher.gradeEntry} replace />} />
+                <Route index element={<TeacherDashboardPage />} />
                 <Route path="saisie" element={<GradeEntryPage />} />
                 <Route path="emploi-du-temps" element={<TeacherSchedulePage />} />
                 <Route path="presence" element={<TeacherAttendancePage />} />

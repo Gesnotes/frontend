@@ -31,6 +31,13 @@ export function toHHMM(minutes: number): string {
   return `${h}:${m}`;
 }
 
+const WEEKDAYS_BY_JS_DAY: Weekday[] = ['dimanche', 'lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi'];
+
+/** Jour de la semaine « aujourd'hui », au fuseau du navigateur — pour un affichage, pas un calcul serveur. */
+export function todayWeekday(): Weekday {
+  return WEEKDAYS_BY_JS_DAY[new Date().getDay()]!;
+}
+
 export function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
 }
