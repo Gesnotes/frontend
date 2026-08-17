@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  Archive, ClipboardCheck, Eye, GraduationCap, Pencil, School, Search,
+} from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import {
@@ -8,12 +11,11 @@ import {
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, plural } from '../../lib/format';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Alert, Button, Card, ConfirmDialog, EmptyState, Modal, ModalActions,
-  ProgressBar, SelectField, Skeleton, TextField, useToast,
+  Alert, Avatar, Button, ConfirmDialog, Modal, ModalActions,
+  SelectField, Skeleton, StatCardIcon, TextField, toneClasses, useToast,
 } from '../../ui';
 
 const MODE_OPTIONS: { value: ClassMode; icon: string; title: string; body: string }[] = [
@@ -61,13 +63,40 @@ export default function ClassesPage() {
   const toast = useToast();
 
   const classes = classesApi.useClasses(termId);
+  const teachers = teachersApi.useTeachers();
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<ClassListItem | null>(null);
   const [toDelete, setToDelete] = useState<ClassListItem | null>(null);
   const deleteClass = classesApi.useDeleteClass();
 
+  const [search, setSearch] = useState('');
+  const [levelFilter, setLevelFilter] = useState('');
+
   const list = classes.data ?? [];
   const headcount = list.reduce((sum, item) => sum + item.effectif, 0);
+  const avgEffectif = list.length > 0 ? Math.round(headcount / list.length) : 0;
+
+  const teacherName = useMemo(() => {
+    const map = new Map<ID, string>();
+    for (const teacher of teachers.data ?? []) {
+      map.set(teacher.id, [teacher.firstName, teacher.lastName].filter(Boolean).join(' ') || teacher.email);
+    }
+    return map;
+  }, [teachers.data]);
+
+  const levels = useMemo(
+    () => Array.from(new Set(list.map((item) => item.level))).sort((a, b) => a.localeCompare(b, 'fr')),
+    [list],
+  );
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return list.filter((item) => {
+      if (levelFilter && item.level !== levelFilter) return false;
+      if (query && !item.name.toLowerCase().includes(query) && !item.level.toLowerCase().includes(query)) return false;
+      return true;
+    });
+  }, [list, search, levelFilter]);
 
   async function confirmDelete() {
     if (!toDelete) return;
@@ -84,49 +113,105 @@ export default function ClassesPage() {
 
   return (
     <>
-      <PageHeader
-        title="Classes"
-        subtitle={
-          classes.data
-            ? `${formatCount(list.length)} ${plural(list.length, 'classe')} · ${formatCount(headcount)} ${plural(headcount, 'élève')}`
-            : "Classes de l'établissement"
-        }
-        actions={
-          <>
-            <TermSelect />
-            <Button onClick={() => setCreating(true)}>Créer une classe</Button>
-          </>
-        }
-      />
-      <PageContent>
-        <QueryBoundary query={classes} loading={<CardsSkeleton />}>
-          {(items) =>
-            items.length === 0 ? (
-              <EmptyState
-                icon="◫"
-                title="Aucune classe"
-                description="Créez une première classe pour commencer à inscrire des élèves."
-                action={{ label: 'Créer une classe', onClick: () => setCreating(true) }}
-              />
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Classes</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {classes.data
+              ? `${formatCount(list.length)} ${plural(list.length, 'classe')} · ${formatCount(headcount)} ${plural(headcount, 'élève')}`
+              : "Classes de l'établissement"}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <TermSelect />
+          <Button onClick={() => setCreating(true)}>Créer une classe</Button>
+        </div>
+      </div>
+
+      <div className="space-y-6 p-8">
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <label className="relative flex-1 min-w-[220px]">
+            <span className="sr-only">Rechercher une classe</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher une classe ou un niveau…"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </label>
+          <select
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={levelFilter}
+            onChange={(e) => setLevelFilter(e.target.value)}
+          >
+            <option value="">Tous les niveaux</option>
+            {levels.map((level) => (
+              <option key={level} value={level}>{level}</option>
+            ))}
+          </select>
+        </div>
+
+        <QueryBoundary query={classes} loading={<TableSkeleton />}>
+          {() =>
+            filtered.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+                <p className="font-semibold text-gray-900">
+                  {list.length === 0 ? 'Aucune classe' : 'Aucune classe ne correspond à ce filtre'}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {list.length === 0
+                    ? 'Créez une première classe pour commencer à inscrire des élèves.'
+                    : 'Essayez un autre nom ou un autre niveau.'}
+                </p>
+                {list.length === 0 ? (
+                  <Button className="mt-4" onClick={() => setCreating(true)}>Créer une classe</Button>
+                ) : null}
+              </div>
             ) : (
-              <div className="grid-cards">
-                {items.map((item) => (
-                  <ClassCard
-                    key={item.id}
-                    item={item}
-                    termId={termId}
-                    onOpen={() => navigate(paths.admin.classDetail(item.id))}
-                    onBulletin={() => navigate(paths.admin.classBulletin(item.id))}
-                    onEdit={() => setEditing(item)}
-                    onArchive={() => setToDelete(item)}
-                    onAttendance={() => navigate(paths.admin.classAttendance(item.id))}
-                  />
-                ))}
+              <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="px-6 py-3">Classe</th>
+                      <th className="px-6 py-3">Professeur référent</th>
+                      <th className="px-6 py-3">Effectif</th>
+                      <th className="px-6 py-3 text-center">Mode</th>
+                      <th className="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filtered.map((item) => (
+                      <ClassRow
+                        key={item.id}
+                        item={item}
+                        teacherName={item.homeroomTeacherId ? teacherName.get(item.homeroomTeacherId) : undefined}
+                        onOpen={() => navigate(paths.admin.classDetail(item.id))}
+                        onAttendance={() => navigate(paths.admin.classAttendance(item.id))}
+                        onEdit={() => setEditing(item)}
+                        onArchive={() => setToDelete(item)}
+                      />
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )
           }
         </QueryBoundary>
-      </PageContent>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <StatCardIcon icon={GraduationCap} tone="bg-blue-50 text-blue-600" label="Total élèves" value={formatCount(headcount)} />
+          <StatCardIcon
+            icon={School}
+            tone="bg-violet-50 text-violet-600"
+            label="Classes"
+            value={formatCount(list.length)}
+            hint={`${formatCount(list.filter((c) => c.mode === 'notes').length)} en notes · ${formatCount(list.filter((c) => c.mode === 'presence').length)} en présence`}
+          />
+          <StatCardIcon icon={GraduationCap} tone="bg-[#dde1ff] text-[#173bab]" label="Moyenne d'effectif" value={`${avgEffectif}`} hint="élèves / classe" />
+        </div>
+      </div>
 
       <CreateClassModal
         open={creating}
@@ -161,146 +246,74 @@ export default function ClassesPage() {
   );
 }
 
-function ClassCard({
-  item, termId, onOpen, onBulletin, onEdit, onArchive, onAttendance,
+function ClassRow({
+  item, teacherName, onOpen, onAttendance, onEdit, onArchive,
 }: {
   item: ClassListItem;
-  termId: ID | undefined;
+  teacherName: string | undefined;
   onOpen: () => void;
-  onBulletin: () => void;
+  onAttendance: () => void;
   onEdit: () => void;
   onArchive: () => void;
-  onAttendance: () => void;
 }) {
-  const hasTerm = termId !== undefined;
-  const isPresence = item.mode === 'presence';
-  const pct =
-    hasTerm && item.evalues !== null && item.effectif > 0
-      ? Math.round((item.evalues / item.effectif) * 100)
-      : null;
+  const pct = item.evalues !== null && item.effectif > 0 ? Math.round((item.evalues / item.effectif) * 100) : null;
 
   return (
-    <Card padded>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 'var(--space-3)' }}>
-        <span className="class-card__badge" aria-hidden="true">{item.level}</span>
-        <div style={{ minWidth: 0, flex: 1 }}>
-          <div className="t-title-md">{item.name}</div>
-          <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
-            {formatCount(item.effectif)} {plural(item.effectif, 'élève')}
+    <tr className="hover:bg-gray-50">
+      <td className="px-6 py-4">
+        <div className="flex items-center gap-3">
+          <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">{item.level}</span>
+          <span className="font-semibold text-gray-900">{item.name}</span>
+        </div>
+      </td>
+      <td className="px-6 py-4">
+        {teacherName ? (
+          <div className="flex items-center gap-2">
+            <Avatar name={teacherName} size={28} />
+            <span className="text-gray-700">{teacherName}</span>
           </div>
-        </div>
-        <ClassCardMenu onEdit={onEdit} onArchive={onArchive} className={item.name} />
-      </div>
-
-      {isPresence ? null : (
-        <div style={{ marginTop: 'var(--space-4)' }}>
-          <p className="t-label-sm t-subtle" style={{ marginBottom: 'var(--space-1)', textTransform: 'none' }}>
-            {pct !== null
-              ? `${pct}% des notes saisies ce trimestre`
-              : hasTerm
-                ? 'Aucun élève dans cette classe.'
-                : 'Sélectionnez une période pour suivre la saisie.'}
-          </p>
-          <ProgressBar value={pct ?? 0} max={100} tone="info" label={`Notes saisies pour ${item.name}`} />
-        </div>
-      )}
-
-      <div className="card-actions card-actions--stacked">
-        {isPresence ? (
-          <Button block variant="tonal" icon="◔" onClick={onAttendance}>Feuille de présence</Button>
         ) : (
-          <>
-            <Button block variant="tonal" icon="▤" onClick={onBulletin}>Voir les notes</Button>
-            <Button block variant="secondary" icon="◔" onClick={onAttendance}>Présence</Button>
-          </>
+          <span className="text-gray-400">Non assigné</span>
         )}
-        <Button block variant="secondary" icon="⋯" onClick={onOpen}>Détail</Button>
-      </div>
-    </Card>
-  );
-}
-
-/**
- * Menu « … » : gestes rares (renommer, archiver), délibérément repliés plutôt
- * qu'en rangée permanente — la carte sert d'abord à consulter une classe, pas
- * à la réorganiser.
- */
-function ClassCardMenu({
-  onEdit, onArchive, className,
-}: { onEdit: () => void; onArchive: () => void; className: string }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const triggerRef = useRef<HTMLButtonElement>(null);
-  // Capturé au moment même de la fermeture, pas dans le nettoyage de l'effet
-  // ci-dessous : le panneau est déjà retiré du DOM à ce moment-là (le focus
-  // serait donc toujours retombé sur `<body>`, jamais détecté « dans le
-  // menu »), et on ne veut voler le focus au bouton déclencheur que si
-  // l'utilisateur interagissait réellement au clavier avec le menu.
-  const focusWasInsideRef = useRef(false);
-
-  function close() {
-    focusWasInsideRef.current = !!ref.current?.contains(document.activeElement);
-    setOpen(false);
-  }
-
-  useEffect(() => {
-    if (!open) return;
-    const trigger = triggerRef.current;
-    function onPointerDown(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) close();
-    }
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') close();
-    }
-    document.addEventListener('mousedown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-      if (focusWasInsideRef.current) trigger?.focus();
-    };
-  }, [open]);
-
-  return (
-    <div className="class-card__menu" ref={ref}>
-      <button
-        type="button"
-        ref={triggerRef}
-        className="class-card__menu-trigger"
-        aria-label={`Actions pour ${className}`}
-        aria-haspopup="true"
-        aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
-      >
-        ⋮
-      </button>
-      {open ? (
-        <div className="class-card__menu-panel" role="menu">
-          <button
-            type="button"
-            role="menuitem"
-            className="class-card__menu-item"
-            onClick={() => {
-              close();
-              onEdit();
-            }}
-          >
-            Renommer
+      </td>
+      <td className="px-6 py-4">
+        <div className="text-gray-700">{formatCount(item.effectif)} {plural(item.effectif, 'élève')}</div>
+        {item.mode === 'notes' && pct !== null ? (
+          <div className="mt-1 flex items-center gap-2">
+            <div className="h-1.5 w-24 overflow-hidden rounded-full bg-gray-100">
+              <div
+                className={`h-full rounded-full ${pct >= 90 ? 'bg-red-500' : 'bg-emerald-500'}`}
+                style={{ width: `${Math.min(100, pct)}%` }}
+              />
+            </div>
+            <span className="text-xs text-gray-400">{pct}% noté</span>
+          </div>
+        ) : null}
+      </td>
+      <td className="px-6 py-4 text-center">
+        <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(item.mode === 'notes' ? 'info' : 'neutral')}`}>
+          {item.mode === 'notes' ? 'Notes' : 'Présence'}
+        </span>
+      </td>
+      <td className="px-6 py-4">
+        <div className="flex items-center justify-end gap-1">
+          <button type="button" onClick={onOpen} title="Voir le détail" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+            <Eye size={16} aria-hidden="true" />
           </button>
-          <button
-            type="button"
-            role="menuitem"
-            className="class-card__menu-item class-card__menu-item--danger"
-            onClick={() => {
-              close();
-              onArchive();
-            }}
-          >
-            Archiver
+          {item.mode === 'presence' ? (
+            <button type="button" onClick={onAttendance} title="Feuille de présence" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+              <ClipboardCheck size={16} aria-hidden="true" />
+            </button>
+          ) : null}
+          <button type="button" onClick={onEdit} title="Modifier" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+            <Pencil size={16} aria-hidden="true" />
+          </button>
+          <button type="button" onClick={onArchive} title="Archiver" className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600">
+            <Archive size={16} aria-hidden="true" />
           </button>
         </div>
-      ) : null}
-    </div>
+      </td>
+    </tr>
   );
 }
 
@@ -521,15 +534,11 @@ function CreateClassModal({
   );
 }
 
-function CardsSkeleton() {
+function TableSkeleton() {
   return (
-    <div className="grid-cards">
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       {[0, 1, 2, 3, 4, 5].map((i) => (
-        <Card key={i} padded>
-          <Skeleton width="50%" height={22} />
-          <Skeleton width="35%" height={12} style={{ marginTop: 10 }} />
-          <Skeleton height={7} style={{ marginTop: 22 }} />
-        </Card>
+        <Skeleton key={i} height={44} style={{ marginBottom: 12 }} />
       ))}
     </div>
   );

@@ -1,3 +1,4 @@
+import { FolderInput, Pencil, Trash2, UserRoundPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -9,14 +10,13 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { downloadBlob } from '../../lib/download';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { paths } from '../../routes/paths';
 import { DeleteStudentDialog } from './DeleteStudentDialog';
 import { ImportStudentsModal } from './ImportStudentsModal';
 import { LinkParentModal } from './LinkParentModal';
 import {
-  Alert, Avatar, Button, Card, Chip, DataTable, EmptyState, Modal, ModalActions,
-  SelectField, Skeleton, TextField, useToast, type Column,
+  Alert, Avatar, Button, Modal, ModalActions,
+  Skeleton, TextField, toneClasses, useToast,
 } from '../../ui';
 
 export default function StudentsPage() {
@@ -84,116 +84,135 @@ export default function StudentsPage() {
   const pageSize = students.data?.pageSize ?? 1;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
-  const columns: Column<Student>[] = [
-    {
-      key: 'identity',
-      header: 'Élève',
-      render: (student) => (
-        <Link to={paths.admin.studentDetail(student.id)} className="cell-person">
-          <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
-          <span style={{ fontWeight: 600 }}>
-            {student.firstName} {student.lastName}
-          </span>
-        </Link>
-      ),
-    },
-    {
-      key: 'class',
-      header: 'Classe',
-      render: (student) => <Chip tone="neutral">{student.classe.name}</Chip>,
-    },
-    {
-      key: 'parents',
-      header: 'Parents associés',
-      render: (student) =>
-        student.parents.length === 0 ? (
-          // Un élève sans parent associé est un parent qui ne recevra jamais
-          // les notes : c'est l'anomalie que cet écran doit rendre visible.
-          <Chip tone="danger">Aucun parent</Chip>
-        ) : (
-          student.parents.map((parent) => personName(parent)).join(', ')
-        ),
-    },
-    {
-      key: 'actions',
-      srHeader: 'Actions',
-      align: 'numeric',
-      render: (student) => (
-        <div className="cell-actions">
-          <Button size="sm" variant="secondary" onClick={() => setLinking(student)}>
-            {student.parents.length === 0 ? 'Associer un parent' : 'Gérer les parents'}
-          </Button>
-          <Button size="sm" variant="tonal" onClick={() => setEditing(student)}>Modifier</Button>
-          <Button size="sm" variant="danger" onClick={() => setToArchive(student)}>Supprimer</Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <>
-      <PageHeader
-        title="Élèves"
-        subtitle={
-          students.data ? `${formatCount(total)} ${plural(total, 'élève')} inscrit${total > 1 ? 's' : ''}` : 'Effectifs'
-        }
-        actions={
-          <>
-            <Button variant="tonal" loading={exporting} onClick={() => void exportCsv()}>
-              Exporter en CSV
-            </Button>
-            <Button variant="secondary" onClick={() => setImporting(true)}>
-              Importer une liste
-            </Button>
-            <Button onClick={openCreate}>Ajouter un élève</Button>
-          </>
-        }
-      />
-      <PageContent>
-        <div className="page-stack">
-          <div className="page-toolbar">
-            <label className="ui-field" style={{ minWidth: 220 }}>
-              <span className="sr-only">Filtrer par classe</span>
-              <select
-                className="ui-select"
-                value={classFilter}
-                onChange={(e) => {
-                  setClassFilter(e.target.value ? Number(e.target.value) : '');
-                  setPage(1);
-                }}
-              >
-                <option value="">Toutes les classes</option>
-                {(classes.data ?? []).map((klass) => (
-                  <option key={klass.id} value={klass.id}>{klass.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Élèves</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {students.data ? `${formatCount(total)} ${plural(total, 'élève')} inscrit${total > 1 ? 's' : ''}` : 'Effectifs'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="tonal" loading={exporting} onClick={() => void exportCsv()}>
+            Exporter en CSV
+          </Button>
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <FolderInput size={16} aria-hidden="true" /> Importer une liste
+          </Button>
+          <Button onClick={openCreate}>Ajouter un élève</Button>
+        </div>
+      </div>
 
-          <QueryBoundary query={students} loading={<TableSkeleton />}>
-            {(data) => (
+      <div className="space-y-6 p-8">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <label className="flex max-w-xs flex-col gap-1.5">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Filtrer par classe</span>
+            <select
+              className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={classFilter}
+              onChange={(e) => {
+                setClassFilter(e.target.value ? Number(e.target.value) : '');
+                setPage(1);
+              }}
+            >
+              <option value="">Toutes les classes</option>
+              {(classes.data ?? []).map((klass) => (
+                <option key={klass.id} value={klass.id}>{klass.name}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <QueryBoundary query={students} loading={<TableSkeleton />}>
+          {(data) =>
+            data.students.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+                <p className="font-semibold text-gray-900">
+                  {classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  Ajoutez un élève et associez-lui un parent pour qu'il reçoive les notes.
+                </p>
+                <Button className="mt-4" onClick={openCreate}>Ajouter un élève</Button>
+              </div>
+            ) : (
               <>
-                <DataTable
-                  caption="Élèves inscrits"
-                  columns={columns}
-                  rows={data.students}
-                  rowKey={(student) => String(student.id)}
-                  empty={
-                    <EmptyState
-                      icon="⚇"
-                      title={classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
-                      description="Ajoutez un élève et associez-lui un parent pour qu'il reçoive les notes."
-                      action={{ label: 'Ajouter un élève', onClick: openCreate }}
-                    />
-                  }
-                />
+                <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <th className="px-6 py-3">Élève</th>
+                        <th className="px-6 py-3">Classe</th>
+                        <th className="px-6 py-3">Parents associés</th>
+                        <th className="px-6 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {data.students.map((student) => (
+                        <tr key={student.id} className="hover:bg-gray-50">
+                          <td className="px-6 py-4">
+                            <Link to={paths.admin.studentDetail(student.id)} className="flex items-center gap-3">
+                              <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
+                              <span className="font-semibold text-gray-900 hover:text-primary hover:underline">
+                                {student.firstName} {student.lastName}
+                              </span>
+                            </Link>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('neutral')}`}>
+                              {student.classe.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {student.parents.length === 0 ? (
+                              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('danger')}`}>
+                                Aucun parent
+                              </span>
+                            ) : (
+                              <span className="text-gray-700">
+                                {student.parents.map((parent) => personName(parent)).join(', ')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setLinking(student)}
+                                title={student.parents.length === 0 ? 'Associer un parent' : 'Gérer les parents'}
+                                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                              >
+                                <UserRoundPlus size={16} aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditing(student)}
+                                title="Modifier"
+                                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                              >
+                                <Pencil size={16} aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setToArchive(student)}
+                                title="Supprimer"
+                                className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              >
+                                <Trash2 size={16} aria-hidden="true" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 {pageCount > 1 ? (
-                  <div className="page-toolbar">
-                    <span className="t-body-md t-muted">
-                      Page {data.page} sur {pageCount}
-                    </span>
-                    <div className="page-toolbar__end">
+                  <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-6 py-4 shadow-sm">
+                    <span className="text-sm text-gray-500">Page {data.page} sur {pageCount}</span>
+                    <div className="flex gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -214,10 +233,10 @@ export default function StudentsPage() {
                   </div>
                 ) : null}
               </>
-            )}
-          </QueryBoundary>
-        </div>
-      </PageContent>
+            )
+          }
+        </QueryBoundary>
+      </div>
 
       <StudentModal
         key={editing ? editing.id : `new-${creationKey}`}
@@ -355,13 +374,10 @@ function StudentModal({
           />
         </div>
 
-        <SelectField
-          label="Classe"
-          placeholder="— Choisir une classe —"
-          required
+        <SelectFieldClasses
           value={classId}
-          onChange={(e) => setClassId(e.target.value)}
-          options={classes.map((c) => ({ value: String(c.id), label: c.name }))}
+          onChange={setClassId}
+          classes={classes}
           error={submitted ? fieldErrors.classId : undefined}
         />
 
@@ -382,12 +398,35 @@ function StudentModal({
   );
 }
 
+/** Évite d'importer `SelectField` juste pour ce seul usage restant sur cette page. */
+function SelectFieldClasses({
+  value, onChange, classes, error,
+}: { value: string; onChange: (v: string) => void; classes: { id: ID; name: string }[]; error?: string }) {
+  return (
+    <label className="ui-field">
+      <span className="ui-field__label">Classe</span>
+      <select
+        className="ui-select"
+        aria-invalid={error ? 'true' : undefined}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">— Choisir une classe —</option>
+        {classes.map((c) => (
+          <option key={c.id} value={String(c.id)}>{c.name}</option>
+        ))}
+      </select>
+      {error ? <span className="ui-field__error">{error}</span> : null}
+    </label>
+  );
+}
+
 function TableSkeleton() {
   return (
-    <Card padded>
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <Skeleton key={i} height={44} style={{ marginBottom: 12 }} />
       ))}
-    </Card>
+    </div>
   );
 }

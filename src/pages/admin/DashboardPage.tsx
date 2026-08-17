@@ -1,3 +1,7 @@
+import {
+  AlertTriangle, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Mail, NotebookPen,
+  Phone, School, TrendingUp, type LucideIcon,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -7,12 +11,11 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, formatGrade, formatPercent, formatRelative, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
 import {
-  Button, Card, Chip, EmptyState, ProgressBar, SectionTitle, Skeleton, StatTile, gradeTone,
+  Button, Skeleton, StatCardIcon, gradeTone, toneClasses,
 } from '../../ui';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 
@@ -27,62 +30,69 @@ export default function DashboardPage() {
       query={dashboard}
       loading={
         <>
-          <PageHeader
-            title="Tableau de bord"
-            subtitle="Vue d'ensemble de l'établissement"
-            actions={<TermSelect />}
-          />
-          <PageContent>
+          <DashHeader title="Tableau de bord" subtitle="Vue d'ensemble de l'établissement" />
+          <div className="p-8">
             <StatsSkeleton />
-          </PageContent>
+          </div>
         </>
       }
     >
       {(data) => (
         <>
-          <PageHeader
+          <DashHeader
             title={`Bonjour, ${displayName}`}
             subtitle={term ? `${data.school.name} · ${term.label}` : data.school.name}
-            actions={<TermSelect />}
           />
-          <PageContent>
-            <div className="page-stack">
-              <InstallCard compact />
-              <SupportCard />
+          <div className="space-y-8 p-8">
+            <InstallCard compact />
+            <SupportCard />
 
-              {isSetupIncomplete(data) ? (
-                <OnboardingChecklist data={data} />
-              ) : (
-                <div className="page-stack">
-                  <DashboardBody data={data} />
+            {isSetupIncomplete(data) ? (
+              <OnboardingChecklist data={data} />
+            ) : (
+              <>
+                <DashboardBody data={data} />
 
-                  <div className="grid-split">
-                    <Card padded>
-                      <SectionTitle>Dernières notes saisies</SectionTitle>
-                      <QueryBoundary query={recent} loading={<RowsSkeleton />}>
-                        {(grades) => <RecentGrades grades={grades} />}
-                      </QueryBoundary>
-                    </Card>
+                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+                  <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                    <div className="border-b border-gray-100 px-6 py-4">
+                      <h2 className="text-base font-bold text-gray-900">Dernières notes saisies</h2>
+                    </div>
+                    <QueryBoundary query={recent} loading={<RowsSkeleton />}>
+                      {(grades) => <RecentGrades grades={grades} />}
+                    </QueryBoundary>
+                  </div>
 
-                    <Card padded>
-                      <SectionTitle
-                        aside={<Link to={paths.admin.classes}>Toutes les classes</Link>}
-                      >
-                        Moyennes par classe
-                      </SectionTitle>
-                      <p className="t-label-sm t-subtle" style={{ textTransform: 'none', marginBottom: 'var(--space-3)' }}>
-                        Cliquez sur une classe pour voir les matières, les notes et les rangs.
-                      </p>
+                  <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                    <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                      <h2 className="text-base font-bold text-gray-900">Moyennes par classe</h2>
+                      <Link to={paths.admin.classes} className="text-sm font-semibold text-primary hover:underline">
+                        Toutes les classes
+                      </Link>
+                    </div>
+                    <div className="p-2">
                       <ClassAverages data={data} termId={termId} />
-                    </Card>
+                    </div>
                   </div>
                 </div>
-              )}
-            </div>
-          </PageContent>
+              </>
+            )}
+          </div>
         </>
       )}
     </QueryBoundary>
+  );
+}
+
+function DashHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
+        <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+      </div>
+      <TermSelect />
+    </div>
   );
 }
 
@@ -94,21 +104,23 @@ export default function DashboardPage() {
  */
 function SupportCard() {
   return (
-    <Card padded>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: 22 }} aria-hidden="true">☎</span>
-        <div style={{ flex: '1 1 220px', minWidth: 0 }}>
-          <div style={{ fontWeight: 600 }}>Besoin d'aide ?</div>
-          <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
-            L'équipe Gesnotes répond par email ou par téléphone.
-          </div>
-        </div>
-        <div style={{ display: 'flex', gap: 'var(--space-4)', flexWrap: 'wrap', fontWeight: 600 }}>
-          <a href="mailto:contact@gesnotes.bj">contact@gesnotes.bj</a>
-          <a href="tel:+2290160888668">+229 01 60 88 86 68</a>
-        </div>
+    <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg bg-[#dde1ff] text-[#173bab]">
+        <Phone size={20} aria-hidden="true" />
       </div>
-    </Card>
+      <div className="min-w-[220px] flex-1">
+        <div className="font-semibold text-gray-900">Besoin d'aide ?</div>
+        <div className="text-sm text-gray-500">L'équipe Gesnotes répond par email ou par téléphone.</div>
+      </div>
+      <div className="flex flex-wrap gap-4 text-sm font-semibold">
+        <a href="mailto:contact@gesnotes.bj" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+          <Mail size={16} aria-hidden="true" /> contact@gesnotes.bj
+        </a>
+        <a href="tel:+2290160888668" className="inline-flex items-center gap-1.5 text-primary hover:underline">
+          <Phone size={16} aria-hidden="true" /> +229 01 60 88 86 68
+        </a>
+      </div>
+    </div>
   );
 }
 
@@ -170,17 +182,21 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
   const next = steps.find((step) => !step.done) ?? steps[0]!;
 
   return (
-    <Card padded>
-      <SectionTitle>Bienvenue, configurons votre école</SectionTitle>
-      <p className="t-body-md t-muted" style={{ marginBottom: 'var(--space-4)' }}>
-        {doneCount} sur {steps.length} terminé
-      </p>
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <h2 className="text-base font-bold text-gray-900">Bienvenue, configurons votre école</h2>
+      <p className="mt-1 mb-4 text-sm text-gray-500">{doneCount} sur {steps.length} terminé</p>
 
-      <div className="checklist">
+      <div className="mb-4 space-y-2">
         {steps.map((step) => (
-          <div key={step.label} className={`checklist__row${step.done ? ' is-done' : ''}`}>
-            <span className="checklist__box" aria-hidden="true">{step.done ? '✓' : ''}</span>
-            {step.label}
+          <div key={step.label} className="flex items-center gap-3 text-sm">
+            <span
+              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
+                step.done ? 'bg-emerald-100 text-emerald-600' : 'border border-gray-300 text-transparent'
+              }`}
+            >
+              {step.done ? '✓' : ''}
+            </span>
+            <span className={step.done ? 'text-gray-400 line-through' : 'text-gray-700'}>{step.label}</span>
           </div>
         ))}
       </div>
@@ -188,7 +204,7 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
       <Link to={next.to}>
         <Button variant="primary">{next.cta}</Button>
       </Link>
-    </Card>
+    </div>
   );
 }
 
@@ -196,256 +212,176 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
   const { effectifs, activite, saisie, presence, creneaux, moyenneEcole } = data;
 
   return (
-    <div className="page-stack">
-      <div className="grid-stats">
-        <StatTile label="Élèves inscrits" value={formatCount(effectifs.eleves)} />
-        <StatTile
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCardIcon
+          icon={GraduationCap}
+          tone="bg-blue-50 text-blue-600"
+          label="Élèves inscrits"
+          value={formatCount(effectifs.eleves)}
+        />
+        <StatCardIcon
+          icon={School}
+          tone="bg-violet-50 text-violet-600"
           label="Classes"
           value={formatCount(effectifs.classes)}
           hint={`${formatCount(effectifs.enseignants)} enseignants · ${formatCount(effectifs.matieres)} matières`}
         />
-        <StatTile
+        <StatCardIcon
+          icon={TrendingUp}
+          tone="bg-[#dde1ff] text-[#173bab]"
           label="Moyenne de l'école"
-          value={formatGrade(moyenneEcole)}
-          unit="/ 20"
+          value={`${formatGrade(moyenneEcole)} / 20`}
           hint={data.periode ? data.periode.label : 'Sélectionnez une période'}
         />
-        <StatTile
+        <StatCardIcon
+          icon={NotebookPen}
+          tone="bg-amber-50 text-amber-600"
           label="Notes saisies (7 j.)"
           value={formatCount(activite.notesDerniers7Jours)}
           hint={`${formatCount(activite.notesTotal)} au total sur la période`}
         />
       </div>
 
-      <PresenceSummary presence={presence} />
-      <CreneauxSummary creneaux={creneaux} />
-      {saisie ? <GradingProgress saisie={saisie} /> : null}
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <span className="h-5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+          <h2 className="text-base font-bold text-gray-900">Actions prioritaires</h2>
+        </div>
+
+        <div className="space-y-3">
+          <PresenceAlert presence={presence} />
+          <CreneauxAlert creneaux={creneaux} />
+          {saisie ? <GradingAlert saisie={saisie} /> : null}
+        </div>
+      </div>
     </div>
   );
 }
 
-/**
- * Présence du jour, école entière — indépendante de la période sélectionnée
- * (contrairement aux autres cartes) : la présence se prend au jour le jour.
- */
-function PresenceSummary({ presence }: { presence: AdminDashboard['presence'] }) {
-  const taux =
-    presence.classesTotal === 0
-      ? null
-      : Math.round((presence.classesAvecAppel / presence.classesTotal) * 100);
+/** Une ligne d'alerte du bloc « Actions prioritaires », couleur pilotée par la sévérité. */
+function AlertRow({
+  icon: Icon, tone, title, description, cta,
+}: {
+  icon: LucideIcon;
+  tone: 'warning' | 'success';
+  title: string;
+  description: string;
+  cta?: { label: string; to: string };
+}) {
+  const toneStyles = tone === 'success'
+    ? { border: 'border-emerald-200', bg: 'bg-emerald-50', icon: 'text-emerald-600', text: 'text-emerald-700' }
+    : { border: 'border-amber-200', bg: 'bg-amber-50', icon: 'text-amber-600', text: 'text-amber-700' };
 
   return (
-    <Card padded>
-      <SectionTitle
-        aside={
-          <span className="t-body-md" style={{ fontWeight: 700 }}>
-            {formatPercent(taux)}
-          </span>
-        }
-      >
-        Présence du jour
-      </SectionTitle>
-
-      <ProgressBar
-        value={presence.classesAvecAppel}
-        max={presence.classesTotal}
-        tone={taux !== null && taux >= 85 ? 'success' : 'info'}
-        label="Classes ayant fait l'appel aujourd'hui"
-      />
-
-      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
-        {formatCount(presence.classesAvecAppel)} {plural(presence.classesAvecAppel, 'classe')} sur{' '}
-        {formatCount(presence.classesTotal)}{' '}
-        {plural(presence.classesAvecAppel, 'a fait', 'ont fait')} l'appel aujourd'hui.
-      </p>
-
-      {presence.absents > 0 || presence.retards > 0 ? (
-        <div
-          style={{
-            marginTop: 'var(--space-3)',
-            display: 'flex',
-            gap: 'var(--space-2)',
-            flexWrap: 'wrap',
-          }}
+    <div className={`flex items-start gap-3 rounded-lg border p-4 ${toneStyles.border} ${toneStyles.bg}`}>
+      <Icon size={18} className={`mt-0.5 shrink-0 ${toneStyles.icon}`} aria-hidden="true" />
+      <div className="min-w-0 flex-1">
+        <div className={`text-sm font-semibold ${toneStyles.text}`}>{title}</div>
+        <div className="mt-0.5 text-sm text-gray-600">{description}</div>
+      </div>
+      {cta ? (
+        <Link
+          to={cta.to}
+          className={`shrink-0 rounded-lg border border-current px-3 py-1.5 text-xs font-semibold ${toneStyles.text} hover:bg-white/60`}
         >
-          {presence.absents > 0 ? (
-            <Chip tone="danger">
-              {formatCount(presence.absents)} {plural(presence.absents, 'absent')}
-            </Chip>
-          ) : null}
-          {presence.retards > 0 ? (
-            <Chip tone="warning">
-              {formatCount(presence.retards)} {plural(presence.retards, 'retard')}
-            </Chip>
-          ) : null}
-        </div>
+          {cta.label}
+        </Link>
       ) : null}
-
-      {presence.classesSansAppel.length > 0 ? (
-        <div
-          style={{
-            marginTop: 'var(--space-3)',
-            display: 'flex',
-            gap: 'var(--space-2)',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          <span className="t-label-sm t-muted">Aucun appel :</span>
-          {presence.classesSansAppel.map((name, index) => (
-            // Deux classes homonymes sont possibles (ex. deux « 6e A » après
-            // une préparation de rentrée) : le nom seul ne suffit pas comme clé.
-            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
-          ))}
-        </div>
-      ) : null}
-    </Card>
+    </div>
   );
 }
 
-/**
- * Appel du jour, classes mode `notes`, par créneau plutôt que par classe —
- * chaque enseignant y fait son propre appel, voir `PresenceSummary` pour le
- * pendant mode `presence`.
- */
-function CreneauxSummary({ creneaux }: { creneaux: AdminDashboard['creneaux'] }) {
-  const taux =
-    creneaux.creneauxTotal === 0
-      ? null
-      : Math.round((creneaux.creneauxCouverts / creneaux.creneauxTotal) * 100);
+/** Présence du jour, école entière — indépendante de la période sélectionnée. */
+function PresenceAlert({ presence }: { presence: AdminDashboard['presence'] }) {
+  if (presence.classesTotal === 0) return null;
+
+  const taux = Math.round((presence.classesAvecAppel / presence.classesTotal) * 100);
+  const ok = taux >= 85;
 
   return (
-    <Card padded>
-      <SectionTitle
-        aside={
-          <span className="t-body-md" style={{ fontWeight: 700 }}>
-            {formatPercent(taux)}
-          </span>
-        }
-      >
-        Appel du jour par créneau
-      </SectionTitle>
+    <AlertRow
+      icon={ok ? ClipboardCheck : AlertTriangle}
+      tone={ok ? 'success' : 'warning'}
+      title={`Présence du jour : ${formatPercent(taux)}`}
+      description={
+        presence.classesSansAppel.length > 0
+          ? `Aucun appel : ${presence.classesSansAppel.join(', ')}.`
+          : `${formatCount(presence.classesAvecAppel)} ${plural(presence.classesAvecAppel, 'classe')} sur ${formatCount(presence.classesTotal)} ${plural(presence.classesAvecAppel, 'a fait', 'ont fait')} l'appel aujourd'hui.`
+      }
+      cta={!ok ? { label: 'Voir les classes', to: paths.admin.classes } : undefined}
+    />
+  );
+}
 
-      <ProgressBar
-        value={creneaux.creneauxCouverts}
-        max={creneaux.creneauxTotal}
-        tone={taux !== null && taux >= 85 ? 'success' : 'info'}
-        label="Créneaux ayant fait l'appel aujourd'hui"
-      />
+/** Appel du jour, classes mode `notes`, par créneau — chaque enseignant fait le sien. */
+function CreneauxAlert({ creneaux }: { creneaux: AdminDashboard['creneaux'] }) {
+  if (creneaux.creneauxTotal === 0) return null;
 
-      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
-        {formatCount(creneaux.creneauxCouverts)} {plural(creneaux.creneauxCouverts, 'créneau')} sur{' '}
-        {formatCount(creneaux.creneauxTotal)}{' '}
-        {plural(creneaux.creneauxCouverts, 'a fait', 'ont fait')} l'appel aujourd'hui.
-      </p>
+  const taux = Math.round((creneaux.creneauxCouverts / creneaux.creneauxTotal) * 100);
+  const ok = taux >= 85;
 
-      {creneaux.absents > 0 || creneaux.retards > 0 ? (
-        <div style={{ marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-          {creneaux.absents > 0 ? (
-            <Chip tone="danger">
-              {formatCount(creneaux.absents)} {plural(creneaux.absents, 'absent')}
-            </Chip>
-          ) : null}
-          {creneaux.retards > 0 ? (
-            <Chip tone="warning">
-              {formatCount(creneaux.retards)} {plural(creneaux.retards, 'retard')}
-            </Chip>
-          ) : null}
-        </div>
-      ) : null}
-
-      {creneaux.creneauxNonCouverts.length > 0 ? (
-        <div
-          style={{
-            marginTop: 'var(--space-3)', display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', alignItems: 'center',
-          }}
-        >
-          <span className="t-label-sm t-muted">Aucun appel :</span>
-          {creneaux.creneauxNonCouverts.map((slot) => (
-            <Chip key={slot.slotId} tone="warning">
-              {slot.className} · {slot.subjectName} {slot.startTime}
-            </Chip>
-          ))}
-        </div>
-      ) : null}
-    </Card>
+  return (
+    <AlertRow
+      icon={ok ? ClipboardCheck : AlertTriangle}
+      tone={ok ? 'success' : 'warning'}
+      title={`Appel par créneau : ${formatPercent(taux)}`}
+      description={
+        creneaux.creneauxNonCouverts.length > 0
+          ? creneaux.creneauxNonCouverts
+              .map((slot) => `${slot.className} · ${slot.subjectName} ${slot.startTime}`)
+              .join(', ')
+          : `${formatCount(creneaux.creneauxCouverts)} ${plural(creneaux.creneauxCouverts, 'créneau')} sur ${formatCount(creneaux.creneauxTotal)} couverts aujourd'hui.`
+      }
+    />
   );
 }
 
 /** Avancement de la saisie : le chiffre qui dit quelles classes relancer. */
-function GradingProgress({ saisie }: { saisie: NonNullable<AdminDashboard['saisie']> }) {
-  const late = saisie.classesSansAucuneNote;
+function GradingAlert({ saisie }: { saisie: NonNullable<AdminDashboard['saisie']> }) {
+  if (saisie.elevesTotal === 0) return null;
+  const ok = saisie.taux !== null && saisie.taux >= 85;
 
   return (
-    <Card padded>
-      <SectionTitle
-        aside={
-          <span className="t-body-md" style={{ fontWeight: 700 }}>
-            {formatPercent(saisie.taux)}
-          </span>
-        }
-      >
-        Avancement de la saisie
-      </SectionTitle>
-
-      <ProgressBar
-        value={saisie.elevesEvalues}
-        max={saisie.elevesTotal}
-        tone={saisie.taux !== null && saisie.taux >= 85 ? 'success' : 'info'}
-        label="Élèves évalués"
-      />
-
-      <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-3)' }}>
-        {formatCount(saisie.elevesEvalues)} élèves évalués sur {formatCount(saisie.elevesTotal)}.
-      </p>
-
-      {late.length > 0 ? (
-        <div
-          style={{
-            marginTop: 'var(--space-3)',
-            display: 'flex',
-            gap: 'var(--space-2)',
-            flexWrap: 'wrap',
-            alignItems: 'center',
-          }}
-        >
-          <span className="t-label-sm t-muted">Aucune note :</span>
-          {late.map((name, index) => (
-            <Chip key={`${name}-${index}`} tone="warning">{name}</Chip>
-          ))}
-        </div>
-      ) : null}
-    </Card>
+    <AlertRow
+      icon={ok ? ClipboardCheck : AlertTriangle}
+      tone={ok ? 'success' : 'warning'}
+      title={`Avancement de la saisie : ${formatPercent(saisie.taux)}`}
+      description={
+        saisie.classesSansAucuneNote.length > 0
+          ? `Aucune note : ${saisie.classesSansAucuneNote.join(', ')}.`
+          : `${formatCount(saisie.elevesEvalues)} élèves évalués sur ${formatCount(saisie.elevesTotal)}.`
+      }
+      cta={!ok ? { label: 'Saisir des notes', to: paths.admin.gradeEntry } : undefined}
+    />
   );
 }
 
 function RecentGrades({ grades }: { grades: RecentGrade[] }) {
   if (grades.length === 0) {
     return (
-      <EmptyState
-        icon="✎"
-        title="Aucune note saisie"
-        description="Les notes apparaîtront ici dès que les enseignants commenceront la saisie."
-      />
+      <div className="px-6 py-10 text-center text-sm text-gray-500">
+        Aucune note saisie. Les notes apparaîtront ici dès que les enseignants commenceront la saisie.
+      </div>
     );
   }
 
   return (
-    <div className="list-rows">
+    <div className="divide-y divide-gray-100">
       {grades.map((grade) => (
-        <div key={grade.id} className="list-row">
-          <Chip tone={gradeTone(grade.value, grade.maxValue)}>
+        <div key={grade.id} className="flex items-center gap-3 px-6 py-3">
+          <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(gradeTone(grade.value, grade.maxValue))}`}>
             {grade.value} / {grade.maxValue}
-          </Chip>
-          <div className="list-row__body">
-            <div className="list-row__title">
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-semibold text-gray-900">
               {grade.matiere.name} · {grade.eleve.classe.name}
             </div>
-            <div className="list-row__meta">
+            <div className="truncate text-xs text-gray-500">
               {personName(grade.professeur, 'Enseignant retiré')} · {grade.type.label}
             </div>
           </div>
-          <span className="list-row__meta">{formatRelative(grade.createdAt)}</span>
+          <span className="shrink-0 text-xs text-gray-400">{formatRelative(grade.createdAt)}</span>
         </div>
       ))}
     </div>
@@ -467,39 +403,40 @@ function ClassAverages({ data, termId }: { data: AdminDashboard; termId: ID | un
 
   if (data.classes.length === 0) {
     return (
-      <EmptyState
-        icon="◫"
-        title="Aucune moyenne disponible"
-        description="Sélectionnez une période pour laquelle des notes ont été saisies."
-      />
+      <div className="px-4 py-10 text-center text-sm text-gray-500">
+        Sélectionnez une période pour laquelle des notes ont été saisies.
+      </div>
     );
   }
 
   return (
-    <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
+    <div className="space-y-1">
       {data.classes.map((row) => {
         const open = openId === row.classId;
         return (
           <div key={row.classId}>
             <button
               type="button"
-              className="dash-class"
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left hover:bg-gray-50"
               aria-expanded={open}
               onClick={() => setOpenId(open ? null : row.classId)}
             >
-              <span className="dash-class__caret" aria-hidden="true">{open ? '▾' : '▸'}</span>
-              <span className="dash-class__name">{row.className}</span>
-              <span className="dash-class__average">{formatGrade(row.average)}</span>
+              {open ? (
+                <ChevronDown size={16} className="shrink-0 text-gray-400" aria-hidden="true" />
+              ) : (
+                <ChevronRight size={16} className="shrink-0 text-gray-400" aria-hidden="true" />
+              )}
+              <span className="flex-1 truncate text-sm font-semibold text-gray-900">{row.className}</span>
+              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(gradeTone(row.average))}`}>
+                {formatGrade(row.average)}
+              </span>
             </button>
 
-            <ProgressBar
-              value={row.average ?? 0}
-              max={20}
-              tone={gradeTone(row.average)}
-              label={`Moyenne de ${row.className}`}
-            />
-
-            {open ? <ClassBulletinPanel classId={row.classId} termId={termId} /> : null}
+            {open ? (
+              <div className="px-3 pb-3">
+                <ClassBulletinPanel classId={row.classId} termId={termId} />
+              </div>
+            ) : null}
           </div>
         );
       })}
@@ -509,12 +446,12 @@ function ClassAverages({ data, termId }: { data: AdminDashboard; termId: ID | un
 
 function StatsSkeleton() {
   return (
-    <div className="grid-stats">
+    <div className="grid grid-cols-1 gap-6 p-8 sm:grid-cols-2 xl:grid-cols-4">
       {[0, 1, 2, 3].map((i) => (
-        <Card key={i} padded>
+        <div key={i} className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
           <Skeleton width="60%" height={12} />
           <Skeleton width="45%" height={28} style={{ marginTop: 14 }} />
-        </Card>
+        </div>
       ))}
     </div>
   );
@@ -522,7 +459,7 @@ function StatsSkeleton() {
 
 function RowsSkeleton() {
   return (
-    <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
+    <div className="space-y-3 p-6">
       {[0, 1, 2, 3, 4].map((i) => (
         <Skeleton key={i} height={40} />
       ))}
