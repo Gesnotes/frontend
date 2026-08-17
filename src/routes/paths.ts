@@ -21,7 +21,6 @@ export const paths = {
     teachers: '/admin/enseignants',
     students: '/admin/eleves',
     studentDetail: (id: number | string) => `/admin/eleves/${id}`,
-    periods: '/admin/periodes',
     holidays: '/admin/calendrier',
     auditLog: '/admin/journal-audit',
     schoolYears: '/admin/annees-scolaires',
