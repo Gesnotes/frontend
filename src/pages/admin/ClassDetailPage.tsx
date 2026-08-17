@@ -1,6 +1,6 @@
 import { ChevronLeft, GraduationCap } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import { classesApi, type ClassDetail, type ID, type RankedStudentResult } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
@@ -183,11 +183,15 @@ function RankedStudentsTable({ data }: { data: ClassDetail }) {
 }
 
 function StudentRow({ student }: { student: RankedStudentResult }) {
+  const navigate = useNavigate();
   const notedCount = student.subjects.filter((s) => s.average !== null).length;
   const pct = student.average !== null ? Math.min(100, Math.max(0, (student.average / 20) * 100)) : 0;
 
   return (
-    <tr className="hover:bg-gray-50">
+    <tr
+      onClick={() => navigate(paths.admin.studentDetail(student.studentId))}
+      className="cursor-pointer hover:bg-gray-50"
+    >
       <td className="px-6 py-4 font-bold text-gray-400">{student.rang ?? '—'}</td>
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
