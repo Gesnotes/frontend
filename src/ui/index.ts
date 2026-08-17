@@ -14,3 +14,5 @@ export { ToastProvider } from './Toast';
 export { useToast } from './toast-context';
 export type { ToastTone, ToastApi } from './toast-context';
 export { Avatar, ProgressBar, BrandMark, StatTile } from './Misc';
+export { Tabs, TabPanel } from './Tabs';
+export type { TabItem } from './Tabs';
