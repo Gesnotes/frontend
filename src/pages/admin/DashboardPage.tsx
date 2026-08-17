@@ -17,6 +17,7 @@ import { paths } from '../../routes/paths';
 import {
   Button, Skeleton, StatCardIcon, gradeTone, toneClasses,
 } from '../../ui';
+import { AbsenceTrendChart } from './AbsenceTrendChart';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
 
 export default function DashboardPage() {
@@ -24,6 +25,7 @@ export default function DashboardPage() {
   const { termId, term } = useTermContext();
   const dashboard = dashboardApi.useDashboard(termId);
   const recent = dashboardApi.useRecentGrades(8);
+  const absenceTrend = dashboardApi.useAbsenceTrend(14);
 
   return (
     <QueryBoundary
@@ -52,6 +54,16 @@ export default function DashboardPage() {
             ) : (
               <>
                 <DashboardBody data={data} />
+
+                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+                  <div className="mb-4 flex items-center gap-2">
+                    <span className="h-5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                    <h2 className="text-base font-bold text-gray-900">Absences — 14 derniers jours</h2>
+                  </div>
+                  <QueryBoundary query={absenceTrend} loading={<Skeleton height={200} />}>
+                    {(trend) => <AbsenceTrendChart data={trend} />}
+                  </QueryBoundary>
+                </div>
 
                 <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
                   <div className="rounded-xl border border-gray-100 bg-white shadow-sm">

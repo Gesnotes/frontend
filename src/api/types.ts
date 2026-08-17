@@ -797,6 +797,13 @@ export type RecentGrade = {
   periode: TermRef;
 };
 
+/** Élément de `GET /admin/dashboard/absences` : un point par jour. */
+export type AbsenceTrendPoint = {
+  date: string;
+  absents: number;
+  retards: number;
+};
+
 // -------------------------------------------------------------- Espace parent
 
 /** Élément de `GET /parents/me/children`. */
