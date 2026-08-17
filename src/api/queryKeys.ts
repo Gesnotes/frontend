@@ -32,12 +32,6 @@ export const queryKeys = {
     all: ['school'] as const,
   },
 
-  users: {
-    all: ['users'] as const,
-    list: (role?: string, includeArchived?: boolean) =>
-      ['users', 'list', role ?? null, includeArchived ?? false] as const,
-  },
-
   schoolYears: {
     all: ['school-years'] as const,
     list: (includeArchived?: boolean) => ['school-years', 'list', includeArchived ?? false] as const,
