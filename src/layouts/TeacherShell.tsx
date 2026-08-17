@@ -1,4 +1,4 @@
-import { ClipboardCheck, History, LogOut, NotebookPen, type LucideIcon } from 'lucide-react';
+import { CalendarClock, ClipboardCheck, History, LogOut, NotebookPen, type LucideIcon } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 import { AccountSwitcher } from '../components/AccountSwitcher';
@@ -23,6 +23,7 @@ import { TermSelect } from './TermSelect';
 const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: paths.teacher.gradeEntry, label: 'Saisie', icon: NotebookPen, end: true },
   { to: paths.teacher.attendance, label: 'Présence', icon: ClipboardCheck },
+  { to: paths.teacher.schedule, label: 'Emploi du temps', icon: CalendarClock },
   { to: paths.teacher.history, label: 'Historique', icon: History },
 ];
 

@@ -81,6 +81,7 @@ function ChildOverview({ data, termLabel }: { data: ChildDetail; termLabel: stri
         <div className="parent__section-head">
           <h2 className="parent__section-title">Par matière</h2>
           <span style={{ marginLeft: 'auto', display: 'flex', gap: 'var(--space-3)' }}>
+            <Link to={paths.parent.schedule}>Emploi du temps</Link>
             <Link to={paths.parent.attendance}>Présence</Link>
             <Link to={paths.parent.grades}>Toutes les notes</Link>
           </span>

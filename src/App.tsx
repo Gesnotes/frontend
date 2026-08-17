@@ -47,12 +47,14 @@ const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
 const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
+const TeacherSchedulePage = lazy(() => import('./pages/teacher/TeacherSchedulePage'));
 const TeacherHistoryPage = lazy(() => import('./pages/teacher/TeacherHistoryPage'));
 
 const ParentHomePage = lazy(() => import('./pages/parent/ParentHomePage'));
 const ChildrenPage = lazy(() => import('./pages/parent/ChildrenPage'));
 const ChildDetailPage = lazy(() => import('./pages/parent/ChildDetailPage'));
 const ChildAttendancePage = lazy(() => import('./pages/parent/ChildAttendancePage'));
+const ChildSchedulePage = lazy(() => import('./pages/parent/ChildSchedulePage'));
 const GradesHistoryPage = lazy(() => import('./pages/parent/GradesHistoryPage'));
 const GradeDetailPage = lazy(() => import('./pages/parent/GradeDetailPage'));
 const NotificationsPage = lazy(() => import('./pages/parent/NotificationsPage'));
@@ -172,6 +174,7 @@ export default function App() {
                 */}
                 <Route index element={<Navigate to={paths.teacher.gradeEntry} replace />} />
                 <Route path="saisie" element={<GradeEntryPage />} />
+                <Route path="emploi-du-temps" element={<TeacherSchedulePage />} />
                 <Route path="presence" element={<TeacherAttendancePage />} />
                 <Route path="historique" element={<TeacherHistoryPage />} />
                 <Route path="*" element={<NotFoundPage />} />
@@ -185,6 +188,7 @@ export default function App() {
                 <Route path="enfants/:childId" element={<ChildDetailPage />} />
                 <Route path="notes" element={<GradesHistoryPage />} />
                 <Route path="presence" element={<ChildAttendancePage />} />
+                <Route path="emploi-du-temps" element={<ChildSchedulePage />} />
                 <Route path="notes/:gradeId" element={<GradeDetailPage />} />
                 <Route path="alertes" element={<NotificationsPage />} />
                 <Route path="*" element={<NotFoundPage />} />

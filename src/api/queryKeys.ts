@@ -88,6 +88,7 @@ export const queryKeys = {
     grades: (id: ID, termId?: ID, subjectId?: ID) =>
       ['children', 'grades', id, termId ?? null, subjectId ?? null] as const,
     attendance: (id: ID) => ['children', 'attendance', id] as const,
+    schedule: (id: ID) => ['children', 'schedule', id] as const,
   },
 
   attendance: {
@@ -100,7 +101,7 @@ export const queryKeys = {
     all: ['schedule'] as const,
     class: (classId: ID, includeArchived?: boolean) =>
       ['schedule', 'class', classId, includeArchived ?? false] as const,
-    mine: (date: string) => ['schedule', 'mine', date] as const,
+    mine: (date?: string) => ['schedule', 'mine', date ?? 'semaine'] as const,
   },
 
   staff: {
