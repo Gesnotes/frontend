@@ -187,7 +187,7 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
       done: periode !== null,
       label: 'Ouvrir une période (trimestre ou semestre)',
       cta: 'Ouvrir une période',
-      to: paths.admin.periods,
+      to: `${paths.admin.schoolYears}?tab=periods`,
     },
   ];
   const doneCount = steps.filter((step) => step.done).length;

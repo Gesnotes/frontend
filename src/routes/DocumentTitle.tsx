@@ -33,8 +33,7 @@ const TITLES: Record<string, string> = {
   [paths.admin.subjects]: 'Matières',
   [paths.admin.teachers]: 'Enseignants',
   [paths.admin.students]: 'Élèves',
-  [paths.admin.periods]: 'Périodes scolaires',
-  [paths.admin.schoolYears]: 'Années scolaires',
+  [paths.admin.schoolYears]: 'Années scolaires et périodes',
   [paths.admin.archives]: 'Archives',
   [paths.admin.settings]: 'Paramètres',
 
