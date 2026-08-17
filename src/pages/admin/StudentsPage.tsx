@@ -1,6 +1,6 @@
 import { FolderInput, Pencil, Trash2, UserRoundPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 import {
   classesApi, errorMessage, studentsApi,
@@ -21,6 +21,7 @@ import {
 
 export default function StudentsPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const classes = classesApi.useClasses();
 
   const [classFilter, setClassFilter] = useState<ID | ''>('');
@@ -150,14 +151,18 @@ export default function StudentsPage() {
                     </thead>
                     <tbody className="divide-y divide-gray-100">
                       {data.students.map((student) => (
-                        <tr key={student.id} className="hover:bg-gray-50">
+                        <tr
+                          key={student.id}
+                          onClick={() => navigate(paths.admin.studentDetail(student.id))}
+                          className="cursor-pointer hover:bg-gray-50"
+                        >
                           <td className="px-6 py-4">
-                            <Link to={paths.admin.studentDetail(student.id)} className="flex items-center gap-3">
+                            <div className="flex items-center gap-3">
                               <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
-                              <span className="font-semibold text-gray-900 hover:text-primary hover:underline">
+                              <span className="font-semibold text-gray-900">
                                 {student.firstName} {student.lastName}
                               </span>
-                            </Link>
+                            </div>
                           </td>
                           <td className="px-6 py-4">
                             <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('neutral')}`}>
@@ -175,7 +180,7 @@ export default function StudentsPage() {
                               </span>
                             )}
                           </td>
-                          <td className="px-6 py-4">
+                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                             <div className="flex items-center justify-end gap-1">
                               <button
                                 type="button"

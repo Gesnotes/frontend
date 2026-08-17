@@ -1,5 +1,5 @@
 import {
-  Archive, ClipboardCheck, Eye, GraduationCap, Pencil, School, Search,
+  Archive, ClipboardCheck, GraduationCap, Pencil, School, Search,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -259,7 +259,10 @@ function ClassRow({
   const pct = item.evalues !== null && item.effectif > 0 ? Math.round((item.evalues / item.effectif) * 100) : null;
 
   return (
-    <tr className="hover:bg-gray-50">
+    <tr
+      onClick={onOpen}
+      className="cursor-pointer hover:bg-gray-50"
+    >
       <td className="px-6 py-4">
         <div className="flex items-center gap-3">
           <span className="rounded-lg bg-gray-100 px-2.5 py-1 text-xs font-bold text-gray-600">{item.level}</span>
@@ -295,11 +298,8 @@ function ClassRow({
           {item.mode === 'notes' ? 'Notes' : 'Présence'}
         </span>
       </td>
-      <td className="px-6 py-4">
+      <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-1">
-          <button type="button" onClick={onOpen} title="Voir le détail" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
-            <Eye size={16} aria-hidden="true" />
-          </button>
           {item.mode === 'presence' ? (
             <button type="button" onClick={onAttendance} title="Feuille de présence" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
               <ClipboardCheck size={16} aria-hidden="true" />

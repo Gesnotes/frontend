@@ -142,26 +142,33 @@ function Panel({ classId, allSubjects }: { classId: ID; allSubjects: Subject[] }
         onChange={(e) => setSearch(e.target.value)}
       />
 
-      {search.trim() ? (
-        matches.length === 0 ? (
-          <p className="t-body-md t-muted" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
-            Aucun résultat pour « {search.trim()} ». <Link to={paths.admin.subjects}>Créer une matière</Link>
-          </p>
-        ) : (
-          <div className="list-rows" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
-            {matches.slice(0, 6).map((subject) => (
-              <div key={subject.id} className="list-row">
-                <div className="list-row__body">
-                  <div className="list-row__title">{subject.name}</div>
-                  <div className="list-row__meta">coef. école × {subject.coefficient}</div>
-                </div>
-                <Button size="sm" loading={setCoef.isPending} onClick={() => void add(subject, subject.coefficient)}>
-                  + Ajouter
-                </Button>
+      {matches.length > 0 ? (
+        <div className="list-rows" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
+          {matches.slice(0, 6).map((subject) => (
+            <div key={subject.id} className="list-row">
+              <div className="list-row__body">
+                <div className="list-row__title">{subject.name}</div>
+                <div className="list-row__meta">coef. école × {subject.coefficient}</div>
               </div>
-            ))}
-          </div>
-        )
+              <Button size="sm" loading={setCoef.isPending} onClick={() => void add(subject, subject.coefficient)}>
+                + Ajouter
+              </Button>
+            </div>
+          ))}
+          {matches.length > 6 ? (
+            <p className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>
+              {matches.length - 6} autre{matches.length - 6 > 1 ? 's' : ''} — affinez la recherche pour les voir.
+            </p>
+          ) : null}
+        </div>
+      ) : search.trim() ? (
+        <p className="t-body-md t-muted" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
+          Aucun résultat pour « {search.trim()} ». <Link to={paths.admin.subjects}>Créer une matière</Link>
+        </p>
+      ) : addable.length === 0 ? (
+        <p className="t-body-md t-muted" style={{ margin: 'var(--space-3) 0 var(--space-4)' }}>
+          Toutes les matières de l'école sont déjà rattachées à cette classe.
+        </p>
       ) : null}
 
       {/* --- Matières rattachées --- */}
