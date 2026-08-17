@@ -42,6 +42,7 @@ const UsersPage = lazy(() => import('./pages/admin/UsersPage'));
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'));
 const StudentDetailPage = lazy(() => import('./pages/admin/StudentDetailPage'));
 const PeriodsPage = lazy(() => import('./pages/admin/PeriodsPage'));
+const HolidaysPage = lazy(() => import('./pages/admin/HolidaysPage'));
 const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
@@ -161,6 +162,7 @@ export default function App() {
                 <Route path="eleves" element={<StudentsPage />} />
                 <Route path="eleves/:studentId" element={<StudentDetailPage />} />
                 <Route path="periodes" element={<PeriodsPage />} />
+                <Route path="calendrier" element={<HolidaysPage />} />
                 <Route path="annees-scolaires" element={<SchoolYearsPage />} />
                 <Route path="archives" element={<ArchivesPage />} />
                 <Route path="parametres" element={<SettingsPage />} />

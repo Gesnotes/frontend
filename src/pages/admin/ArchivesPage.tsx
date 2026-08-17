@@ -1,8 +1,9 @@
 import { useState } from 'react';
 
 import {
-  classesApi, errorMessage, referentialsApi, schoolYearsApi, studentsApi, subjectsApi, teachersApi,
-  type ID, type SchoolYear, type Term,
+  classesApi, errorMessage, holidaysApi, referentialsApi, schoolYearsApi, studentsApi, subjectsApi,
+  teachersApi,
+  type Holiday, type ID, type SchoolYear, type Term,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -13,7 +14,7 @@ import {
 } from '../../ui';
 import { PermanentDeleteDialog } from '../../components/PermanentDeleteDialog';
 
-type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears';
+type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears' | 'holidays';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'classes', label: 'Classes' },
@@ -22,6 +23,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'students', label: 'Élèves' },
   { id: 'terms', label: 'Périodes' },
   { id: 'schoolYears', label: 'Années scolaires' },
+  { id: 'holidays', label: 'Jours fériés' },
 ];
 
 /**
@@ -72,6 +74,7 @@ export default function ArchivesPage() {
           {tab === 'students' ? <ArchivedStudents /> : null}
           {tab === 'terms' ? <ArchivedTerms /> : null}
           {tab === 'schoolYears' ? <ArchivedSchoolYears /> : null}
+          {tab === 'holidays' ? <ArchivedHolidays /> : null}
         </div>
       </PageContent>
     </>
@@ -659,6 +662,87 @@ function ArchivedSchoolYears() {
           if (!toDelete) return;
           await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
           toast.success(`« ${toDelete.label} » supprimée définitivement`);
+          setToDelete(null);
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Jours fériés archivés.
+ *
+ * Rien ne dépend d'un jour férié en base : la suppression définitive n'a pas
+ * besoin d'annoncer ce qu'elle emporterait, contrairement aux autres archives.
+ */
+function ArchivedHolidays() {
+  const toast = useToast();
+  const holidays = holidaysApi.useHolidays(true);
+  const restore = holidaysApi.useRestoreHoliday();
+  const remove = holidaysApi.useDeleteHolidayPermanently();
+
+  const [toDelete, setToDelete] = useState<Holiday | null>(null);
+
+  async function runRestore(holiday: Holiday) {
+    try {
+      await restore.mutateAsync(holiday.id);
+      toast.success(`« ${holiday.label} » restauré`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <>
+      <QueryBoundary query={holidays} loading={<TableSkeleton />}>
+        {(items) => {
+          const rows = onlyArchived(items);
+          const columns: Column<Holiday>[] = [
+            { key: 'date', header: 'Date', render: (row) => <strong>{formatDate(row.date)}</strong> },
+            { key: 'label', header: 'Libellé', render: (row) => row.label },
+            {
+              key: 'actions',
+              srHeader: 'Actions',
+              align: 'numeric',
+              render: (row) => (
+                <RowActions
+                  restoring={restore.isPending}
+                  onRestore={() => void runRestore(row)}
+                  onDelete={() => setToDelete(row)}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <DataTable
+              caption="Jours fériés archivés"
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => String(row.id)}
+              empty={
+                <EmptyState
+                  icon="✓"
+                  title="Aucun jour férié archivé"
+                  description="Tout est actif. Les éléments archivés apparaîtront ici."
+                />
+              }
+            />
+          );
+        }}
+      </QueryBoundary>
+
+      <PermanentDeleteDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
+        description="Le jour férié est effacé de la liste."
+        confirmName={toDelete?.label}
+        pending={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={async (typedLabel) => {
+          if (!toDelete) return;
+          await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
+          toast.success(`« ${toDelete.label} » supprimé définitivement`);
           setToDelete(null);
         }}
       />
