@@ -24,6 +24,16 @@ export type SchoolSettings = {
   name: string;
   /** Moyenne à partir de laquelle l'école considère un élève admis. */
   passingGrade: number;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+};
+
+export type UpdateSchoolSettingsPayload = {
+  passingGrade?: number;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
 };
 
 // ------------------------------------------------------------------- Erreurs

@@ -1,5 +1,5 @@
 import { School } from 'lucide-react';
-import { useState } from 'react';
+import { useState, type ChangeEvent } from 'react';
 
 import { errorMessage, schoolApi } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
@@ -24,7 +24,7 @@ export default function SettingsPage() {
         <QueryBoundary query={settings} loading={<SettingsSkeleton />}>
           {(data) => (
             <>
-              <SchoolCard name={data.name} />
+              <SchoolCard name={data.name} email={data.email} phone={data.phone} address={data.address} />
               <PassingGradeCard current={data.passingGrade} />
             </>
           )}
@@ -34,7 +34,56 @@ export default function SettingsPage() {
   );
 }
 
-function SchoolCard({ name }: { name: string }) {
+function SchoolCard({
+  name, email, phone, address,
+}: { name: string; email: string | null; phone: string | null; address: string | null }) {
+  const toast = useToast();
+  const update = schoolApi.useUpdateContactInfo();
+
+  const initial = { email: email ?? '', phone: phone ?? '', address: address ?? '' };
+  const [values, setValues] = useState(initial);
+  const [edited, setEdited] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Même logique de resynchronisation que PassingGradeCard : ne reprend le
+  // serveur que tant que l'utilisateur n'a pas commencé à modifier le formulaire.
+  const [syncedInitial, setSyncedInitial] = useState(initial);
+  if (
+    !edited &&
+    (syncedInitial.email !== initial.email || syncedInitial.phone !== initial.phone || syncedInitial.address !== initial.address)
+  ) {
+    setSyncedInitial(initial);
+    setValues(initial);
+  }
+
+  const dirty =
+    values.email.trim() !== initial.email ||
+    values.phone.trim() !== initial.phone ||
+    values.address.trim() !== initial.address;
+
+  function field(key: keyof typeof values) {
+    return (e: ChangeEvent<HTMLInputElement>) => {
+      setValues((v) => ({ ...v, [key]: e.target.value }));
+      setEdited(true);
+    };
+  }
+
+  async function submit() {
+    setError(null);
+    try {
+      const saved = await update.mutateAsync({
+        email: values.email.trim() || null,
+        phone: values.phone.trim() || null,
+        address: values.address.trim() || null,
+      });
+      setValues({ email: saved.email ?? '', phone: saved.phone ?? '', address: saved.address ?? '' });
+      setEdited(false);
+      toast.success('Coordonnées enregistrées');
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
@@ -43,15 +92,34 @@ function SchoolCard({ name }: { name: string }) {
         </div>
         <h2 className="text-base font-bold text-gray-900">Établissement</h2>
       </div>
-      <label className="flex flex-col gap-1.5">
-        <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Nom de l'école</span>
-        <input
-          type="text"
-          value={name}
-          readOnly
-          className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700"
-        />
-      </label>
+
+      {error ? (
+        <div className="mb-4">
+          <Alert tone="danger">{error}</Alert>
+        </div>
+      ) : null}
+
+      <div className="space-y-4">
+        <label className="flex flex-col gap-1.5">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">Nom de l'école</span>
+          <input
+            type="text"
+            value={name}
+            readOnly
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700"
+          />
+        </label>
+
+        <TextField label="Email" type="email" value={values.email} onChange={field('email')} />
+        <TextField label="Téléphone" type="tel" value={values.phone} onChange={field('phone')} />
+        <TextField label="Adresse" value={values.address} onChange={field('address')} />
+
+        <div className="flex justify-end">
+          <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
+            Enregistrer
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }
