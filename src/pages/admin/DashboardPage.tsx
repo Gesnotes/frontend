@@ -1,6 +1,6 @@
 import {
-  AlertTriangle, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Mail, NotebookPen,
-  Phone, School, TrendingUp, type LucideIcon,
+  AlertTriangle, CalendarOff, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Mail,
+  NotebookPen, Phone, School, TrendingUp, type LucideIcon,
 } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
@@ -221,7 +221,7 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
 }
 
 function DashboardBody({ data }: { data: AdminDashboard }) {
-  const { effectifs, activite, saisie, presence, creneaux, moyenneEcole } = data;
+  const { effectifs, activite, saisie, presence, creneaux, moyenneEcole, ferie } = data;
 
   return (
     <div className="space-y-6">
@@ -262,8 +262,14 @@ function DashboardBody({ data }: { data: AdminDashboard }) {
         </div>
 
         <div className="space-y-3">
-          <PresenceAlert presence={presence} />
-          <CreneauxAlert creneaux={creneaux} />
+          {ferie ? (
+            <HolidayAlert ferie={ferie} />
+          ) : (
+            <>
+              <PresenceAlert presence={presence} />
+              <CreneauxAlert creneaux={creneaux} />
+            </>
+          )}
           {saisie ? <GradingAlert saisie={saisie} /> : null}
         </div>
       </div>
@@ -301,6 +307,21 @@ function AlertRow({
         </Link>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Jour férié : remplace les alertes de présence/créneaux plutôt que de les
+ * laisser signaler « aucun appel » un jour où aucun appel n'est attendu.
+ */
+function HolidayAlert({ ferie }: { ferie: NonNullable<AdminDashboard['ferie']> }) {
+  return (
+    <AlertRow
+      icon={CalendarOff}
+      tone="success"
+      title={`Jour férié : ${ferie.label}`}
+      description="Aucun appel n'est attendu aujourd'hui."
+    />
   );
 }
 

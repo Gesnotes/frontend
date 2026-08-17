@@ -148,6 +148,20 @@ export type TermPayload = {
   endDate: IsoDate | null;
 };
 
+/** `GET /holidays` — un jour férié ou de congé de l'école. */
+export type Holiday = {
+  id: ID;
+  date: IsoDate;
+  label: string;
+  /** Non nul : jour archivé, absent des listes mais rien n'est perdu. */
+  archivedAt: string | null;
+};
+
+export type HolidayPayload = {
+  date: IsoDate;
+  label: string;
+};
+
 /** Catégorie de note : interrogation (poids 1), devoir (2), composition (3). */
 export type GradeType = {
   id: ID;
@@ -763,6 +777,8 @@ export type AdminDashboard = {
       endTime: string;
     }[];
   };
+  /** Jour férié du jour, `null` sinon — voir `Holiday`. */
+  ferie: { label: string } | null;
   periode: TermRef | null;
   moyenneEcole: number | null;
   classes: DashboardClassRow[];
