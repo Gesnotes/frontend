@@ -64,6 +64,7 @@ export const queryKeys = {
     all: ['dashboard'] as const,
     summary: (termId?: ID) => ['dashboard', 'summary', termId ?? null] as const,
     recentGrades: (limit: number) => ['dashboard', 'recent-grades', limit] as const,
+    absences: (days: number) => ['dashboard', 'absences', days] as const,
   },
 
   teacherMe: {
