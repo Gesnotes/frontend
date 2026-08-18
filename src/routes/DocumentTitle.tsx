@@ -45,7 +45,8 @@ const TITLES: Record<string, string> = {
   [paths.teacher.history]: 'Historique des saisies',
 
   [paths.parent.home]: 'Accueil',
-  [paths.parent.children]: 'Mes enfants',
+  [paths.parent.scolarite]: 'Scolarité',
+  [paths.parent.suiviParental]: 'Suivi parental',
   [paths.parent.grades]: 'Notes',
   [paths.parent.attendance]: 'Présence',
   [paths.parent.notifications]: 'Alertes',

@@ -40,8 +40,9 @@ export const paths = {
   parent: {
     root: '/parent',
     home: '/parent',
-    children: '/parent/enfants',
     child: (id: number | string) => `/parent/enfants/${id}`,
+    scolarite: '/parent/scolarite',
+    suiviParental: '/parent/suivi-parental',
     grades: '/parent/notes',
     grade: (id: number | string) => `/parent/notes/${id}`,
     attendance: '/parent/presence',

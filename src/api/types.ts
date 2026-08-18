@@ -856,6 +856,10 @@ export type ChildDetail = StudentResult & {
   termLabel: string;
   /** Moyenne des périodes de l'année scolaire du terme choisi, `null` si non rattaché à une année. */
   annualAverage: number | null;
+  /** Position dans la classe sur cette période, `null` si l'enfant n'a pas de moyenne ce terme-là. */
+  rank: { position: number; total: number } | null;
+  /** Moyenne générale de chaque période de l'année scolaire, dans l'ordre chronologique. Vide si non rattaché à une année. */
+  termTrend: { termId: ID; termLabel: string; average: number | null }[];
 };
 
 /** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */

@@ -7,17 +7,7 @@ export function TermPicker() {
   if (terms.length <= 1) return null;
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        gap: 'var(--space-2)',
-        overflowX: 'auto',
-        paddingBottom: 4,
-        marginTop: 'calc(var(--space-8) * -1 + var(--space-4))',
-      }}
-      role="group"
-      aria-label="Période scolaire"
-    >
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1" role="group" aria-label="Période scolaire">
       {terms.map((term) => {
         const active = term.id === termId;
         return (
@@ -26,16 +16,9 @@ export function TermPicker() {
             type="button"
             aria-pressed={active}
             onClick={() => setTermId(term.id)}
-            style={{
-              padding: '7px 14px',
-              borderRadius: 'var(--radius-full)',
-              border: `1px solid ${active ? 'var(--primary-container)' : 'var(--outline-variant)'}`,
-              background: active ? 'var(--primary-container)' : 'var(--surface-container-lowest)',
-              color: active ? 'var(--on-primary)' : 'var(--on-surface-variant)',
-              fontSize: 'var(--body-md-size)',
-              fontWeight: 600,
-              whiteSpace: 'nowrap',
-            }}
+            className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-semibold transition-colors ${
+              active ? 'bg-[#173bab] text-white' : 'border border-gray-200 bg-white text-gray-600'
+            }`}
           >
             {term.label}
           </button>
