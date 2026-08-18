@@ -19,6 +19,7 @@ export const paths = {
     schedule: '/admin/emploi-du-temps',
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
+    teacherDetail: (id: number | string) => `/admin/enseignants/${id}`,
     students: '/admin/eleves',
     studentDetail: (id: number | string) => `/admin/eleves/${id}`,
     holidays: '/admin/calendrier',

@@ -2,6 +2,7 @@ import {
   Contact, Mail, Pencil, Search, UserRoundX, Users,
 } from 'lucide-react';
 import { useMemo, useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   classesApi, errorMessage, subjectsApi, teachersApi,
@@ -11,6 +12,7 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { emailError, phoneError } from '../../lib/validation';
+import { paths } from '../../routes/paths';
 import {
   Alert, Avatar, Button, Chip, ConfirmDialog, Modal, ModalActions,
   Skeleton, StatCardIcon, TextField, useToast,
@@ -18,6 +20,7 @@ import {
 
 export default function TeachersPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const teachers = teachersApi.useTeachers();
   const remove = teachersApi.useDeleteTeacher();
   const resend = teachersApi.useResendInvitation();
@@ -146,7 +149,11 @@ export default function TeachersPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filtered.map((teacher) => (
-                      <tr key={teacher.id} className="hover:bg-gray-50">
+                      <tr
+                        key={teacher.id}
+                        onClick={() => navigate(paths.admin.teacherDetail(teacher.id))}
+                        className="cursor-pointer hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
                             <Avatar name={personName(teacher, teacher.email)} size={36} brand />
@@ -169,7 +176,7 @@ export default function TeachersPage() {
                             </div>
                           )}
                         </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
                           <div className="flex items-center justify-end gap-1">
                             <button
                               type="button"
