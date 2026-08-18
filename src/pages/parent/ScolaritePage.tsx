@@ -8,7 +8,7 @@ import { parentApi, type ChildDetail, type ParentGrade, type SubjectResult } fro
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useChildContext } from '../../context/child-context';
 import { useTermContext } from '../../context/term-context';
-import { formatDateShort, formatGrade } from '../../lib/format';
+import { formatGrade } from '../../lib/format';
 import { colorForSubject } from '../../lib/schedule';
 import { paths } from '../../routes/paths';
 import { EmptyState, Skeleton, gradeTone, toneClasses } from '../../ui';
@@ -75,7 +75,7 @@ function TrimSegmentedControl({
   labels, selectedIndex, onChange,
 }: { labels: string[]; selectedIndex: number; onChange: (index: number) => void }) {
   return (
-    <div className="flex gap-1 rounded-full bg-gray-100 p-1.5">
+    <div className="flex gap-1 rounded-full bg-[var(--surface-container-low)] p-1.5">
       {labels.map((label, i) => {
         const active = i === selectedIndex;
         return (
@@ -212,54 +212,38 @@ function SubjectCard({ subject, grades }: { subject: SubjectResult; grades: Pare
   );
 }
 
+/** La note la plus récente du type, pour mener directement à sa fiche détaillée. */
+function mostRecentGrade(grades: ParentGrade[]): ParentGrade {
+  return [...grades].sort((a, b) => (b.evaluation.date ?? '').localeCompare(a.evaluation.date ?? ''))[0]!;
+}
+
 function CategoryRow({
   category, grades,
 }: { category: SubjectResult['categories'][number]; grades: ParentGrade[] | undefined }) {
-  const [open, setOpen] = useState(false);
+  const target = grades && grades.length > 0 ? mostRecentGrade(grades) : undefined;
+
+  const content = (
+    <>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[13px] font-bold text-gray-900">{category.label}</span>
+        <span className="block text-xs font-semibold text-gray-400">Coefficient {category.weight}</span>
+      </span>
+      <ScoreChip average={category.average} />
+      {target ? <ChevronRight size={16} className="shrink-0 text-gray-300" aria-hidden="true" /> : null}
+    </>
+  );
+
+  if (!target) {
+    return <div className="flex items-center gap-3 py-1.5">{content}</div>;
+  }
 
   return (
-    <div>
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-3 rounded-lg py-1.5 text-left"
-      >
-        <ChevronRight size={14} className={`shrink-0 text-gray-300 transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
-        <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-bold text-gray-900">{category.label}</span>
-          <span className="block text-xs font-semibold text-gray-400">Coefficient {category.weight}</span>
-        </span>
-        <ScoreChip average={category.average} />
-      </button>
-
-      {open ? (
-        <div className="mb-1.5 ml-6 flex flex-col gap-1.5 border-l-2 border-gray-100 pl-3">
-          {grades === undefined ? (
-            <p className="py-1 text-xs text-gray-400">Chargement…</p>
-          ) : grades.length === 0 ? (
-            <p className="py-1 text-xs text-gray-400">Aucune note dans le détail.</p>
-          ) : (
-            grades.map((grade) => (
-              <Link
-                key={grade.id}
-                to={paths.parent.grade(grade.id)}
-                className="flex items-center gap-2 rounded-lg py-1"
-              >
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-xs font-semibold text-gray-700">{grade.evaluation.label}</span>
-                  <span className="block text-[11px] text-gray-400">
-                    {formatDateShort(grade.evaluation.date ?? grade.createdAt)}
-                    {grade.comment ? ' · commentaire' : ''}
-                  </span>
-                </span>
-                <ScoreChip average={grade.value} max={grade.maxValue} />
-              </Link>
-            ))
-          )}
-        </div>
-      ) : null}
-    </div>
+    <Link
+      to={paths.parent.grade(target.id)}
+      className="-mx-1 flex items-center gap-3 rounded-lg px-1 py-1.5 hover:bg-gray-50"
+    >
+      {content}
+    </Link>
   );
 }
 

@@ -84,7 +84,7 @@ function ClassBody({ data, termId }: { data: ClassDetail; termId: ID | undefined
 
   return (
     <div className="space-y-6">
-      <div className="inline-flex flex-wrap gap-1 rounded-xl bg-gray-100 p-1">
+      <div className="inline-flex flex-wrap gap-1 rounded-xl bg-[var(--surface-container-low)] p-1">
         {items.map((item) => {
           const active = item.key === tab;
           return (
