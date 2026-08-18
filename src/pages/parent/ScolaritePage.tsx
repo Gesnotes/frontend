@@ -1,14 +1,17 @@
 import {
-  BarChart3, BookOpen, Calculator, ChevronDown, ChevronUp, FlaskConical, Globe2, GraduationCap, Landmark,
+  BarChart3, BookOpen, Calculator, ChevronDown, ChevronRight, ChevronUp, FlaskConical, Globe2, GraduationCap, Landmark,
 } from 'lucide-react';
 import { useState, type ComponentType } from 'react';
+import { Link } from 'react-router-dom';
 
-import { parentApi, type ChildDetail, type SubjectResult } from '../../api';
+import { parentApi, type ChildDetail, type ParentGrade, type SubjectResult } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useChildContext } from '../../context/child-context';
 import { useTermContext } from '../../context/term-context';
-import { formatGrade } from '../../lib/format';
-import { EmptyState, Skeleton, gradeTone } from '../../ui';
+import { formatDateShort, formatGrade } from '../../lib/format';
+import { colorForSubject } from '../../lib/schedule';
+import { paths } from '../../routes/paths';
+import { EmptyState, Skeleton, gradeTone, toneClasses } from '../../ui';
 import { ChildRequired } from './ChildRequired';
 import { ChildSwitcher } from './ChildSwitcher';
 
@@ -30,6 +33,7 @@ export default function ScolaritePage() {
   const { child } = useChildContext();
   const { terms, termId, setTermId } = useTermContext();
   const detail = parentApi.useChildDetail(child?.id, termId);
+  const grades = parentApi.useChildGrades(child?.id, { termId });
   const [isYear, setIsYear] = useState(false);
 
   const termIndex = Math.max(0, terms.findIndex((t) => t.id === termId));
@@ -60,7 +64,7 @@ export default function ScolaritePage() {
         ) : null}
 
         <QueryBoundary query={detail} loading={<ScolariteSkeleton />}>
-          {(data) => (isYear ? <YearRecap data={data} /> : <TrimesterView data={data} />)}
+          {(data) => (isYear ? <YearRecap data={data} /> : <TrimesterView data={data} grades={grades.data} />)}
         </QueryBoundary>
       </ChildRequired>
     </main>
@@ -117,7 +121,7 @@ function GeneralAverageCard({
   );
 }
 
-function TrimesterView({ data }: { data: ChildDetail }) {
+function TrimesterView({ data, grades }: { data: ChildDetail; grades: ParentGrade[] | undefined }) {
   return (
     <>
       <GeneralAverageCard
@@ -136,7 +140,11 @@ function TrimesterView({ data }: { data: ChildDetail }) {
       ) : (
         <div className="flex flex-col gap-3">
           {data.subjects.map((subject) => (
-            <SubjectCard key={subject.subjectId} subject={subject} />
+            <SubjectCard
+              key={subject.subjectId}
+              subject={subject}
+              grades={grades?.filter((grade) => grade.matiere.id === subject.subjectId)}
+            />
           ))}
         </div>
       )}
@@ -144,17 +152,13 @@ function TrimesterView({ data }: { data: ChildDetail }) {
   );
 }
 
-const SUBJECT_PALETTE: { icon: ComponentType<{ size?: number; className?: string }>; classes: string }[] = [
-  { icon: Calculator, classes: 'bg-violet-50 text-violet-600' },
-  { icon: BookOpen, classes: 'bg-blue-50 text-blue-600' },
-  { icon: Globe2, classes: 'bg-emerald-50 text-emerald-600' },
-  { icon: FlaskConical, classes: 'bg-rose-50 text-rose-600' },
-  { icon: Landmark, classes: 'bg-amber-50 text-amber-600' },
+/** Icônes tournantes par matière — la couleur, elle, reprend `colorForSubject` (déjà utilisée sur l'emploi du temps). */
+const SUBJECT_ICONS: ComponentType<{ size?: number; style?: object }>[] = [
+  Calculator, BookOpen, Globe2, FlaskConical, Landmark,
 ];
 
-function subjectStyle(name: string) {
-  const hash = [...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
-  return SUBJECT_PALETTE[hash % SUBJECT_PALETTE.length]!;
+function subjectIcon(subjectId: number) {
+  return SUBJECT_ICONS[Math.abs(subjectId) % SUBJECT_ICONS.length]!;
 }
 
 function toneAccent(tone: ReturnType<typeof gradeTone>): string {
@@ -163,17 +167,20 @@ function toneAccent(tone: ReturnType<typeof gradeTone>): string {
   return 'text-gray-300';
 }
 
-function SubjectCard({ subject }: { subject: SubjectResult }) {
+function SubjectCard({ subject, grades }: { subject: SubjectResult; grades: ParentGrade[] | undefined }) {
   const [expanded, setExpanded] = useState(subject.categories.length > 0);
-  const style = subjectStyle(subject.subjectName);
-  const Icon = style.icon;
+  const Icon = subjectIcon(subject.subjectId);
   const tone = gradeTone(subject.average);
+  const color = colorForSubject(subject.subjectId);
 
   return (
     <div className="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
       <button type="button" onClick={() => setExpanded((v) => !v)} className="flex w-full items-center gap-3 p-3 text-left">
-        <span className={`flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-full ${style.classes}`}>
-          <Icon size={17} className="shrink-0" />
+        <span
+          className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-full"
+          style={{ backgroundColor: `${color}1a` }}
+        >
+          <Icon size={17} style={{ color }} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold text-gray-900">{subject.subjectName}</span>
@@ -191,15 +198,13 @@ function SubjectCard({ subject }: { subject: SubjectResult }) {
       </button>
 
       {expanded && subject.categories.length > 0 ? (
-        <div className="flex flex-col gap-2.5 border-t border-gray-100 px-3 py-2.5">
+        <div className="flex flex-col gap-1 border-t border-gray-100 px-3 py-2.5">
           {subject.categories.map((category) => (
-            <div key={category.gradeTypeId} className="flex items-center gap-3">
-              <span className="min-w-0 flex-1">
-                <span className="block text-[13px] font-bold text-gray-900">{category.label}</span>
-                <span className="block text-xs font-semibold text-gray-400">Coefficient {category.weight}</span>
-              </span>
-              <ScoreChip average={category.average} />
-            </div>
+            <CategoryRow
+              key={category.gradeTypeId}
+              category={category}
+              grades={grades?.filter((grade) => grade.type.id === category.gradeTypeId)}
+            />
           ))}
         </div>
       ) : null}
@@ -207,15 +212,61 @@ function SubjectCard({ subject }: { subject: SubjectResult }) {
   );
 }
 
-function ScoreChip({ average }: { average: number | null }) {
-  const highlight = gradeTone(average) === 'success';
+function CategoryRow({
+  category, grades,
+}: { category: SubjectResult['categories'][number]; grades: ParentGrade[] | undefined }) {
+  const [open, setOpen] = useState(false);
+
   return (
-    <span
-      className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold ${
-        highlight ? 'bg-[#dde1ff] text-[#173bab]' : 'bg-gray-100 text-gray-600'
-      }`}
-    >
-      {formatGrade(average)}/20
+    <div>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-center gap-3 rounded-lg py-1.5 text-left"
+      >
+        <ChevronRight size={14} className={`shrink-0 text-gray-300 transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-[13px] font-bold text-gray-900">{category.label}</span>
+          <span className="block text-xs font-semibold text-gray-400">Coefficient {category.weight}</span>
+        </span>
+        <ScoreChip average={category.average} />
+      </button>
+
+      {open ? (
+        <div className="mb-1.5 ml-6 flex flex-col gap-1.5 border-l-2 border-gray-100 pl-3">
+          {grades === undefined ? (
+            <p className="py-1 text-xs text-gray-400">Chargement…</p>
+          ) : grades.length === 0 ? (
+            <p className="py-1 text-xs text-gray-400">Aucune note dans le détail.</p>
+          ) : (
+            grades.map((grade) => (
+              <Link
+                key={grade.id}
+                to={paths.parent.grade(grade.id)}
+                className="flex items-center gap-2 rounded-lg py-1"
+              >
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-gray-700">{grade.evaluation.label}</span>
+                  <span className="block text-[11px] text-gray-400">
+                    {formatDateShort(grade.evaluation.date ?? grade.createdAt)}
+                    {grade.comment ? ' · commentaire' : ''}
+                  </span>
+                </span>
+                <ScoreChip average={grade.value} max={grade.maxValue} />
+              </Link>
+            ))
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+function ScoreChip({ average, max = 20 }: { average: number | null; max?: number }) {
+  return (
+    <span className={`shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-bold ${toneClasses(gradeTone(average, max))}`}>
+      {formatGrade(average)}/{max}
     </span>
   );
 }
