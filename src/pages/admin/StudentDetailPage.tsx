@@ -102,7 +102,7 @@ function StudentBody({ data, onManageParents }: { data: StudentDetail; onManageP
 
       <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
         <h2 className="mb-4 text-base font-bold text-gray-900">Bulletin de la période</h2>
-        <BulletinSection bulletin={data.bulletin} />
+        <BulletinSection bulletin={data.bulletin} annualAverage={data.annualAverage} />
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -129,7 +129,9 @@ function IdentityRow({ label, value }: { label: string; value: string }) {
   );
 }
 
-function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
+function BulletinSection({
+  bulletin, annualAverage,
+}: { bulletin: StudentResult | null; annualAverage: number | null }) {
   if (!bulletin) {
     return (
       <p className="text-sm text-gray-500">
@@ -179,9 +181,16 @@ function BulletinSection({ bulletin }: { bulletin: StudentResult | null }) {
         </table>
       </div>
 
-      <p className="mt-4 text-sm font-bold text-gray-900">
-        Moyenne générale : {formatGrade(bulletin.average)}
-      </p>
+      <div className="mt-4 flex flex-wrap items-baseline gap-x-6 gap-y-1">
+        <p className="text-sm font-bold text-gray-900">
+          Moyenne générale : {formatGrade(bulletin.average)}
+        </p>
+        {annualAverage !== null ? (
+          <p className="text-sm font-semibold text-gray-500">
+            Moyenne annuelle : {formatGrade(annualAverage)}
+          </p>
+        ) : null}
+      </div>
     </>
   );
 }

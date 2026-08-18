@@ -56,6 +56,7 @@ export default function ChildDetailPage() {
         <QueryBoundary query={detail} loading={<DetailSkeleton />}>
           {(data) => (
             <>
+              <AverageSummary data={data} />
               <SubjectList data={data} />
               <Button variant="secondary" block loading={exporting} onClick={() => void exportBulletin()}>
                 Télécharger le bulletin (PDF)
@@ -65,6 +66,31 @@ export default function ChildDetailPage() {
         </QueryBoundary>
       </ChildRequired>
     </main>
+  );
+}
+
+function AverageSummary({ data }: { data: ChildDetail }) {
+  if (data.average === null && data.annualAverage === null) return null;
+
+  return (
+    <Card padded>
+      <div style={{ display: 'flex', gap: 'var(--space-5)', flexWrap: 'wrap' }}>
+        <div>
+          <div className="parent__row-meta">Moyenne générale</div>
+          <div style={{ fontSize: 'var(--title-md-size)', fontWeight: 800, color: 'var(--on-surface)' }}>
+            {formatGrade(data.average)}
+          </div>
+        </div>
+        {data.annualAverage !== null ? (
+          <div>
+            <div className="parent__row-meta">Moyenne annuelle</div>
+            <div style={{ fontSize: 'var(--title-md-size)', fontWeight: 800, color: 'var(--on-surface-variant)' }}>
+              {formatGrade(data.annualAverage)}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </Card>
   );
 }
 

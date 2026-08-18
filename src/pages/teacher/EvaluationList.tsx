@@ -1,12 +1,12 @@
-import { NotebookPen } from 'lucide-react';
+import { NotebookPen, TrendingDown, Trophy } from 'lucide-react';
 import { useState } from 'react';
 
 import {
-  errorMessage, evaluationsApi, type Evaluation, type ID, type TeacherClassAssignment,
+  classesApi, errorMessage, evaluationsApi, type Evaluation, type ID, type TeacherClassAssignment,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { usePendingBatches } from '../../hooks/usePendingBatches';
-import { formatCount, formatDate, plural } from '../../lib/format';
+import { formatCount, formatDate, formatGrade, plural } from '../../lib/format';
 import { Alert, Button, Card, Chip, ConfirmDialog, EmptyState, Skeleton, useToast } from '../../ui';
 import { CreateEvaluationDialog } from './CreateEvaluationDialog';
 import { PendingBatchesBanner } from './PendingBatchesBanner';
@@ -85,6 +85,8 @@ export function EvaluationList({
         onRetry={() => void flush()}
         onDiscard={discard}
       />
+
+      <SubjectExtremes classId={classId} subjectId={subjectId} termId={termId} />
 
       <QueryBoundary query={evaluations} loading={<CardsSkeleton />}>
         {(items) =>
@@ -167,6 +169,42 @@ function CardsSkeleton() {
           <Skeleton width="40%" height={12} style={{ marginTop: 10 }} />
         </Card>
       ))}
+    </div>
+  );
+}
+
+/**
+ * Meilleure et plus faible moyenne de la classe, pour la seule matière en
+ * cours de saisie. Réutilise `GET /classes/:id` (déjà accessible à
+ * l'enseignant affecté à la classe, cf. `assertCanViewClass`) plutôt qu'un
+ * nouvel endpoint : la réponse porte déjà les moyennes de toutes les
+ * matières, il suffit de filtrer côté client sur `subjectId`.
+ */
+function SubjectExtremes({ classId, subjectId, termId }: { classId: ID; subjectId: ID; termId: ID }) {
+  const detail = classesApi.useClassDetail(classId, termId);
+  const noted = (detail.data?.students ?? [])
+    .map((student) => ({
+      student,
+      average: student.subjects.find((s) => s.subjectId === subjectId)?.average ?? null,
+    }))
+    .filter((entry): entry is { student: typeof entry.student; average: number } => entry.average !== null)
+    .sort((a, b) => b.average - a.average);
+
+  if (noted.length === 0) return null;
+
+  const best = noted[0];
+  const worst = noted.length > 1 ? noted[noted.length - 1] : null;
+
+  return (
+    <div className="tsaisie-extremes">
+      <Chip tone="success">
+        <Trophy size={13} aria-hidden="true" /> {best.student.firstName} {best.student.lastName} · {formatGrade(best.average)}
+      </Chip>
+      {worst ? (
+        <Chip tone="danger">
+          <TrendingDown size={13} aria-hidden="true" /> {worst.student.firstName} {worst.student.lastName} · {formatGrade(worst.average)}
+        </Chip>
+      ) : null}
     </div>
   );
 }

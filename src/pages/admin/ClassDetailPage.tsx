@@ -1,4 +1,6 @@
-import { ChevronLeft, GraduationCap } from 'lucide-react';
+import {
+  ChevronLeft, GraduationCap, Trophy, TrendingDown,
+} from 'lucide-react';
 import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
@@ -159,6 +161,10 @@ function RankedStudentsTable({ data }: { data: ClassDetail }) {
     );
   }
 
+  const noted = data.students.filter((s) => s.average !== null);
+  const bestId = noted[0]?.studentId;
+  const worstId = noted.length > 1 ? noted[noted.length - 1]?.studentId : undefined;
+
   return (
     <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
       <table className="w-full text-left text-sm">
@@ -174,7 +180,12 @@ function RankedStudentsTable({ data }: { data: ClassDetail }) {
         </thead>
         <tbody className="divide-y divide-gray-100">
           {data.students.map((student) => (
-            <StudentRow key={student.studentId} student={student} />
+            <StudentRow
+              key={student.studentId}
+              student={student}
+              isBest={student.studentId === bestId}
+              isWorst={student.studentId === worstId}
+            />
           ))}
         </tbody>
       </table>
@@ -182,7 +193,9 @@ function RankedStudentsTable({ data }: { data: ClassDetail }) {
   );
 }
 
-function StudentRow({ student }: { student: RankedStudentResult }) {
+function StudentRow({
+  student, isBest, isWorst,
+}: { student: RankedStudentResult; isBest: boolean; isWorst: boolean }) {
   const navigate = useNavigate();
   const notedCount = student.subjects.filter((s) => s.average !== null).length;
   const pct = student.average !== null ? Math.min(100, Math.max(0, (student.average / 20) * 100)) : 0;
@@ -197,6 +210,22 @@ function StudentRow({ student }: { student: RankedStudentResult }) {
         <div className="flex items-center gap-3">
           <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
           <span className="font-semibold text-gray-900">{student.firstName} {student.lastName}</span>
+          {isBest ? (
+            <span
+              title="Meilleure moyenne de la classe"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-amber-50 text-amber-500"
+            >
+              <Trophy size={13} aria-hidden="true" />
+            </span>
+          ) : null}
+          {isWorst ? (
+            <span
+              title="Moyenne la plus faible de la classe"
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-red-50 text-red-500"
+            >
+              <TrendingDown size={13} aria-hidden="true" />
+            </span>
+          ) : null}
         </div>
       </td>
       <td className="px-6 py-4">
