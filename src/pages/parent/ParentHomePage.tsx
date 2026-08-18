@@ -1,9 +1,7 @@
 import { NotebookPen } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-import {
-  parentApi, type ChildSummary, type ID, type ParentGrade,
-} from '../../api';
+import { parentApi, type ID, type ParentGrade } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useAuth } from '../../auth/auth-context';
 import { useChildContext } from '../../context/child-context';
@@ -11,16 +9,15 @@ import { useTermContext } from '../../context/term-context';
 import { formatRelative } from '../../lib/format';
 import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
-import {
-  Avatar, Chip, Skeleton, gradeTone,
-} from '../../ui';
+import { Chip, Skeleton, gradeTone } from '../../ui';
 import { ChildHero, ChildStatsRow } from './ChildHeroStats';
 import { ChildRequired } from './ChildRequired';
+import { ChildSwitcher } from './ChildSwitcher';
 
 export default function ParentHomePage() {
   const { displayName } = useAuth();
   const { termId, term } = useTermContext();
-  const { child, children, childId, selectChild } = useChildContext();
+  const { child } = useChildContext();
 
   const detail = parentApi.useChildDetail(child?.id, termId);
 
@@ -36,13 +33,7 @@ export default function ParentHomePage() {
       <InstallCard compact />
 
       <ChildRequired>
-        {/* Changer d'enfant se fait ici, comme dans la maquette : une rangée
-            d'avatars sur l'accueil, pas un onglet dédié. */}
-        {children.length > 1 ? (
-          <ChildAvatarRow children={children} activeId={childId} onSelect={selectChild} />
-        ) : (
-          <ChildBanner child={child} />
-        )}
+        <ChildSwitcher />
 
         <QueryBoundary query={detail} loading={<HomeSkeleton />}>
           {(data) => (
@@ -56,37 +47,6 @@ export default function ParentHomePage() {
         <RecentGradesSection childId={child?.id} termId={termId} />
       </ChildRequired>
     </main>
-  );
-}
-
-function ChildAvatarRow({
-  children, activeId, onSelect,
-}: { children: ChildSummary[]; activeId: ID | undefined; onSelect: (id: ID) => void }) {
-  return (
-    <div className="-mx-1 flex gap-4 overflow-x-auto px-1 pb-1" role="tablist" aria-label="Changer d'enfant">
-      {children.map((c) => {
-        const active = c.id === activeId;
-        return (
-          <button
-            key={c.id}
-            type="button"
-            role="tab"
-            aria-selected={active}
-            onClick={() => onSelect(c.id)}
-            className={`flex w-16 shrink-0 flex-col items-center gap-2 ${active ? '' : 'opacity-60'}`}
-          >
-            <span
-              className={`flex h-15 w-15 items-center justify-center rounded-full border-2 ${
-                active ? 'border-[#173bab]' : 'border-transparent'
-              }`}
-            >
-              <Avatar name={`${c.firstName} ${c.lastName}`} size={52} brand={active} />
-            </span>
-            <span className="w-full truncate text-center text-xs font-semibold text-gray-700">{c.firstName}</span>
-          </button>
-        );
-      })}
-    </div>
   );
 }
 
@@ -123,15 +83,6 @@ function RecentGradesSection({ childId, termId }: { childId: ID | undefined; ter
         ))}
       </div>
     </section>
-  );
-}
-
-function ChildBanner({ child }: { child: ChildSummary | undefined }) {
-  if (!child) return null;
-  return (
-    <p className="text-sm text-gray-500">
-      {child.firstName} {child.lastName} · {child.classe.name}
-    </p>
   );
 }
 

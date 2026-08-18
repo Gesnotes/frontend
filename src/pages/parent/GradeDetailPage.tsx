@@ -1,10 +1,11 @@
+import { ChevronLeft } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { gradesApi, type ParentGrade } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatDate } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { Avatar, Chip, Skeleton, gradeTone, toneColor } from '../../ui';
+import { Avatar, Chip, Skeleton, gradeTone, toneClasses } from '../../ui';
 
 export default function GradeDetailPage() {
   const { gradeId } = useParams();
@@ -14,19 +15,26 @@ export default function GradeDetailPage() {
   const grade = gradesApi.useGrade(Number.isFinite(id) ? id : undefined);
 
   return (
-    <main className="parent__body">
-      <header className="parent__topbar">
-        <button className="parent__back" onClick={() => navigate(-1)} aria-label="Retour">‹</button>
+    <main className="mx-auto flex w-full max-w-[520px] flex-col gap-6 px-4 pb-24 pt-5">
+      <header className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Retour"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-gray-500"
+        >
+          <ChevronLeft size={18} aria-hidden="true" />
+        </button>
         <div>
-          <h1 className="parent__name">Détail de la note</h1>
-          <p className="parent__greeting">{grade.data?.matiere.name ?? ''}</p>
+          <h1 className="text-xl font-bold text-gray-900">Détail de la note</h1>
+          <p className="text-sm text-gray-500">{grade.data?.matiere.name ?? ''}</p>
         </div>
       </header>
 
       <QueryBoundary
         query={grade}
         errorTitle="Note introuvable"
-        loading={<Skeleton height={320} radius="var(--radius-lg)" />}
+        loading={<Skeleton height={320} radius={20} />}
       >
         {(data) => <GradeBody grade={data} />}
       </QueryBoundary>
@@ -36,81 +44,64 @@ export default function GradeDetailPage() {
 
 function GradeBody({ grade }: { grade: ParentGrade }) {
   const tone = gradeTone(grade.value, grade.maxValue);
-  const color = toneColor(tone);
 
   return (
     <>
-      <section className="parent__grade-hero">
+      <section className="flex flex-col items-center gap-2 rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
         <div
-          className="parent__grade-circle"
-          style={{
-            background: `color-mix(in srgb, ${color} 14%, transparent)`,
-            color,
-          }}
+          className={`flex h-28 w-28 items-center justify-center rounded-full text-4xl font-extrabold tracking-tight ${toneClasses(tone)}`}
         >
           {grade.value}
         </div>
-        <span className="t-label-sm t-muted">sur {grade.maxValue}</span>
-        <p className="t-title-md" style={{ marginTop: 'var(--space-2)' }}>{grade.evaluation.label}</p>
-        <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap', justifyContent: 'center' }}>
+        <span className="text-xs font-semibold text-gray-400">sur {grade.maxValue}</span>
+        <p className="mt-2 text-base font-bold text-gray-900">{grade.evaluation.label}</p>
+        <div className="flex flex-wrap justify-center gap-2">
           <Chip tone="info">{grade.matiere.name}</Chip>
           <Chip tone="neutral">{grade.type.label}</Chip>
         </div>
       </section>
 
-      <section className="parent__facts">
-        <div>
-          <span className="parent__fact-label">Date</span>
-          <span className="parent__fact-value">{formatDate(grade.createdAt)}</span>
-        </div>
-        <div>
-          <span className="parent__fact-label">Période</span>
-          <span className="parent__fact-value">{grade.periode.label}</span>
-        </div>
-        <div>
-          {/*
-            Le poids explique pourquoi cette note pèse plus qu'une autre dans
-            la moyenne : c'est la première question posée en cas de contestation.
-          */}
-          <span className="parent__fact-label">Poids du type</span>
-          <span className="parent__fact-value">× {grade.type.weight}</span>
-        </div>
-        <div>
-          <span className="parent__fact-label">Enseignant</span>
-          <span className="parent__fact-value">
-            {personName(grade.professeur, 'Non renseigné')}
-          </span>
-        </div>
+      <section className="grid grid-cols-2 gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm">
+        <Fact label="Date" value={formatDate(grade.createdAt)} />
+        <Fact label="Période" value={grade.periode.label} />
+        {/*
+          Le poids explique pourquoi cette note pèse plus qu'une autre dans
+          la moyenne : c'est la première question posée en cas de contestation.
+        */}
+        <Fact label="Poids du type" value={`× ${grade.type.weight}`} />
+        <Fact label="Enseignant" value={personName(grade.professeur, 'Non renseigné')} />
       </section>
 
       <section>
-        <h2 className="parent__section-title" style={{ marginBottom: 'var(--space-3)' }}>
-          Commentaire du professeur
-        </h2>
+        <h2 className="mb-3 text-base font-bold text-gray-900">Commentaire du professeur</h2>
 
         {grade.comment ? (
           <>
-            <p className="parent__comment">« {grade.comment} »</p>
+            <p className="rounded-xl border border-gray-100 bg-white p-4 italic leading-relaxed text-gray-700 shadow-sm">
+              « {grade.comment} »
+            </p>
             {grade.professeur ? (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 'var(--space-2)',
-                  marginTop: 'var(--space-3)',
-                }}
-              >
+              <div className="mt-3 flex items-center gap-2">
                 <Avatar name={personName(grade.professeur)} size={28} brand />
-                <span className="parent__row-meta">
+                <span className="text-xs text-gray-500">
                   {personName(grade.professeur)} · {grade.matiere.name}
                 </span>
               </div>
             ) : null}
           </>
         ) : (
-          <p className="t-body-md t-subtle">Aucun commentaire pour cette note.</p>
+          <p className="text-sm text-gray-400">Aucun commentaire pour cette note.</p>
         )}
       </section>
     </>
+  );
+}
+
+function Fact({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <span className="block text-xs font-semibold uppercase tracking-wide text-gray-400">{label}</span>
+      <span className="mt-0.5 block text-sm font-semibold text-gray-900">{value}</span>
+    </div>
   );
 }

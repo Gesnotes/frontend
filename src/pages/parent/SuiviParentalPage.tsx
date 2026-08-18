@@ -13,6 +13,7 @@ import {
   Chip, EmptyState, Skeleton, attendanceTone,
 } from '../../ui';
 import { ChildRequired } from './ChildRequired';
+import { ChildSwitcher } from './ChildSwitcher';
 
 const ATTENDANCE_LABELS = { present: 'Présent', late: 'Retard', absent: 'Absent' } as const;
 const RECENT_LIMIT = 8;
@@ -32,12 +33,11 @@ export default function SuiviParentalPage() {
     <main className="mx-auto flex w-full max-w-[520px] flex-col gap-6 px-4 pb-24 pt-5">
       <header>
         <h1 className="text-xl font-bold text-gray-900">Suivi parental</h1>
-        <p className="text-sm text-gray-500">
-          {child ? `${child.firstName} ${child.lastName} · ${child.classe.name}` : ''}
-        </p>
       </header>
 
       <ChildRequired>
+        <ChildSwitcher />
+
         <section>
           <div className="mb-3 flex items-baseline gap-3">
             <h2 className="flex items-center gap-2 text-base font-bold text-gray-900">
