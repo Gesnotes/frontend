@@ -404,6 +404,40 @@ export type Teacher = {
   affectations: TeacherAssignment[];
 };
 
+/** Élève minimal, tel que rattaché à une note ou une présence sur la fiche enseignant. */
+export type TeacherStudentRef = { id: ID; firstName: string; lastName: string };
+
+/** Note saisie par cet enseignant, telle que renvoyée par la fiche enseignant. */
+export type TeacherRecentGrade = {
+  id: ID;
+  value: number;
+  maxValue: number;
+  createdAt: IsoDateTime | null;
+  eleve: TeacherStudentRef;
+  matiere: { id: ID; name: string };
+  type: { label: string };
+};
+
+/** Présence enregistrée par cet enseignant, telle que renvoyée par la fiche enseignant. */
+export type TeacherRecentAttendance = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  eleve: TeacherStudentRef;
+};
+
+/**
+ * Fiche complète d'un enseignant : identité, affectations, dernières notes
+ * saisies et dernières présences enregistrées PAR ce compte (une note ou une
+ * présence saisie par l'administration au nom de cet enseignant n'apparaît
+ * pas ici — voir `getTeacherDetail` côté backend).
+ */
+export type TeacherDetail = Teacher & {
+  totalNotesSaisies: number;
+  dernieresNotes: TeacherRecentGrade[];
+  dernieresPresences: TeacherRecentAttendance[];
+};
+
 export type AssignmentInput = { classId: ID; subjectId: ID };
 
 export type CreateTeacherPayload = {

@@ -38,6 +38,7 @@ const AdminGradeEntryPage = lazy(() => import('./pages/admin/AdminGradeEntryPage
 const SchedulePage = lazy(() => import('./pages/admin/SchedulePage'));
 const SubjectsPage = lazy(() => import('./pages/admin/SubjectsPage'));
 const TeachersPage = lazy(() => import('./pages/admin/TeachersPage'));
+const TeacherDetailPage = lazy(() => import('./pages/admin/TeacherDetailPage'));
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'));
 const StudentDetailPage = lazy(() => import('./pages/admin/StudentDetailPage'));
 const HolidaysPage = lazy(() => import('./pages/admin/HolidaysPage'));
@@ -158,6 +159,7 @@ export default function App() {
                 <Route path="emploi-du-temps" element={<SchedulePage />} />
                 <Route path="matieres" element={<SubjectsPage />} />
                 <Route path="enseignants" element={<TeachersPage />} />
+                <Route path="enseignants/:teacherId" element={<TeacherDetailPage />} />
                 <Route path="eleves" element={<StudentsPage />} />
                 <Route path="eleves/:studentId" element={<StudentDetailPage />} />
                 <Route path="calendrier" element={<HolidaysPage />} />

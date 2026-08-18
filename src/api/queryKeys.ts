@@ -53,6 +53,7 @@ export const queryKeys = {
   teachers: {
     all: ['teachers'] as const,
     list: (includeArchived?: boolean) => ['teachers', 'list', includeArchived ?? false] as const,
+    detail: (id: ID) => ['teachers', 'detail', id] as const,
   },
 
   students: {

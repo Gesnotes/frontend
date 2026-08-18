@@ -7,6 +7,7 @@ import type {
   ID,
   MessageResponse,
   Teacher,
+  TeacherDetail,
   UpdateTeacherPayload,
 } from '../types';
 
@@ -14,6 +15,11 @@ export function fetchTeachers(includeArchived = false): Promise<Teacher[]> {
   return api.get<Teacher[]>('/teachers', {
     include_archived: includeArchived ? 'true' : 'false',
   });
+}
+
+/** Fiche complète : identité, affectations, dernières notes et présences saisies par ce compte. */
+export function fetchTeacherDetail(id: ID): Promise<TeacherDetail> {
+  return api.get<TeacherDetail>(`/teachers/${id}/detail`);
 }
 
 /**
@@ -56,6 +62,14 @@ export function useTeachers(includeArchived = false) {
   return useQuery({
     queryKey: queryKeys.teachers.list(includeArchived),
     queryFn: () => fetchTeachers(includeArchived),
+  });
+}
+
+export function useTeacherDetail(id: ID | undefined) {
+  return useQuery({
+    queryKey: queryKeys.teachers.detail(id ?? 0),
+    queryFn: () => fetchTeacherDetail(id!),
+    enabled: id !== undefined,
   });
 }
 
