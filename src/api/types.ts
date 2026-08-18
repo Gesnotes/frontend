@@ -115,6 +115,8 @@ export type PersonRef = { id: ID; firstName: string | null; lastName: string | n
 export type Term = {
   id: ID;
   label: string;
+  /** Année scolaire de rattachement, `null` si la période n'y est pas liée. */
+  schoolYearId: ID | null;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
   /** Période contenant la date du jour. Au plus une l'est. Jamais une archivée. */
@@ -146,6 +148,7 @@ export type TermPayload = {
   label: string;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
+  schoolYearId?: ID | null;
 };
 
 /** `GET /holidays` — un jour férié ou de congé de l'école. */
@@ -552,6 +555,8 @@ export type StudentRecentGrade = {
  */
 export type StudentDetail = Student & {
   bulletin: StudentResult | null;
+  /** Moyenne des périodes de l'année scolaire du terme choisi, `null` si non rattaché à une année. */
+  annualAverage: number | null;
   presence: StudentAttendanceRecord[];
   dernieresNotes: StudentRecentGrade[];
 };
@@ -849,6 +854,12 @@ export type ChildSummary = {
 export type ChildDetail = StudentResult & {
   termId: ID;
   termLabel: string;
+  /** Moyenne des périodes de l'année scolaire du terme choisi, `null` si non rattaché à une année. */
+  annualAverage: number | null;
+  /** Position dans la classe sur cette période, `null` si l'enfant n'a pas de moyenne ce terme-là. */
+  rank: { position: number; total: number } | null;
+  /** Moyenne générale de chaque période de l'année scolaire, dans l'ordre chronologique. Vide si non rattaché à une année. */
+  termTrend: { termId: ID; termLabel: string; average: number | null }[];
 };
 
 /** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */

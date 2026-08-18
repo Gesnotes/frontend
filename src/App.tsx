@@ -53,7 +53,8 @@ const TeacherSchedulePage = lazy(() => import('./pages/teacher/TeacherSchedulePa
 const TeacherHistoryPage = lazy(() => import('./pages/teacher/TeacherHistoryPage'));
 
 const ParentHomePage = lazy(() => import('./pages/parent/ParentHomePage'));
-const ChildrenPage = lazy(() => import('./pages/parent/ChildrenPage'));
+const ScolaritePage = lazy(() => import('./pages/parent/ScolaritePage'));
+const SuiviParentalPage = lazy(() => import('./pages/parent/SuiviParentalPage'));
 const ChildDetailPage = lazy(() => import('./pages/parent/ChildDetailPage'));
 const ChildAttendancePage = lazy(() => import('./pages/parent/ChildAttendancePage'));
 const ChildSchedulePage = lazy(() => import('./pages/parent/ChildSchedulePage'));
@@ -182,7 +183,8 @@ export default function App() {
             <Route element={<RequireRole allow={['parent']} />}>
               <Route path={paths.parent.root} element={<ParentShell />}>
                 <Route index element={<ParentHomePage />} />
-                <Route path="enfants" element={<ChildrenPage />} />
+                <Route path="scolarite" element={<ScolaritePage />} />
+                <Route path="suivi-parental" element={<SuiviParentalPage />} />
                 <Route path="enfants/:childId" element={<ChildDetailPage />} />
                 <Route path="notes" element={<GradesHistoryPage />} />
                 <Route path="presence" element={<ChildAttendancePage />} />

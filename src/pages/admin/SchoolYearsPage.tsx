@@ -702,10 +702,12 @@ function TermModal({
 }: { open: boolean; term: Term | null; onClose: () => void; onSaved: (label: string) => void }) {
   const create = referentialsApi.useCreateTerm();
   const update = referentialsApi.useUpdateTerm();
+  const years = schoolYearsApi.useSchoolYears();
 
   const [label, setLabel] = useState(term?.label ?? '');
   const [startDate, setStartDate] = useState(term?.startDate ?? '');
   const [endDate, setEndDate] = useState(term?.endDate ?? '');
+  const [schoolYearId, setSchoolYearId] = useState(term?.schoolYearId != null ? String(term.schoolYearId) : '');
   const [error, setError] = useState<string | null>(null);
 
   const pending = create.isPending || update.isPending;
@@ -722,6 +724,7 @@ function TermModal({
       label: label.trim(),
       startDate: startDate || null,
       endDate: endDate || null,
+      schoolYearId: schoolYearId ? Number(schoolYearId) : null,
     };
     try {
       if (term) await update.mutateAsync({ id: term.id, ...payload });
@@ -786,6 +789,15 @@ function TermModal({
           Renseignez les deux dates ou aucune. Sans elles, la période ne pourra jamais être
           détectée comme « en cours ». Deux périodes ne peuvent pas se chevaucher.
         </span>
+
+        <SelectField
+          label="Année scolaire"
+          placeholder="— Aucune —"
+          value={schoolYearId}
+          onChange={(e) => setSchoolYearId(e.target.value)}
+          options={(years.data ?? []).map((y) => ({ value: String(y.id), label: y.label }))}
+          hint="Facultatif — nécessaire pour que la moyenne annuelle de l'élève puisse être calculée."
+        />
       </form>
     </Modal>
   );
