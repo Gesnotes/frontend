@@ -3,12 +3,12 @@ import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import {
-  studentsApi,
-  type StudentAttendanceRecord, type StudentDetail, type StudentRecentGrade, type StudentResult,
+  attendanceApi, studentsApi,
+  type ID, type StudentAttendanceHistoryRecord, type StudentDetail, type StudentRecentGrade, type StudentResult,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
-import { formatDate, formatGrade, formatRelative } from '../../lib/format';
+import { formatDate, formatGrade, formatRelative, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
@@ -105,19 +105,57 @@ function StudentBody({ data, onManageParents }: { data: StudentDetail; onManageP
         <BulletinSection bulletin={data.bulletin} annualAverage={data.annualAverage} />
       </div>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-bold text-gray-900">Présence récente</h2>
-          <AttendanceList records={data.presence} />
-        </div>
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-bold text-gray-900">Fiche d'absence</h2>
+        <AttendanceHistorySection studentId={data.id} />
+      </div>
 
-        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-base font-bold text-gray-900">Notes récentes</h2>
-          <RecentGradesList grades={data.dernieresNotes} />
-        </div>
+      <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+        <h2 className="mb-4 text-base font-bold text-gray-900">Notes récentes</h2>
+        <RecentGradesList grades={data.dernieresNotes} />
       </div>
     </div>
   );
+}
+
+/**
+ * Historique complet de présence, borné à la période sélectionnée (l'en-tête
+ * de la fiche élève) : la fiche d'absence individuelle. Remplace la liste
+ * « Présence récente », plafonnée côté backend, qui ne disait pas combien
+ * d'absences un élève cumule sur la période.
+ */
+function AttendanceHistorySection({ studentId }: { studentId: ID }) {
+  const { termId, term } = useTermContext();
+  const history = attendanceApi.useStudentAttendanceHistory(studentId, termId);
+
+  return (
+    <QueryBoundary query={history} loading={<Skeleton height={160} />} errorTitle="La présence n'a pas pu être chargée">
+      {(records) => (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-500">
+            {term ? `Sur ${term.label} : ` : 'Depuis le début : '}
+            <AttendanceSummary records={records} />
+          </p>
+          <AttendanceList records={records} />
+        </div>
+      )}
+    </QueryBoundary>
+  );
+}
+
+function AttendanceSummary({ records }: { records: StudentAttendanceHistoryRecord[] }) {
+  if (records.length === 0) return <>aucune présence enregistrée.</>;
+
+  const present = records.filter((r) => r.status === 'present').length;
+  const late = records.filter((r) => r.status === 'late').length;
+  const absent = records.filter((r) => r.status === 'absent').length;
+
+  const parts: string[] = [];
+  if (present > 0) parts.push(`${present} ${plural(present, 'présence')}`);
+  if (late > 0) parts.push(`${late} ${plural(late, 'retard')}`);
+  if (absent > 0) parts.push(`${absent} ${plural(absent, 'absence')}`);
+
+  return <>{parts.join(' · ')}.</>;
 }
 
 function IdentityRow({ label, value }: { label: string; value: string }) {
@@ -195,20 +233,23 @@ function BulletinSection({
   );
 }
 
-function AttendanceList({ records }: { records: StudentAttendanceRecord[] }) {
+function AttendanceList({ records }: { records: StudentAttendanceHistoryRecord[] }) {
   if (records.length === 0) {
-    return <p className="text-sm text-gray-500">Aucune présence enregistrée récemment.</p>;
+    return <p className="text-sm text-gray-500">Aucune présence enregistrée sur cette période.</p>;
   }
 
   return (
-    <div className="space-y-3">
+    <div className="max-h-96 space-y-3 overflow-y-auto">
       {records.map((record) => (
         <div key={record.id} className="flex items-center gap-3">
           <span className={`shrink-0 rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses(attendanceTone(record.status))}`}>
             {ATTENDANCE_LABEL[record.status]}
           </span>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900">{formatDate(record.date)}</div>
+            <div className="text-sm font-semibold text-gray-900">
+              {formatDate(record.date)}
+              {record.subjectName ? <span className="font-normal text-gray-500"> · {record.subjectName}</span> : null}
+            </div>
             {record.comment ? <div className="truncate text-xs text-gray-500">{record.comment}</div> : null}
           </div>
         </div>

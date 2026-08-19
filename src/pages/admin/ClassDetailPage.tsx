@@ -50,6 +50,9 @@ export default function ClassDetailPage() {
         </div>
         <div className="flex items-center gap-3">
           <TermSelect />
+          <Link to={paths.admin.classAttendance(id)}>
+            <Button variant="secondary">Présence</Button>
+          </Link>
           <Link to={paths.admin.classEnrollment(id)}>
             <Button variant="secondary">Réinscrire</Button>
           </Link>
