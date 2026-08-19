@@ -595,6 +595,40 @@ export type StudentDetail = Student & {
   dernieresNotes: StudentRecentGrade[];
 };
 
+/**
+ * Élément de `GET /students/:id/attendance` : historique complet de présence
+ * d'un élève (la fiche d'absence individuelle), même forme que l'historique
+ * remis au parent.
+ */
+export type StudentAttendanceHistoryRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+  classId: ID;
+  /** Matière du créneau (classe mode `notes`), `null` pour un appel classique. */
+  subjectName: string | null;
+};
+
+/** Compteurs de présence d'un élève sur une période, ligne du récap de classe. */
+export type ClassAttendanceSummaryRow = {
+  studentId: ID;
+  firstName: string;
+  lastName: string;
+  present: number;
+  absent: number;
+  late: number;
+  /** Total des jours (ou créneaux) où un statut a été saisi, quel qu'il soit. */
+  recorded: number;
+};
+
+/** Réponse de `GET /classes/:id/attendance-summary` : récap de la classe sur une période. */
+export type ClassAttendanceSummary = {
+  classId: ID;
+  termId: ID;
+  students: ClassAttendanceSummaryRow[];
+};
+
 // --------------------------------------------------------------------- Notes
 
 /** Note telle que renvoyée aux enseignants (`/grades`, `/teachers/me/grades`). */

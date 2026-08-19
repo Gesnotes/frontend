@@ -107,6 +107,9 @@ export const queryKeys = {
     all: ['attendance'] as const,
     sheet: (target: { classId?: ID; slotId?: ID }, date: string) =>
       ['attendance', 'sheet', target.classId ?? null, target.slotId ?? null, date] as const,
+    classSummary: (classId: ID, termId: ID) => ['attendance', 'class-summary', classId, termId] as const,
+    studentHistory: (studentId: ID, termId?: ID) =>
+      ['attendance', 'student-history', studentId, termId ?? null] as const,
   },
 
   schedule: {

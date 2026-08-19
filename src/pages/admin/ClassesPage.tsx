@@ -300,11 +300,9 @@ function ClassRow({
       </td>
       <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-end gap-1">
-          {item.mode === 'presence' ? (
-            <button type="button" onClick={onAttendance} title="Feuille de présence" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
-              <ClipboardCheck size={16} aria-hidden="true" />
-            </button>
-          ) : null}
+          <button type="button" onClick={onAttendance} title="Présence" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
+            <ClipboardCheck size={16} aria-hidden="true" />
+          </button>
           <button type="button" onClick={onEdit} title="Modifier" className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700">
             <Pencil size={16} aria-hidden="true" />
           </button>
