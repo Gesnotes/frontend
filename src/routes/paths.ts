@@ -36,6 +36,8 @@ export const paths = {
     schedule: '/enseignant/emploi-du-temps',
     attendance: '/enseignant/presence',
     history: '/enseignant/historique',
+    students: '/enseignant/eleves',
+    studentDetail: (id: number | string) => `/enseignant/eleves/${id}`,
   },
 
   parent: {

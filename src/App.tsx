@@ -52,6 +52,8 @@ const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
 const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
 const TeacherSchedulePage = lazy(() => import('./pages/teacher/TeacherSchedulePage'));
 const TeacherHistoryPage = lazy(() => import('./pages/teacher/TeacherHistoryPage'));
+const TeacherStudentsPage = lazy(() => import('./pages/teacher/TeacherStudentsPage'));
+const TeacherStudentDetailPage = lazy(() => import('./pages/teacher/TeacherStudentDetailPage'));
 
 const ParentHomePage = lazy(() => import('./pages/parent/ParentHomePage'));
 const ScolaritePage = lazy(() => import('./pages/parent/ScolaritePage'));
@@ -177,6 +179,8 @@ export default function App() {
                 <Route path="saisie" element={<GradeEntryPage />} />
                 <Route path="emploi-du-temps" element={<TeacherSchedulePage />} />
                 <Route path="presence" element={<TeacherAttendancePage />} />
+                <Route path="eleves" element={<TeacherStudentsPage />} />
+                <Route path="eleves/:studentId" element={<TeacherStudentDetailPage />} />
                 <Route path="historique" element={<TeacherHistoryPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
