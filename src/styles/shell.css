@@ -127,7 +127,8 @@
 
 .account-switcher {
   position: relative;
-  flex-shrink: 0;
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .account-switcher__trigger {
@@ -143,12 +144,23 @@
   font-weight: 600;
   cursor: pointer;
   max-width: 220px;
+  min-width: 0;
 }
 
 .account-switcher__school {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+}
+
+/* Un téléphone étroit n'a pas la place pour 220px de nom d'école à côté du
+   sélecteur de période et du bouton de déconnexion : le nom se tronque plus
+   tôt plutôt que de pousser la barre du haut hors de l'écran. */
+@media (max-width: 480px) {
+  .account-switcher__trigger {
+    max-width: 130px;
+  }
 }
 
 .account-switcher__badge {

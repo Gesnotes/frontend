@@ -74,6 +74,23 @@
   color: var(--on-surface);
 }
 
+/*
+ * Sur un téléphone étroit, le nom d'école (jusqu'à 220px), le sélecteur de
+ * période (120px) et le bouton de déconnexion (40px) ne tiennent pas côte à
+ * côte : le mot-symbole « Gesnotes » cède la place en premier (le logo seul
+ * suffit à identifier l'app), puis le sélecteur de période accepte de
+ * rétrécir sous 120px plutôt que de forcer la barre à défiler.
+ */
+@media (max-width: 480px) {
+  .tshell__brand-name {
+    display: none;
+  }
+
+  .tshell__top-actions .ui-select {
+    min-width: 88px;
+  }
+}
+
 /* ---------------- Corps ---------------- */
 
 .tshell__body {

@@ -1,5 +1,5 @@
 import {
-  CalendarClock, ClipboardCheck, History, LayoutDashboard, LogOut, NotebookPen, Users, type LucideIcon,
+  CalendarClock, ClipboardCheck, History, LayoutDashboard, LogOut, NotebookPen, type LucideIcon,
 } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -26,7 +26,6 @@ const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = 
   { to: paths.teacher.dashboard, label: 'Accueil', icon: LayoutDashboard, end: true },
   { to: paths.teacher.gradeEntry, label: 'Saisie', icon: NotebookPen },
   { to: paths.teacher.attendance, label: 'Présence', icon: ClipboardCheck },
-  { to: paths.teacher.students, label: 'Élèves', icon: Users },
   { to: paths.teacher.schedule, label: 'Emploi du temps', icon: CalendarClock },
   { to: paths.teacher.history, label: 'Historique', icon: History },
 ];
