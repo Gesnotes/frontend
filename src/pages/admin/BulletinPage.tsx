@@ -12,7 +12,7 @@ import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { TermSelect } from '../../layouts/TermSelect';
 import { paths } from '../../routes/paths';
 import {
-  Button, Card, Chip, DataTable, EmptyState, Skeleton, gradeTone, useToast, type Column,
+  Alert, Button, Card, Chip, DataTable, EmptyState, Skeleton, gradeTone, useToast, type Column,
 } from '../../ui';
 import { TermRequired } from './TermRequired';
 
@@ -26,16 +26,17 @@ export default function BulletinPage() {
   const [exporting, setExporting] = useState<BulletinExportFormat | 'csv' | null>(null);
 
   /**
-   * Rien à imprimer tant qu'aucune note n'est saisie.
-   *
-   * Le calcul agrège toute la classe et la mise en page ouvre une page par
-   * élève : produire ce document sur une période vide coûte cher pour un PDF
-   * rempli de tirets. Le backend refuse aussi, cette garde évite l'aller-retour
-   * et surtout le bouton qui promet un export impossible.
+   * Le bulletin n'est remis aux familles qu'à la fin d'une période, quand
+   * chaque matière attendue de la classe a été notée (`bulletinReady`,
+   * calculé côté backend). Le backend refuse aussi l'export, cette garde
+   * évite l'aller-retour et surtout le bouton qui promet un export impossible.
    */
-  const printable = Boolean(
-    bulletin.data?.students.some((student) => student.subjects.length > 0),
-  );
+  const printable = bulletin.data?.bulletinReady ?? false;
+  const printableHint = bulletin.data && !printable
+    ? bulletin.data.missingSubjects.length > 0
+      ? `Il manque les notes de ${bulletin.data.missingSubjects.join(', ')}.`
+      : 'Aucune note sur cette période.'
+    : undefined;
 
   async function exportPdf(format: BulletinExportFormat) {
     if (termId === undefined || !bulletin.data) return;
@@ -90,7 +91,7 @@ export default function BulletinPage() {
               variant="tonal"
               loading={exporting === 'csv'}
               disabled={!printable}
-              title={printable ? undefined : 'Aucune note sur cette période.'}
+              title={printableHint}
               onClick={() => void exportCsv()}
             >
               Export CSV
@@ -99,7 +100,7 @@ export default function BulletinPage() {
               variant="secondary"
               loading={exporting === 'classe'}
               disabled={!printable}
-              title={printable ? undefined : 'Aucune note sur cette période.'}
+              title={printableHint}
               onClick={() => void exportPdf('classe')}
             >
               Synthèse PDF
@@ -107,7 +108,7 @@ export default function BulletinPage() {
             <Button
               loading={exporting === 'eleves'}
               disabled={!printable}
-              title={printable ? undefined : 'Aucune note sur cette période.'}
+              title={printableHint}
               onClick={() => void exportPdf('eleves')}
             >
               Bulletins élèves
@@ -208,6 +209,12 @@ function BulletinTable({ data }: { data: ClassDetail }) {
 
   return (
     <div className="page-stack">
+      {!data.bulletinReady && data.missingSubjects.length > 0 ? (
+        <Alert tone="info">
+          Bulletin pas encore complet : il manque les notes de {data.missingSubjects.join(', ')}.
+          Le téléchargement sera possible une fois toutes les matières notées.
+        </Alert>
+      ) : null}
       <p className="t-body-md t-muted">
         Moyenne de la classe :{' '}
         <strong style={{ color: 'var(--on-surface)' }}>{formatGrade(data.classAverage)} / 20</strong>

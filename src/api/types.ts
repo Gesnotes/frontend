@@ -281,6 +281,10 @@ export type ClassDetail = {
   students: RankedStudentResult[];
   classAverage: number | null;
   stats: ClassStats;
+  /** Faux tant qu'une matière attendue de la classe n'a pas été notée sur la période. */
+  bulletinReady: boolean;
+  /** Noms des matières manquantes quand `bulletinReady` est faux. */
+  missingSubjects: string[];
 };
 
 export type CreateClassPayload = {
@@ -928,6 +932,10 @@ export type ChildDetail = StudentResult & {
   rank: { position: number; total: number } | null;
   /** Moyenne générale de chaque période de l'année scolaire, dans l'ordre chronologique. Vide si non rattaché à une année. */
   termTrend: { termId: ID; termLabel: string; average: number | null }[];
+  /** Faux tant qu'une matière attendue de la classe (pas seulement de cet enfant) n'a pas été notée sur la période. */
+  bulletinReady: boolean;
+  /** Noms des matières manquantes quand `bulletinReady` est faux. */
+  missingSubjects: string[];
 };
 
 /** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */
