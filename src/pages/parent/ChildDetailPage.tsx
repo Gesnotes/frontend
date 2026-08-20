@@ -7,7 +7,7 @@ import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { downloadBlob, safeFilename } from '../../lib/download';
 import { formatGrade } from '../../lib/format';
-import { Button, Card, Chip, EmptyState, Skeleton, gradeTone, useToast } from '../../ui';
+import { Alert, Button, Card, Chip, EmptyState, Skeleton, gradeTone, useToast } from '../../ui';
 import { ChildRequired } from './ChildRequired';
 import { TermPicker } from './TermPicker';
 
@@ -58,7 +58,19 @@ export default function ChildDetailPage() {
             <>
               <AverageSummary data={data} />
               <SubjectList data={data} />
-              <Button variant="secondary" block loading={exporting} onClick={() => void exportBulletin()}>
+              {!data.bulletinReady ? (
+                <Alert tone="info">
+                  Le bulletin sera disponible une fois que toutes les matières de la classe
+                  auront été notées{data.missingSubjects.length > 0 ? ` (reste : ${data.missingSubjects.join(', ')})` : ''}.
+                </Alert>
+              ) : null}
+              <Button
+                variant="secondary"
+                block
+                loading={exporting}
+                disabled={!data.bulletinReady}
+                onClick={() => void exportBulletin()}
+              >
                 Télécharger le bulletin (PDF)
               </Button>
             </>

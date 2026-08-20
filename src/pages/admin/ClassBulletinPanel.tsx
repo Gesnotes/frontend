@@ -123,6 +123,12 @@ export function ClassBulletinPanel({
                 </table>
               </div>
 
+              {!detail.bulletinReady ? (
+                <p className="t-body-sm t-muted" style={{ marginTop: 'var(--space-2)' }}>
+                  Bulletin pas encore complet : il manque les notes de {detail.missingSubjects.join(', ')}.
+                </p>
+              ) : null}
+
               <div className="dash-bulletin__actions">
                 {showBulletinLink ? (
                   <Link to={paths.admin.classBulletin(classId)}>
@@ -133,6 +139,8 @@ export function ClassBulletinPanel({
                   size="sm"
                   variant="tonal"
                   loading={exporting}
+                  disabled={!detail.bulletinReady}
+                  title={detail.bulletinReady ? undefined : 'Le bulletin sera disponible une fois toutes les matières notées.'}
                   onClick={() => void exportCsv(detail.className, detail.termLabel)}
                 >
                   Exporter en CSV
