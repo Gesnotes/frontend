@@ -211,8 +211,9 @@ const SUBJECT_ICONS: ComponentType<{ size?: number; style?: object }>[] = [
   Calculator, BookOpen, Globe2, FlaskConical, Landmark,
 ];
 
-function subjectIcon(subjectId: number) {
-  return SUBJECT_ICONS[Math.abs(subjectId) % SUBJECT_ICONS.length]!;
+function subjectIcon(subjectId: number, size: number, color: string) {
+  const Icon = SUBJECT_ICONS[Math.abs(subjectId) % SUBJECT_ICONS.length]!;
+  return <Icon size={size} style={{ color }} />;
 }
 
 function toneAccent(tone: ReturnType<typeof gradeTone>): string {
@@ -223,7 +224,6 @@ function toneAccent(tone: ReturnType<typeof gradeTone>): string {
 
 function SubjectCard({ subject, grades }: { subject: SubjectResult; grades: ParentGrade[] | undefined }) {
   const [expanded, setExpanded] = useState(subject.categories.length > 0);
-  const Icon = subjectIcon(subject.subjectId);
   const tone = gradeTone(subject.average);
   const color = colorForSubject(subject.subjectId);
 
@@ -234,7 +234,7 @@ function SubjectCard({ subject, grades }: { subject: SubjectResult; grades: Pare
           className="flex h-9.5 w-9.5 shrink-0 items-center justify-center rounded-full"
           style={{ backgroundColor: `${color}1a` }}
         >
-          <Icon size={17} style={{ color }} />
+          {subjectIcon(subject.subjectId, 17, color)}
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold text-gray-900">{subject.subjectName}</span>
