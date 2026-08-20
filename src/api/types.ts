@@ -27,10 +27,10 @@ export type SchoolSettings = {
   email: string | null;
   phone: string | null;
   address: string | null;
-  /** Texte libre affiché sous le nom de l'école sur le bulletin PDF. */
-  bulletinHeader: string | null;
-  /** Texte libre affiché en pied de page du bulletin PDF, au-dessus de la mention générique. */
-  bulletinFooter: string | null;
+  /** Une image d'en-tête est réglée pour le bulletin PDF (voir `GET /school/bulletin-header-image`). */
+  hasBulletinHeaderImage: boolean;
+  /** Une image de pied de page est réglée pour le bulletin PDF. */
+  hasBulletinFooterImage: boolean;
 };
 
 export type UpdateSchoolSettingsPayload = {
@@ -38,8 +38,6 @@ export type UpdateSchoolSettingsPayload = {
   email?: string | null;
   phone?: string | null;
   address?: string | null;
-  bulletinHeader?: string | null;
-  bulletinFooter?: string | null;
 };
 
 // ------------------------------------------------------------------- Erreurs

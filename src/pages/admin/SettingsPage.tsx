@@ -1,9 +1,9 @@
-import { FileText, School } from 'lucide-react';
-import { useState, type ChangeEvent } from 'react';
+import { FileText, School, Trash2, Upload } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
 
 import { errorMessage, schoolApi } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
-import { Alert, Button, Skeleton, TextAreaField, TextField, useToast } from '../../ui';
+import { Alert, Button, Skeleton, TextField, useToast } from '../../ui';
 
 /**
  * Réglages propres à l'école — pour l'instant, le seul champ configurable est
@@ -26,7 +26,10 @@ export default function SettingsPage() {
             <>
               <SchoolCard name={data.name} email={data.email} phone={data.phone} address={data.address} />
               <PassingGradeCard current={data.passingGrade} />
-              <BulletinTemplateCard header={data.bulletinHeader} footer={data.bulletinFooter} />
+              <BulletinTemplateCard
+                hasHeaderImage={data.hasBulletinHeaderImage}
+                hasFooterImage={data.hasBulletinFooterImage}
+              />
             </>
           )}
         </QueryBoundary>
@@ -204,50 +207,25 @@ function PassingGradeCard({ current }: { current: number }) {
   );
 }
 
+/** Lit un fichier choisi comme data URL (`data:image/png;base64,...`), le format attendu par l'API. */
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error('Lecture du fichier impossible.'));
+    reader.readAsDataURL(file);
+  });
+}
+
 /**
- * Personnalisation du bulletin PDF : texte libre affiché sous le nom de
- * l'école (en-tête) et en pied de page, au-dessus de la mention générique
- * (« Généré le... Gesnotes »), jamais à sa place — voir bulletin/pdf.ts.
+ * Personnalisation du bulletin PDF par image téléversée (logo, en-tête
+ * officiel, cachet...) : l'en-tête remplace le nom de l'école, le pied de
+ * page s'ajoute au-dessus de la mention générique (« Généré le... Gesnotes »),
+ * jamais à sa place — voir bulletin/pdf.ts.
  */
 function BulletinTemplateCard({
-  header, footer,
-}: { header: string | null; footer: string | null }) {
-  const toast = useToast();
-  const update = schoolApi.useUpdateBulletinTemplate();
-
-  const initial = { header: header ?? '', footer: footer ?? '' };
-  const [values, setValues] = useState(initial);
-  const [edited, setEdited] = useState(false);
-
-  const [syncedInitial, setSyncedInitial] = useState(initial);
-  if (!edited && (syncedInitial.header !== initial.header || syncedInitial.footer !== initial.footer)) {
-    setSyncedInitial(initial);
-    setValues(initial);
-  }
-
-  const dirty = values.header.trim() !== initial.header || values.footer.trim() !== initial.footer;
-
-  function field(key: keyof typeof values) {
-    return (e: ChangeEvent<HTMLTextAreaElement>) => {
-      setValues((v) => ({ ...v, [key]: e.target.value }));
-      setEdited(true);
-    };
-  }
-
-  async function submit() {
-    try {
-      const saved = await update.mutateAsync({
-        bulletinHeader: values.header.trim() || null,
-        bulletinFooter: values.footer.trim() || null,
-      });
-      setValues({ header: saved.bulletinHeader ?? '', footer: saved.bulletinFooter ?? '' });
-      setEdited(false);
-      toast.success('Modèle de bulletin enregistré');
-    } catch (cause) {
-      toast.error(errorMessage(cause));
-    }
-  }
-
+  hasHeaderImage, hasFooterImage,
+}: { hasHeaderImage: boolean; hasFooterImage: boolean }) {
   return (
     <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       <div className="mb-4 flex items-center gap-3">
@@ -257,30 +235,114 @@ function BulletinTemplateCard({
         <h2 className="text-base font-bold text-gray-900">Modèle de bulletin</h2>
       </div>
       <p className="mb-4 text-sm text-gray-500">
-        Ce texte s'ajoute au bulletin PDF téléchargé par l'administration, les enseignants et les
-        familles — utile pour une mention officielle en en-tête, ou une ligne de signature en
-        pied de page.
+        Une image (PNG ou JPEG, 1,5 Mo maximum) ajoutée au bulletin PDF téléchargé par
+        l'administration, les enseignants et les familles — utile pour un en-tête déjà mis en
+        forme (logo, cachet officiel) ou une ligne de signature en pied de page.
       </p>
 
-      <div className="space-y-4">
-        <TextAreaField
-          label="En-tête (sous le nom de l'école)"
-          rows={2}
-          value={values.header}
-          onChange={field('header')}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <BulletinImageSlotCard
+          slot="header"
+          label="En-tête (remplace le nom de l'école)"
+          hasImage={hasHeaderImage}
         />
-        <TextAreaField
-          label="Pied de page"
-          rows={2}
-          value={values.footer}
-          onChange={field('footer')}
-        />
+        <BulletinImageSlotCard slot="footer" label="Pied de page" hasImage={hasFooterImage} />
+      </div>
+    </div>
+  );
+}
 
-        <div className="flex justify-end">
-          <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
-            Enregistrer
-          </Button>
+function BulletinImageSlotCard({
+  slot, label, hasImage,
+}: { slot: schoolApi.BulletinImageSlot; label: string; hasImage: boolean }) {
+  const toast = useToast();
+  const preview = schoolApi.useBulletinImagePreview(slot, hasImage);
+  const upload = schoolApi.useUploadBulletinImage(slot);
+  const remove = schoolApi.useRemoveBulletinImage(slot);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  // Objet URL propre au blob courant, recréé seulement quand le blob change ;
+  // révoqué à chaque changement et au démontage, sinon chaque nouvel aperçu
+  // fuit l'ancien.
+  const previewUrl = useMemo(
+    () => (preview.data ? URL.createObjectURL(preview.data) : null),
+    [preview.data],
+  );
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  async function onFileChosen(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // permet de re-choisir le même fichier après une erreur
+    if (!file) return;
+
+    setError(null);
+    try {
+      const dataUrl = await readAsDataUrl(file);
+      await upload.mutateAsync(dataUrl);
+      toast.success('Image enregistrée');
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  async function onRemove() {
+    setError(null);
+    try {
+      await remove.mutateAsync();
+      toast.success('Image retirée');
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  const busy = upload.isPending || remove.isPending;
+
+  return (
+    <div className="rounded-lg border border-gray-200 p-4">
+      <span className="text-xs font-semibold uppercase tracking-wide text-gray-500">{label}</span>
+
+      <div className="mt-3 flex h-20 items-center justify-center rounded-lg bg-gray-50">
+        {hasImage && previewUrl ? (
+          <img src={previewUrl} alt="" className="max-h-16 max-w-full object-contain" />
+        ) : hasImage && preview.isPending ? (
+          <Skeleton width="80%" height={16} />
+        ) : (
+          <span className="text-xs text-gray-400">Aucune image</span>
+        )}
+      </div>
+
+      {error ? (
+        <div className="mt-3">
+          <Alert tone="danger">{error}</Alert>
         </div>
+      ) : null}
+
+      <div className="mt-3 flex gap-2">
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg"
+          className="hidden"
+          onChange={(e) => void onFileChosen(e)}
+        />
+        <Button
+          size="sm"
+          variant="secondary"
+          loading={upload.isPending}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload size={14} aria-hidden="true" /> {hasImage ? 'Remplacer' : 'Téléverser'}
+        </Button>
+        {hasImage ? (
+          <Button size="sm" variant="ghost" disabled={busy} loading={remove.isPending} onClick={() => void onRemove()}>
+            <Trash2 size={14} aria-hidden="true" />
+          </Button>
+        ) : null}
       </div>
     </div>
   );

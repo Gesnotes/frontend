@@ -30,6 +30,7 @@ export const queryKeys = {
 
   school: {
     all: ['school'] as const,
+    bulletinImage: (slot: 'header' | 'footer') => ['school', 'bulletin-image', slot] as const,
   },
 
   schoolYears: {
