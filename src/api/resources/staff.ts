@@ -108,6 +108,11 @@ export function deleteSchoolPermanently(id: ID, confirmLabel: string): Promise<v
   });
 }
 
+/** Renvoie l'invitation au compte administrateur de l'école (email perdu, lien expiré). */
+export function resendSchoolInvitation(id: ID): Promise<MessageResponse> {
+  return staffApiFetch<MessageResponse>(`/staff/schools/${id}/invitation`, { method: 'POST' });
+}
+
 // ------------------------------------------------------------------- Hooks
 
 export function useOverview() {
@@ -165,6 +170,10 @@ export function useRestoreSchool() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.staff.schools });
     },
   });
+}
+
+export function useResendSchoolInvitation() {
+  return useMutation({ mutationFn: (id: ID) => resendSchoolInvitation(id) });
 }
 
 export function useDeleteSchoolPermanently() {
