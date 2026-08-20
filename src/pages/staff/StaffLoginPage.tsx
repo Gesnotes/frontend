@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import { errorMessage, isApiError } from '../../api';
 import { useStaffAuth } from '../../staff/staff-auth-context';
@@ -62,6 +62,10 @@ export default function StaffLoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
         />
+
+        <div className="auth__row-end">
+          <Link to={paths.staff.forgotPassword}>Mot de passe oublié ?</Link>
+        </div>
 
         <Button type="submit" block loading={submitting} disabled={!email || !password}>
           Se connecter

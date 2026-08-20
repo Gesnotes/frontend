@@ -66,6 +66,8 @@ const GradeDetailPage = lazy(() => import('./pages/parent/GradeDetailPage'));
 const NotificationsPage = lazy(() => import('./pages/parent/NotificationsPage'));
 
 const StaffLoginPage = lazy(() => import('./pages/staff/StaffLoginPage'));
+const StaffForgotPasswordPage = lazy(() => import('./pages/staff/StaffForgotPasswordPage'));
+const StaffResetPasswordPage = lazy(() => import('./pages/staff/StaffResetPasswordPage'));
 const StaffDashboardPage = lazy(() => import('./pages/staff/StaffDashboardPage'));
 const SignupRequestsPage = lazy(() => import('./pages/staff/SignupRequestsPage'));
 const SchoolsPage = lazy(() => import('./pages/staff/SchoolsPage'));
@@ -138,6 +140,15 @@ export default function App() {
               </RedirectIfStaffAuthenticated>
             }
           />
+          <Route
+            path={paths.staff.forgotPassword}
+            element={
+              <RedirectIfStaffAuthenticated>
+                <StaffForgotPasswordPage />
+              </RedirectIfStaffAuthenticated>
+            }
+          />
+          <Route path={paths.staff.resetPassword} element={<StaffResetPasswordPage />} />
           <Route element={<RequireStaffAuth />}>
             <Route path={paths.staff.root} element={<StaffShell />}>
               <Route index element={<StaffDashboardPage />} />

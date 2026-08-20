@@ -7,6 +7,7 @@ import type {
   AcceptSignupRequestPayload,
   AcceptSignupRequestResult,
   ID,
+  MessageResponse,
   PlatformOverview,
   SchoolWithMetrics,
   SignupRequestRow,
@@ -23,6 +24,29 @@ export async function login(email: string, password: string): Promise<StaffLogin
   });
   staffSessionStore.set(result);
   return result;
+}
+
+/**
+ * `POST /staff/forgot-password`.
+ *
+ * La réponse est identique que le compte existe ou non (anti-énumération) :
+ * l'UI ne doit donc jamais annoncer « compte inconnu ».
+ */
+export function forgotPassword(email: string): Promise<MessageResponse> {
+  return staffApiFetch<MessageResponse>('/staff/forgot-password', {
+    method: 'POST',
+    body: { email },
+    anonymous: true,
+  });
+}
+
+/** `POST /staff/reset-password` — le token vient du lien reçu par email. */
+export function resetPassword(token: string, password: string): Promise<MessageResponse> {
+  return staffApiFetch<MessageResponse>('/staff/reset-password', {
+    method: 'POST',
+    body: { token, password },
+    anonymous: true,
+  });
 }
 
 /** `POST /staff/logout`. La session locale est purgée même si l'appel échoue. */
