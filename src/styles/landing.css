@@ -8,6 +8,19 @@
      (texte trop large, grille mal contrainte) sur un petit écran suffit à
      casser l'impression de fiabilité dès la première seconde. */
   overflow-x: hidden;
+  position: relative;
+}
+
+/* Filet de couleur en tête de page — signature discrète de la marque,
+   visible même au-dessus du header sticky. */
+.landing__accent-bar {
+  height: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--on-primary-fixed-variant),
+    var(--primary),
+    var(--primary-container)
+  );
 }
 
 .landing__header {
@@ -66,6 +79,7 @@
 }
 
 .landing__hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -76,12 +90,40 @@
   animation: gn-rise var(--motion-slow) ease both;
 }
 
+/* Halo décoratif derrière le hero — deux taches de couleur floutées, toutes
+   deux issues de la même famille de bleu que le reste de l'application
+   (aucune couleur codée en dur, seulement des jetons combinés). */
+.landing__hero-glow {
+  position: absolute;
+  inset: -10% -10% auto -10%;
+  height: 480px;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(480px 280px at 20% 20%, color-mix(in srgb, var(--primary-container) 55%, transparent), transparent),
+    radial-gradient(420px 260px at 80% 10%, color-mix(in srgb, var(--primary-fixed) 65%, transparent), transparent);
+  filter: blur(40px);
+}
+
 .landing__hero-copy {
   max-width: 720px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: var(--space-5);
+}
+
+.landing__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-1) var(--space-4);
+  border-radius: var(--radius-full);
+  background: var(--primary-fixed);
+  color: var(--on-primary-fixed);
+  font-size: var(--label-sm-size);
+  font-weight: 700;
+  letter-spacing: var(--label-sm-tracking);
+  text-transform: uppercase;
 }
 
 .landing__hero-title {
@@ -111,6 +153,44 @@
 
 .landing__hero-login:hover {
   color: var(--primary);
+}
+
+/* Bandeau de confiance — le premier argument après le hero, avant même la
+   liste de fonctionnalités : le bleu le plus riche de la page, pour marquer
+   qu'il porte le message central. */
+.landing__trust {
+  background: linear-gradient(135deg, var(--on-primary-fixed-variant), var(--primary));
+  color: var(--on-primary);
+}
+
+.landing__trust-inner {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-8) var(--margin-mobile);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+.landing__trust-item {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.landing__trust-item p {
+  color: color-mix(in srgb, var(--on-primary) 82%, transparent);
+  margin-top: var(--space-1);
+}
+
+.landing__trust-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+  background: color-mix(in srgb, var(--on-primary) 16%, transparent);
 }
 
 .landing__section-head {
@@ -145,7 +225,7 @@
 }
 
 .landing__feature-card--highlight {
-  background: var(--primary-container);
+  background: linear-gradient(135deg, var(--primary-container), var(--on-primary-fixed-variant));
   color: var(--on-primary);
   border-color: transparent;
 }
@@ -195,6 +275,11 @@
 }
 
 .landing__cta {
+  background: linear-gradient(135deg, var(--on-primary-fixed-variant), var(--primary));
+  color: var(--on-primary);
+}
+
+.landing__cta-inner {
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -202,8 +287,7 @@
   gap: var(--space-4);
   max-width: 640px;
   margin: 0 auto;
-  padding-top: var(--space-10);
-  padding-bottom: var(--space-10);
+  padding: var(--space-10) var(--margin-mobile);
 }
 
 .landing__footer {
@@ -226,6 +310,12 @@
 .landing__footer-brand {
   font-weight: 800;
   font-size: var(--title-md-size);
+}
+
+.landing__footer-tagline {
+  margin-top: var(--space-1);
+  color: var(--outline-variant);
+  font-size: var(--body-md-size);
 }
 
 .landing__footer-meta {
@@ -253,14 +343,16 @@
 }
 
 .landing--visible .landing__feature-card,
-.landing--visible .landing__audience-item {
+.landing--visible .landing__audience-item,
+.landing--visible .landing__trust-item {
   opacity: 1;
   transform: translateY(0);
   transition: opacity var(--motion-slow) ease, transform var(--motion-slow) ease;
 }
 
 .landing__feature-card,
-.landing__audience-item {
+.landing__audience-item,
+.landing__trust-item {
   opacity: 0;
   transform: translateY(16px);
 }
@@ -269,7 +361,8 @@
   .landing__hero,
   .landing--pre-reveal,
   .landing__feature-card,
-  .landing__audience-item {
+  .landing__audience-item,
+  .landing__trust-item {
     animation: none;
     opacity: 1;
     transform: none;
@@ -278,7 +371,8 @@
 
 @media (max-width: 900px) {
   .landing__features,
-  .landing__audience {
+  .landing__audience,
+  .landing__trust-inner {
     grid-template-columns: 1fr;
   }
 }
