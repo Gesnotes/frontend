@@ -18,6 +18,13 @@ export function updateContactInfo(payload: UpdateSchoolSettingsPayload): Promise
   return api.patch<SchoolSettings>('/school', payload);
 }
 
+export function updateBulletinTemplate(payload: {
+  bulletinHeader: string | null;
+  bulletinFooter: string | null;
+}): Promise<SchoolSettings> {
+  return api.patch<SchoolSettings>('/school', payload);
+}
+
 // ------------------------------------------------------------------- Hooks
 
 export function useSchoolSettings() {
@@ -39,6 +46,14 @@ export function useUpdateContactInfo() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: updateContactInfo,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.school.all }),
+  });
+}
+
+export function useUpdateBulletinTemplate() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateBulletinTemplate,
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.school.all }),
   });
 }

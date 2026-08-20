@@ -1,9 +1,9 @@
-import { School } from 'lucide-react';
+import { FileText, School } from 'lucide-react';
 import { useState, type ChangeEvent } from 'react';
 
 import { errorMessage, schoolApi } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
-import { Alert, Button, Skeleton, TextField, useToast } from '../../ui';
+import { Alert, Button, Skeleton, TextAreaField, TextField, useToast } from '../../ui';
 
 /**
  * Réglages propres à l'école — pour l'instant, le seul champ configurable est
@@ -26,6 +26,7 @@ export default function SettingsPage() {
             <>
               <SchoolCard name={data.name} email={data.email} phone={data.phone} address={data.address} />
               <PassingGradeCard current={data.passingGrade} />
+              <BulletinTemplateCard header={data.bulletinHeader} footer={data.bulletinFooter} />
             </>
           )}
         </QueryBoundary>
@@ -198,6 +199,88 @@ function PassingGradeCard({ current }: { current: number }) {
         <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
           Enregistrer
         </Button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Personnalisation du bulletin PDF : texte libre affiché sous le nom de
+ * l'école (en-tête) et en pied de page, au-dessus de la mention générique
+ * (« Généré le... Gesnotes »), jamais à sa place — voir bulletin/pdf.ts.
+ */
+function BulletinTemplateCard({
+  header, footer,
+}: { header: string | null; footer: string | null }) {
+  const toast = useToast();
+  const update = schoolApi.useUpdateBulletinTemplate();
+
+  const initial = { header: header ?? '', footer: footer ?? '' };
+  const [values, setValues] = useState(initial);
+  const [edited, setEdited] = useState(false);
+
+  const [syncedInitial, setSyncedInitial] = useState(initial);
+  if (!edited && (syncedInitial.header !== initial.header || syncedInitial.footer !== initial.footer)) {
+    setSyncedInitial(initial);
+    setValues(initial);
+  }
+
+  const dirty = values.header.trim() !== initial.header || values.footer.trim() !== initial.footer;
+
+  function field(key: keyof typeof values) {
+    return (e: ChangeEvent<HTMLTextAreaElement>) => {
+      setValues((v) => ({ ...v, [key]: e.target.value }));
+      setEdited(true);
+    };
+  }
+
+  async function submit() {
+    try {
+      const saved = await update.mutateAsync({
+        bulletinHeader: values.header.trim() || null,
+        bulletinFooter: values.footer.trim() || null,
+      });
+      setValues({ header: saved.bulletinHeader ?? '', footer: saved.bulletinFooter ?? '' });
+      setEdited(false);
+      toast.success('Modèle de bulletin enregistré');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+      <div className="mb-4 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#dde1ff] text-[#173bab]">
+          <FileText size={20} aria-hidden="true" />
+        </div>
+        <h2 className="text-base font-bold text-gray-900">Modèle de bulletin</h2>
+      </div>
+      <p className="mb-4 text-sm text-gray-500">
+        Ce texte s'ajoute au bulletin PDF téléchargé par l'administration, les enseignants et les
+        familles — utile pour une mention officielle en en-tête, ou une ligne de signature en
+        pied de page.
+      </p>
+
+      <div className="space-y-4">
+        <TextAreaField
+          label="En-tête (sous le nom de l'école)"
+          rows={2}
+          value={values.header}
+          onChange={field('header')}
+        />
+        <TextAreaField
+          label="Pied de page"
+          rows={2}
+          value={values.footer}
+          onChange={field('footer')}
+        />
+
+        <div className="flex justify-end">
+          <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
+            Enregistrer
+          </Button>
+        </div>
       </div>
     </div>
   );
