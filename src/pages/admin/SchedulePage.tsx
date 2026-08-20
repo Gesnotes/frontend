@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { classesApi, type ID } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
@@ -24,9 +24,10 @@ export default function SchedulePage() {
     [classes.data],
   );
 
-  useEffect(() => {
-    if (classId === '' && scheduledClasses.length > 0) setClassId(scheduledClasses[0].id);
-  }, [classId, scheduledClasses]);
+  // Dérivé plutôt que synchronisé par effet : aucune classe choisie pour
+  // l'instant ? on retombe sur la première disponible, sans aller-retour de
+  // rendu.
+  const selectedClassId: ID | '' = classId === '' ? (scheduledClasses[0]?.id ?? '') : classId;
 
   return (
     <>
@@ -40,7 +41,7 @@ export default function SchedulePage() {
             <span className="sr-only">Classe</span>
             <select
               className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
-              value={classId}
+              value={selectedClassId}
               onChange={(e) => setClassId(Number(e.target.value))}
             >
               {scheduledClasses.map((klass) => (
@@ -62,8 +63,8 @@ export default function SchedulePage() {
                   (maternelle, garderie) se prend jour par jour, sans horaire par matière.
                 </p>
               </div>
-            ) : classId !== '' ? (
-              <ClassSchedulePanel classId={classId} />
+            ) : typeof selectedClassId === 'number' ? (
+              <ClassSchedulePanel classId={selectedClassId} />
             ) : null
           }
         </QueryBoundary>
