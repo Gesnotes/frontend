@@ -19,11 +19,11 @@ export default function ChildDetailPage() {
   const { termId, term } = useTermContext();
 
   const detail = parentApi.useChildDetail(Number.isFinite(id) ? id : undefined, termId);
-  const [exporting, setExporting] = useState(false);
+  const [exporting, setExporting] = useState<'periode' | 'annuel' | null>(null);
 
   async function exportBulletin() {
     if (termId === undefined || !detail.data) return;
-    setExporting(true);
+    setExporting('periode');
     try {
       const blob = await parentApi.exportChildBulletin(id, termId);
       downloadBlob(
@@ -34,7 +34,26 @@ export default function ChildDetailPage() {
     } catch (cause) {
       toast.error(errorMessage(cause));
     } finally {
-      setExporting(false);
+      setExporting(null);
+    }
+  }
+
+  /**
+   * Pas de garde préalable comme `bulletinReady` : l'année entière doit être
+   * complète, pas seulement la période affichée à l'écran ; le message
+   * d'erreur du backend suffit à l'expliquer si ce n'est pas encore le cas.
+   */
+  async function exportAnnualBulletin() {
+    if (!term?.schoolYearId || !detail.data) return;
+    setExporting('annuel');
+    try {
+      const blob = await parentApi.exportChildAnnualBulletin(id, term.schoolYearId);
+      downloadBlob(blob, `bulletin-${safeFilename(detail.data.lastName)}-annuel.pdf`);
+      toast.success('Bulletin annuel téléchargé');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(null);
     }
   }
 
@@ -67,12 +86,22 @@ export default function ChildDetailPage() {
               <Button
                 variant="secondary"
                 block
-                loading={exporting}
+                loading={exporting === 'periode'}
                 disabled={!data.bulletinReady}
                 onClick={() => void exportBulletin()}
               >
                 Télécharger le bulletin (PDF)
               </Button>
+              {term?.schoolYearId ? (
+                <Button
+                  variant="tonal"
+                  block
+                  loading={exporting === 'annuel'}
+                  onClick={() => void exportAnnualBulletin()}
+                >
+                  Télécharger le bulletin annuel
+                </Button>
+              ) : null}
             </>
           )}
         </QueryBoundary>
