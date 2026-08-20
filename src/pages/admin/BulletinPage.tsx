@@ -23,7 +23,7 @@ export default function BulletinPage() {
   const toast = useToast();
 
   const bulletin = classesApi.useClassBulletin(Number.isFinite(id) ? id : undefined, termId);
-  const [exporting, setExporting] = useState<BulletinExportFormat | 'csv' | null>(null);
+  const [exporting, setExporting] = useState<BulletinExportFormat | 'csv' | 'annuel' | null>(null);
 
   /**
    * Le bulletin n'est remis aux familles qu'à la fin d'une période, quand
@@ -49,6 +49,28 @@ export default function BulletinPage() {
         `${safeFilename(bulletin.data.className)}-${safeFilename(bulletin.data.termLabel)}-${suffix}.pdf`,
       );
       toast.success('Bulletin téléchargé');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(null);
+    }
+  }
+
+  /**
+   * Bulletin annuel cumulé : une colonne par période de l'année scolaire de
+   * la période actuellement sélectionnée, plus la moyenne annuelle. Pas de
+   * garde préalable comme `printable` — l'année entière doit être complète,
+   * pas seulement la période affichée à l'écran ; le message d'erreur du
+   * backend (déjà clair) suffit à l'expliquer si ce n'est pas encore le cas.
+   */
+  async function exportAnnualPdf(format: BulletinExportFormat) {
+    if (!term?.schoolYearId || !bulletin.data) return;
+    setExporting('annuel');
+    try {
+      const blob = await classesApi.exportClassAnnualBulletin(id, term.schoolYearId, format);
+      const suffix = format === 'eleves' ? 'bulletins' : 'synthese';
+      downloadBlob(blob, `${safeFilename(bulletin.data.className)}-annuel-${suffix}.pdf`);
+      toast.success('Bulletin annuel téléchargé');
     } catch (cause) {
       toast.error(errorMessage(cause));
     } finally {
@@ -112,6 +134,19 @@ export default function BulletinPage() {
               onClick={() => void exportPdf('eleves')}
             >
               Bulletins élèves
+            </Button>
+            <Button
+              variant="tonal"
+              loading={exporting === 'annuel'}
+              disabled={!term?.schoolYearId}
+              title={
+                term?.schoolYearId
+                  ? undefined
+                  : "Cette période n'est rattachée à aucune année scolaire."
+              }
+              onClick={() => void exportAnnualPdf('eleves')}
+            >
+              Bulletin annuel
             </Button>
           </>
         }

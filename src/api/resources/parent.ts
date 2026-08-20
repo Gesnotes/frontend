@@ -33,6 +33,11 @@ export function exportChildBulletin(id: ID, termId: ID): Promise<Blob> {
   return apiFetchBlob(`/children/${id}/bulletin/export`, { term_id: termId });
 }
 
+/** Bulletin annuel cumulé d'un seul enfant — pendant annuel de `exportChildBulletin`. */
+export function exportChildAnnualBulletin(id: ID, schoolYearId: ID): Promise<Blob> {
+  return apiFetchBlob(`/children/${id}/bulletin/annual/export`, { school_year_id: schoolYearId });
+}
+
 // --------------------------------------------------------- Notifications push
 
 export function registerDevice(fcmToken: string) {
