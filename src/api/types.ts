@@ -27,6 +27,10 @@ export type SchoolSettings = {
   email: string | null;
   phone: string | null;
   address: string | null;
+  /** Texte libre affiché sous le nom de l'école sur le bulletin PDF. */
+  bulletinHeader: string | null;
+  /** Texte libre affiché en pied de page du bulletin PDF, au-dessus de la mention générique. */
+  bulletinFooter: string | null;
 };
 
 export type UpdateSchoolSettingsPayload = {
@@ -34,6 +38,8 @@ export type UpdateSchoolSettingsPayload = {
   email?: string | null;
   phone?: string | null;
   address?: string | null;
+  bulletinHeader?: string | null;
+  bulletinFooter?: string | null;
 };
 
 // ------------------------------------------------------------------- Erreurs
