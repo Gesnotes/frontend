@@ -1,12 +1,12 @@
 import { CalendarClock, NotebookPen } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { gradesApi, scheduleApi, type ID, type TeacherClassAssignment, type TimetableSlot } from '../../api';
 import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, plural, todayLocalIso } from '../../lib/format';
 import { paths } from '../../routes/paths';
-import { Alert, Card, EmptyState, ErrorState, Skeleton } from '../../ui';
+import { Alert, Card, ClickableCard, EmptyState, ErrorState, Skeleton } from '../../ui';
 
 /**
  * Accueil enseignant : ce qui compte en arrivant sur l'app — les cours du
@@ -70,6 +70,8 @@ function TodaySection({ schedule }: { schedule: ReturnType<typeof scheduleApi.us
 }
 
 function SummarySection({ assignments }: { assignments: ReturnType<typeof gradesApi.useMyClasses> }) {
+  const navigate = useNavigate();
+
   if (!assignments.data || assignments.data.length === 0) return null;
 
   const classCount = new Set(assignments.data.map((a) => a.classId)).size;
@@ -83,10 +85,12 @@ function SummarySection({ assignments }: { assignments: ReturnType<typeof grades
         <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>Classes</div>
         <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{formatCount(classCount)}</div>
       </Card>
-      <Card padded style={{ flex: 1 }}>
+      {/* Carte cliquable plutôt qu'un onglet bas dédié : à six onglets, la
+          barre de navigation débordait sur un téléphone étroit. */}
+      <ClickableCard style={{ flex: 1, textAlign: 'left' }} onClick={() => navigate(paths.teacher.students)}>
         <div className="t-label-sm t-subtle" style={{ textTransform: 'none' }}>Élèves</div>
         <div style={{ fontSize: 28, fontWeight: 700, marginTop: 4 }}>{formatCount(studentCount)}</div>
-      </Card>
+      </ClickableCard>
     </div>
   );
 }
