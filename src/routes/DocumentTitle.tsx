@@ -53,6 +53,8 @@ const TITLES: Record<string, string> = {
   [paths.parent.notifications]: 'Alertes',
 
   [paths.staff.login]: 'Équipe Gesnotes',
+  [paths.staff.forgotPassword]: 'Mot de passe oublié',
+  [paths.staff.resetPassword]: 'Définir un mot de passe',
   [paths.staff.dashboard]: "Vue d'ensemble",
   [paths.staff.signupRequests]: "Demandes d'inscription",
   [paths.staff.schools]: 'Écoles',

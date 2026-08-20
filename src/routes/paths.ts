@@ -56,6 +56,8 @@ export const paths = {
   /** Espace de l'équipe Gesnotes — supervision de la plateforme. */
   staff: {
     login: '/equipe/connexion',
+    forgotPassword: '/equipe/mot-de-passe-oublie',
+    resetPassword: '/equipe/reinitialiser-mot-de-passe',
     root: '/equipe',
     dashboard: '/equipe',
     signupRequests: '/equipe/demandes',
