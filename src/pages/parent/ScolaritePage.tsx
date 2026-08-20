@@ -4,14 +4,15 @@ import {
 import { useState, type ComponentType } from 'react';
 import { Link } from 'react-router-dom';
 
-import { parentApi, type ChildDetail, type ParentGrade, type SubjectResult } from '../../api';
+import { errorMessage, parentApi, type ChildDetail, type ID, type ParentGrade, type SubjectResult } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useChildContext } from '../../context/child-context';
 import { useTermContext } from '../../context/term-context';
+import { downloadBlob, safeFilename } from '../../lib/download';
 import { formatGrade } from '../../lib/format';
 import { colorForSubject } from '../../lib/schedule';
 import { paths } from '../../routes/paths';
-import { EmptyState, Skeleton, gradeTone, toneClasses } from '../../ui';
+import { Alert, Button, EmptyState, Skeleton, gradeTone, toneClasses, useToast } from '../../ui';
 import { ChildRequired } from './ChildRequired';
 import { ChildSwitcher } from './ChildSwitcher';
 
@@ -64,7 +65,13 @@ export default function ScolaritePage() {
         ) : null}
 
         <QueryBoundary query={detail} loading={<ScolariteSkeleton />}>
-          {(data) => (isYear ? <YearRecap data={data} /> : <TrimesterView data={data} grades={grades.data} />)}
+          {(data) =>
+            isYear ? (
+              <YearRecap data={data} />
+            ) : (
+              <TrimesterView data={data} grades={grades.data} childId={child!.id} />
+            )
+          }
         </QueryBoundary>
       </ChildRequired>
     </main>
@@ -121,7 +128,9 @@ function GeneralAverageCard({
   );
 }
 
-function TrimesterView({ data, grades }: { data: ChildDetail; grades: ParentGrade[] | undefined }) {
+function TrimesterView({
+  data, grades, childId,
+}: { data: ChildDetail; grades: ParentGrade[] | undefined; childId: ID }) {
   return (
     <>
       <GeneralAverageCard
@@ -148,6 +157,51 @@ function TrimesterView({ data, grades }: { data: ChildDetail; grades: ParentGrad
           ))}
         </div>
       )}
+
+      <BulletinDownload data={data} childId={childId} />
+    </>
+  );
+}
+
+/**
+ * Téléchargement du bulletin PDF, mêmes conditions que la fiche enfant
+ * (`ChildDetailPage`) : disponible seulement une fois toutes les matières de
+ * la classe notées sur la période (`bulletinReady`, calculé côté backend).
+ */
+function BulletinDownload({ data, childId }: { data: ChildDetail; childId: ID }) {
+  const toast = useToast();
+  const [exporting, setExporting] = useState(false);
+
+  async function exportBulletin() {
+    setExporting(true);
+    try {
+      const blob = await parentApi.exportChildBulletin(childId, data.termId);
+      downloadBlob(blob, `bulletin-${safeFilename(data.lastName)}-${safeFilename(data.termLabel)}.pdf`);
+      toast.success('Bulletin téléchargé');
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    } finally {
+      setExporting(false);
+    }
+  }
+
+  return (
+    <>
+      {!data.bulletinReady ? (
+        <Alert tone="info">
+          Le bulletin sera disponible une fois que toutes les matières de la classe
+          auront été notées{data.missingSubjects.length > 0 ? ` (reste : ${data.missingSubjects.join(', ')})` : ''}.
+        </Alert>
+      ) : null}
+      <Button
+        variant="secondary"
+        block
+        loading={exporting}
+        disabled={!data.bulletinReady}
+        onClick={() => void exportBulletin()}
+      >
+        Télécharger le bulletin (PDF)
+      </Button>
     </>
   );
 }
