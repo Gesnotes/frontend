@@ -85,6 +85,11 @@ export function declineSignupRequest(id: ID): Promise<void> {
   return staffApiFetch<void>(`/staff/signup-requests/${id}/decline`, { method: 'POST' });
 }
 
+/** Renvoie l'invitation au compte administrateur d'une demande déjà acceptée. */
+export function resendSignupRequestInvitation(id: ID): Promise<MessageResponse> {
+  return staffApiFetch<MessageResponse>(`/staff/signup-requests/${id}/resend-invitation`, { method: 'POST' });
+}
+
 /**
  * Suspend une école : ses comptes ne peuvent plus se connecter, sessions en
  * cours révoquées, rien détruit — restaurable à tout moment.
@@ -145,6 +150,10 @@ export function useDeclineSignupRequest() {
       void queryClient.invalidateQueries({ queryKey: queryKeys.staff.all });
     },
   });
+}
+
+export function useResendSignupRequestInvitation() {
+  return useMutation({ mutationFn: (id: ID) => resendSignupRequestInvitation(id) });
 }
 
 export function useSuspendSchool() {

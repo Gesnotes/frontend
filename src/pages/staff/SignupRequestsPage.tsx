@@ -14,9 +14,20 @@ export default function SignupRequestsPage() {
   const [status, setStatus] = useState<SignupRequestStatus>('nouveau');
   const requests = staffApi.useSignupRequests(status);
   const list = requests.data ?? [];
+  const resend = staffApi.useResendSignupRequestInvitation();
+  const toast = useToast();
 
   const [accepting, setAccepting] = useState<SignupRequestRow | null>(null);
   const [declining, setDeclining] = useState<SignupRequestRow | null>(null);
+
+  async function resendInvitation(request: SignupRequestRow) {
+    try {
+      await resend.mutateAsync(request.id);
+      toast.success(`Invitation renvoyée à ${request.email}`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
 
   return (
     <>
@@ -90,6 +101,18 @@ export default function SignupRequestsPage() {
                       <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
                         <Button onClick={() => setAccepting(request)}>Accepter</Button>
                         <Button variant="secondary" onClick={() => setDeclining(request)}>Refuser</Button>
+                      </div>
+                    ) : null}
+
+                    {status === 'traite' && request.schoolId !== null ? (
+                      <div style={{ display: 'flex', gap: 'var(--space-2)', marginTop: 'var(--space-4)' }}>
+                        <Button
+                          variant="secondary"
+                          loading={resend.isPending && resend.variables === request.id}
+                          onClick={() => void resendInvitation(request)}
+                        >
+                          Renvoyer l'invitation
+                        </Button>
                       </div>
                     ) : null}
                   </Card>
