@@ -511,6 +511,8 @@ export type ParentContact = {
   phone?: string | null;
 };
 
+export type Sex = 'M' | 'F';
+
 export type Student = {
   id: ID;
   schoolId: ID;
@@ -518,6 +520,7 @@ export type Student = {
   firstName: string;
   lastName: string;
   birthDate: IsoDate | null;
+  sex: Sex | null;
   archivedAt: IsoDateTime | null;
   createdAt: IsoDateTime | null;
   classe: ClassRef;
@@ -537,6 +540,7 @@ export type CreateStudentPayload = {
   lastName: string;
   classId: ID;
   birthDate?: IsoDate;
+  sex?: Sex;
 };
 
 export type UpdateStudentPayload = {
@@ -544,6 +548,7 @@ export type UpdateStudentPayload = {
   lastName?: string;
   classId?: ID;
   birthDate?: IsoDate | null;
+  sex?: Sex | null;
 };
 
 /** Une ligne du fichier d'import, telle que le backend l'a comprise. */

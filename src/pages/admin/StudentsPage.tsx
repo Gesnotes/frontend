@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import {
   classesApi, errorMessage, studentsApi,
-  type ID, type Student,
+  type ID, type Sex, type Student,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useDebouncedValue } from '../../hooks/useDebouncedValue';
@@ -17,7 +17,7 @@ import { ImportStudentsModal } from './ImportStudentsModal';
 import { LinkParentModal } from './LinkParentModal';
 import {
   Alert, Avatar, Button, Modal, ModalActions,
-  Skeleton, TextField, toneClasses, useToast,
+  SelectField, Skeleton, TextField, toneClasses, useToast,
 } from '../../ui';
 
 export default function StudentsPage() {
@@ -319,6 +319,7 @@ function StudentModal({
   const [lastName, setLastName] = useState(student?.lastName ?? '');
   const [classId, setClassId] = useState(String(student?.classId ?? ''));
   const [birthDate, setBirthDate] = useState(student?.birthDate ?? '');
+  const [sex, setSex] = useState<Sex | ''>(student?.sex ?? '');
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -352,9 +353,14 @@ function StudentModal({
         classId: Number(classId) as ID,
       };
       if (student) {
-        await update.mutateAsync({ id: student.id, ...base, birthDate: birthDate || null });
+        await update.mutateAsync({
+          id: student.id,
+          ...base,
+          birthDate: birthDate || null,
+          sex: sex || null,
+        });
       } else {
-        await create.mutateAsync({ ...base, birthDate: birthDate || undefined });
+        await create.mutateAsync({ ...base, birthDate: birthDate || undefined, sex: sex || undefined });
       }
       onSaved();
     } catch (cause) {
@@ -405,12 +411,24 @@ function StudentModal({
           error={submitted ? fieldErrors.classId : undefined}
         />
 
-        <TextField
-          label="Date de naissance"
-          type="date"
-          value={birthDate ?? ''}
-          onChange={(e) => setBirthDate(e.target.value)}
-        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+          <TextField
+            label="Date de naissance"
+            type="date"
+            value={birthDate ?? ''}
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
+          <SelectField
+            label="Sexe"
+            placeholder="Non renseigné"
+            options={[
+              { value: 'M', label: 'Masculin' },
+              { value: 'F', label: 'Féminin' },
+            ]}
+            value={sex ?? ''}
+            onChange={(e) => setSex(e.target.value as 'M' | 'F' | '')}
+          />
+        </div>
 
         {student ? null : (
           <Alert tone="info">
