@@ -146,10 +146,26 @@ function SupportCard() {
  * mieux vaut le dire ici que laisser l'administration le découvrir plus tard,
  * bloquée, sans configuration à portée de main.
  */
-function isSetupIncomplete({ effectifs, periode }: AdminDashboard): boolean {
+/**
+ * Les matières ne comptent que si l'école a au moins une classe en mode
+ * notes. L'inscription par niveau (`provisionFromLevels` côté backend) crée
+ * déjà classes et matières pour les cycles collège/secondaire, mais une
+ * école inscrite uniquement en garderie/maternelle/primaire (présence
+ * uniquement) n'aura jamais de matière à ajouter — le principe 4 de
+ * DESIGN.md (« la valeur par défaut est le cas fréquent ») veut qu'on ne
+ * réclame pas une étape qui ne s'applique pas à ce cas-là. Avant la
+ * première classe, on ne sait pas encore quel mode elle aura : l'étape
+ * reste affichée par défaut.
+ */
+function needsSubjectsStep({ effectifs, presence }: AdminDashboard): boolean {
+  return effectifs.classes === 0 || effectifs.classes > presence.classesTotal;
+}
+
+function isSetupIncomplete(data: AdminDashboard): boolean {
+  const { effectifs, periode } = data;
   return (
     effectifs.classes === 0 ||
-    effectifs.matieres === 0 ||
+    (needsSubjectsStep(data) && effectifs.matieres === 0) ||
     effectifs.enseignants === 0 ||
     effectifs.eleves === 0 ||
     periode === null
@@ -165,12 +181,14 @@ function OnboardingChecklist({ data }: { data: AdminDashboard }) {
       cta: 'Commencer par les classes',
       to: paths.admin.classes,
     },
-    {
-      done: effectifs.matieres > 0,
-      label: 'Ajouter vos matières',
-      cta: 'Ajouter vos matières',
-      to: paths.admin.subjects,
-    },
+    ...(needsSubjectsStep(data)
+      ? [{
+          done: effectifs.matieres > 0,
+          label: 'Ajouter vos matières',
+          cta: 'Ajouter vos matières',
+          to: paths.admin.subjects,
+        }]
+      : []),
     {
       done: effectifs.enseignants > 0,
       label: 'Inviter vos enseignants',
