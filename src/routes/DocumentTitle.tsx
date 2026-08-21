@@ -36,6 +36,9 @@ const TITLES: Record<string, string> = {
   [paths.admin.schoolYears]: 'Années scolaires et périodes',
   [paths.admin.archives]: 'Archives',
   [paths.admin.settings]: 'Paramètres',
+  [paths.admin.schedule]: 'Emploi du temps',
+  [paths.admin.holidays]: 'Calendrier scolaire',
+  [paths.admin.auditLog]: "Journal d'audit",
 
   // `/enseignant` redirige vers la saisie : le titre ne doit pas annoncer un
   // écran « Mes classes » qui n'existe plus.
@@ -44,6 +47,7 @@ const TITLES: Record<string, string> = {
   [paths.teacher.attendance]: 'Présence',
   [paths.teacher.students]: 'Élèves',
   [paths.teacher.history]: 'Historique des saisies',
+  [paths.teacher.schedule]: 'Emploi du temps',
 
   [paths.parent.home]: 'Accueil',
   [paths.parent.scolarite]: 'Scolarité',
@@ -51,6 +55,7 @@ const TITLES: Record<string, string> = {
   [paths.parent.grades]: 'Notes',
   [paths.parent.attendance]: 'Présence',
   [paths.parent.notifications]: 'Alertes',
+  [paths.parent.schedule]: 'Emploi du temps',
 
   [paths.staff.login]: 'Équipe Gesnotes',
   [paths.staff.forgotPassword]: 'Mot de passe oublié',
