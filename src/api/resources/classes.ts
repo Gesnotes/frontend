@@ -51,6 +51,15 @@ export function exportClassBulletinCsv(id: ID, termId: ID): Promise<Blob> {
   return apiFetchBlob(`/classes/${id}/bulletin/csv`, { term_id: termId });
 }
 
+/** Bulletin annuel cumulé : une colonne par période de l'année scolaire, plus la moyenne annuelle. */
+export function exportClassAnnualBulletin(
+  id: ID,
+  schoolYearId: ID,
+  format: BulletinExportFormat = 'eleves',
+): Promise<Blob> {
+  return apiFetchBlob(`/classes/${id}/bulletin/annual/export`, { school_year_id: schoolYearId, format });
+}
+
 export function createClass(payload: CreateClassPayload) {
   return api.post<ClassListItem>('/classes', payload);
 }

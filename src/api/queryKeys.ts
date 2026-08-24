@@ -14,12 +14,23 @@ export const queryKeys = {
     list: (includeArchived?: boolean) => ['terms', 'list', includeArchived ?? false] as const,
   },
 
+  holidays: {
+    all: ['holidays'] as const,
+    list: (includeArchived?: boolean) => ['holidays', 'list', includeArchived ?? false] as const,
+  },
+
+  auditLogs: {
+    all: ['audit-logs'] as const,
+    list: (limit: number) => ['audit-logs', 'list', limit] as const,
+  },
+
   gradeTypes: {
     all: ['grade-types'] as const,
   },
 
   school: {
     all: ['school'] as const,
+    bulletinImage: (slot: 'header' | 'footer') => ['school', 'bulletin-image', slot] as const,
   },
 
   schoolYears: {
@@ -43,13 +54,15 @@ export const queryKeys = {
   teachers: {
     all: ['teachers'] as const,
     list: (includeArchived?: boolean) => ['teachers', 'list', includeArchived ?? false] as const,
+    detail: (id: ID) => ['teachers', 'detail', id] as const,
   },
 
   students: {
     all: ['students'] as const,
-    list: (classId?: ID, page?: number, includeArchived?: boolean) =>
-      ['students', 'list', classId ?? null, page ?? 1, includeArchived ?? false] as const,
+    list: (classId?: ID, page?: number, includeArchived?: boolean, search?: string) =>
+      ['students', 'list', classId ?? null, page ?? 1, includeArchived ?? false, search ?? ''] as const,
     detail: (id: ID) => ['students', 'detail', id] as const,
+    detailFull: (id: ID, termId?: ID) => ['students', 'detail-full', id, termId ?? null] as const,
     parentSearch: (query: string) => ['students', 'parent-search', query] as const,
   },
 
@@ -57,6 +70,7 @@ export const queryKeys = {
     all: ['dashboard'] as const,
     summary: (termId?: ID) => ['dashboard', 'summary', termId ?? null] as const,
     recentGrades: (limit: number) => ['dashboard', 'recent-grades', limit] as const,
+    absences: (days: number) => ['dashboard', 'absences', days] as const,
   },
 
   teacherMe: {
@@ -87,11 +101,23 @@ export const queryKeys = {
     grades: (id: ID, termId?: ID, subjectId?: ID) =>
       ['children', 'grades', id, termId ?? null, subjectId ?? null] as const,
     attendance: (id: ID) => ['children', 'attendance', id] as const,
+    schedule: (id: ID) => ['children', 'schedule', id] as const,
   },
 
   attendance: {
     all: ['attendance'] as const,
-    sheet: (classId: ID, date: string) => ['attendance', 'sheet', classId, date] as const,
+    sheet: (target: { classId?: ID; slotId?: ID }, date: string) =>
+      ['attendance', 'sheet', target.classId ?? null, target.slotId ?? null, date] as const,
+    classSummary: (classId: ID, termId: ID) => ['attendance', 'class-summary', classId, termId] as const,
+    studentHistory: (studentId: ID, termId?: ID) =>
+      ['attendance', 'student-history', studentId, termId ?? null] as const,
+  },
+
+  schedule: {
+    all: ['schedule'] as const,
+    class: (classId: ID, includeArchived?: boolean) =>
+      ['schedule', 'class', classId, includeArchived ?? false] as const,
+    mine: (date?: string) => ['schedule', 'mine', date ?? 'semaine'] as const,
   },
 
   staff: {

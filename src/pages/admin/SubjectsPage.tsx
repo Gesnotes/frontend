@@ -1,14 +1,16 @@
-import { useState, type FormEvent } from 'react';
+import {
+  BookOpen, Calculator, Pencil, Search, Trash2, Users,
+} from 'lucide-react';
+import { useMemo, useState, type FormEvent } from 'react';
 
 import { errorMessage, subjectsApi, type Subject } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
 import { CoefficientsModal } from './CoefficientsModal';
 import {
-  Alert, Button, Card, Chip, ConfirmDialog, DataTable, EmptyState, Modal, ModalActions,
-  Skeleton, TextField, useToast, type Column,
+  Alert, Button, Chip, ConfirmDialog, Modal, ModalActions,
+  Skeleton, StatCardIcon, TextField, useToast,
 } from '../../ui';
 
 export default function SubjectsPage() {
@@ -25,12 +27,22 @@ export default function SubjectsPage() {
   const [toArchive, setToArchive] = useState<Subject | null>(null);
   const [coefficientsFor, setCoefficientsFor] = useState<Subject | null>(null);
 
+  const [search, setSearch] = useState('');
+
   function openCreate() {
     setCreationKey((key) => key + 1);
     setCreating(true);
   }
 
   const list = subjects.data ?? [];
+  const totalCoefficients = list.reduce((sum, s) => sum + Number(s.coefficient), 0);
+  const teacherCount = new Set(list.flatMap((s) => s.enseignants.map((t) => t.id))).size;
+
+  const filtered = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    if (!query) return list;
+    return list.filter((s) => s.name.toLowerCase().includes(query));
+  }, [list, search]);
 
   async function confirmArchive() {
     if (!toArchive) return;
@@ -43,93 +55,134 @@ export default function SubjectsPage() {
     }
   }
 
-  const columns: Column<Subject>[] = [
-    {
-      key: 'name',
-      header: 'Matière',
-      render: (subject) => <span style={{ fontWeight: 600 }}>{subject.name}</span>,
-    },
-    {
-      key: 'coefficient',
-      header: 'Coefficient',
-      render: (subject) => <Chip tone="info">× {subject.coefficient}</Chip>,
-    },
-    {
-      key: 'overrides',
-      header: 'Coefficients par classe',
-      render: (subject) =>
-        subject.coefficientsParClasse.length === 0 ? (
-          <span className="t-subtle">Coefficient de l'école</span>
-        ) : (
-          <div style={{ display: 'flex', gap: 'var(--space-2)', flexWrap: 'wrap' }}>
-            {subject.coefficientsParClasse.map((c) => (
-              <Chip key={c.classId} tone="neutral">
-                {c.className} × {c.coefficient}
-              </Chip>
-            ))}
-          </div>
-        ),
-    },
-    {
-      key: 'teachers',
-      header: 'Enseignants',
-      render: (subject) =>
-        subject.enseignants.length === 0 ? (
-          <span className="t-subtle">—</span>
-        ) : (
-          // Un enseignant apparaît une fois par classe : on dédoublonne.
-          [...new Map(subject.enseignants.map((t) => [t.id, t])).values()]
-            .map((t) => personName(t))
-            .join(', ')
-        ),
-    },
-    {
-      key: 'actions',
-      srHeader: 'Actions',
-      align: 'numeric',
-      render: (subject) => (
-        <div className="cell-actions">
-          <Button size="sm" variant="secondary" onClick={() => setCoefficientsFor(subject)}>
-            Coefficients
-          </Button>
-          <Button size="sm" variant="tonal" onClick={() => setEditing(subject)}>Modifier</Button>
-          <Button size="sm" variant="danger" onClick={() => setToArchive(subject)}>Archiver</Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <>
-      <PageHeader
-        title="Matières & coefficients"
-        subtitle={
-          subjects.data
-            ? `${formatCount(list.length)} ${plural(list.length, 'matière')} au programme`
-            : 'Programme de l’établissement'
-        }
-        actions={<Button onClick={openCreate}>Créer une matière</Button>}
-      />
-      <PageContent>
-        <QueryBoundary query={subjects} loading={<TableSkeleton />}>
-          {(items) => (
-            <DataTable
-              caption="Matières et coefficients"
-              columns={columns}
-              rows={items}
-              rowKey={(subject) => String(subject.id)}
-              empty={
-                <EmptyState
-                  icon="≣"
-                  title="Aucune matière"
-                  description="Ajoutez les matières du programme pour permettre la saisie des notes."
-                  action={{ label: 'Créer une matière', onClick: openCreate }}
-                />
-              }
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Matières & coefficients</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {subjects.data
+              ? `${formatCount(list.length)} ${plural(list.length, 'matière')} au programme`
+              : "Programme de l'établissement"}
+          </p>
+        </div>
+        <Button onClick={openCreate}>Créer une matière</Button>
+      </div>
+
+      <div className="space-y-6 p-8">
+        <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <label className="relative block max-w-md">
+            <span className="sr-only">Rechercher une matière</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher une matière…"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
             />
-          )}
+          </label>
+        </div>
+
+        <QueryBoundary query={subjects} loading={<TableSkeleton />}>
+          {() =>
+            filtered.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+                <p className="font-semibold text-gray-900">
+                  {list.length === 0 ? 'Aucune matière' : 'Aucune matière ne correspond à cette recherche'}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {list.length === 0
+                    ? 'Ajoutez les matières du programme pour permettre la saisie des notes.'
+                    : 'Essayez un autre nom.'}
+                </p>
+                {list.length === 0 ? (
+                  <Button className="mt-4" onClick={openCreate}>Créer une matière</Button>
+                ) : null}
+              </div>
+            ) : (
+              <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                      <th className="px-6 py-3">Matière</th>
+                      <th className="px-6 py-3 text-center">Coefficient</th>
+                      <th className="px-6 py-3">Coefficients par classe</th>
+                      <th className="px-6 py-3">Enseignants</th>
+                      <th className="px-6 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {filtered.map((subject) => (
+                      <tr key={subject.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 font-semibold text-gray-900">{subject.name}</td>
+                        <td className="px-6 py-4 text-center">
+                          <Chip tone="info">× {subject.coefficient}</Chip>
+                        </td>
+                        <td className="px-6 py-4">
+                          {subject.coefficientsParClasse.length === 0 ? (
+                            <span className="text-gray-400">Coefficient de l'école</span>
+                          ) : (
+                            <div className="flex flex-wrap gap-1.5">
+                              {subject.coefficientsParClasse.map((c) => (
+                                <Chip key={c.classId} tone="neutral">{c.className} × {c.coefficient}</Chip>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                        <td className="px-6 py-4 text-gray-700">
+                          {subject.enseignants.length === 0 ? (
+                            <span className="text-gray-400">—</span>
+                          ) : (
+                            // Un enseignant apparaît une fois par classe : on dédoublonne.
+                            [...new Map(subject.enseignants.map((t) => [t.id, t])).values()]
+                              .map((t) => personName(t))
+                              .join(', ')
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-1">
+                            <button
+                              type="button"
+                              onClick={() => setCoefficientsFor(subject)}
+                              title="Coefficients"
+                              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            >
+                              <Calculator size={16} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setEditing(subject)}
+                              title="Modifier"
+                              className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                            >
+                              <Pencil size={16} aria-hidden="true" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setToArchive(subject)}
+                              title="Archiver"
+                              className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                            >
+                              <Trash2 size={16} aria-hidden="true" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
         </QueryBoundary>
-      </PageContent>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <StatCardIcon icon={BookOpen} tone="bg-blue-50 text-blue-600" label="Total matières" value={formatCount(list.length)} />
+          <StatCardIcon icon={Calculator} tone="bg-amber-50 text-amber-600" label="Somme des coefficients" value={totalCoefficients.toFixed(1)} />
+          <StatCardIcon icon={Users} tone="bg-emerald-50 text-emerald-600" label="Professeurs assignés" value={formatCount(teacherCount)} />
+        </div>
+      </div>
 
       <SubjectModal
         key={editing ? editing.id : `new-${creationKey}`}
@@ -240,10 +293,10 @@ function SubjectModal({
 
 function TableSkeleton() {
   return (
-    <Card padded>
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <Skeleton key={i} height={38} style={{ marginBottom: 12 }} />
       ))}
-    </Card>
+    </div>
   );
 }

@@ -1,5 +1,9 @@
+import {
+  CalendarClock, ClipboardCheck, History, LayoutDashboard, LogOut, NotebookPen, type LucideIcon,
+} from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
+import { AccountSwitcher } from '../components/AccountSwitcher';
 import { useAuth } from '../auth/auth-context';
 import { TermProvider } from '../context/TermProvider';
 import { OfflineBar } from '../pwa/OfflineBar';
@@ -18,10 +22,12 @@ import { TermSelect } from './TermSelect';
  */
 // « Mes classes » a fusionné dans « Saisie » : la saisie commence par le choix
 // de la classe, avec l'avancement affiché sur chaque carte.
-const items = [
-  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: '✎', end: true },
-  { to: paths.teacher.attendance, label: 'Présence', icon: '✓' },
-  { to: paths.teacher.history, label: 'Historique', icon: '↺' },
+const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
+  { to: paths.teacher.dashboard, label: 'Accueil', icon: LayoutDashboard, end: true },
+  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: NotebookPen },
+  { to: paths.teacher.attendance, label: 'Présence', icon: ClipboardCheck },
+  { to: paths.teacher.schedule, label: 'Emploi du temps', icon: CalendarClock },
+  { to: paths.teacher.history, label: 'Historique', icon: History },
 ];
 
 export function TeacherShell() {
@@ -36,9 +42,10 @@ export function TeacherShell() {
             <span className="tshell__brand-name">Gesnotes</span>
           </div>
           <div className="tshell__top-actions">
+            <AccountSwitcher />
             <TermSelect />
             <button className="tshell__logout" onClick={() => void logout()} title="Déconnexion" aria-label="Se déconnecter">
-              ⎋
+              <LogOut size={18} aria-hidden="true" />
             </button>
           </div>
         </header>
@@ -50,17 +57,20 @@ export function TeacherShell() {
         </main>
 
         <nav className="tshell__nav" aria-label="Navigation">
-          {items.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) => `tshell__nav-link${isActive ? ' is-active' : ''}`}
-            >
-              <span className="tshell__nav-icon" aria-hidden="true">{item.icon}</span>
-              {item.label}
-            </NavLink>
-          ))}
+          {items.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) => `tshell__nav-link${isActive ? ' is-active' : ''}`}
+              >
+                <Icon size={20} className="tshell__nav-icon" aria-hidden="true" />
+                {item.label}
+              </NavLink>
+            );
+          })}
         </nav>
       </div>
     </TermProvider>

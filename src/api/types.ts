@@ -24,6 +24,20 @@ export type SchoolSettings = {
   name: string;
   /** Moyenne à partir de laquelle l'école considère un élève admis. */
   passingGrade: number;
+  email: string | null;
+  phone: string | null;
+  address: string | null;
+  /** Une image d'en-tête est réglée pour le bulletin PDF (voir `GET /school/bulletin-header-image`). */
+  hasBulletinHeaderImage: boolean;
+  /** Une image de pied de page est réglée pour le bulletin PDF. */
+  hasBulletinFooterImage: boolean;
+};
+
+export type UpdateSchoolSettingsPayload = {
+  passingGrade?: number;
+  email?: string | null;
+  phone?: string | null;
+  address?: string | null;
 };
 
 // ------------------------------------------------------------------- Erreurs
@@ -55,18 +69,40 @@ export type LoginResult = {
 };
 
 /**
+ * Un autre compte accessible à la même personne : soit détecté
+ * automatiquement (même identifiant + mot de passe valides dans une autre
+ * école), soit lié explicitement (`POST /auth/link-account`). Porte son
+ * propre `refreshToken`, prêt à l'emploi pour basculer via
+ * `POST /auth/refresh` sans ressaisir de mot de passe.
+ */
+export type OtherAccount = {
+  userId: ID;
+  schoolId: ID;
+  schoolName: string;
+  role: Role;
+  refreshToken: string;
+};
+
+/**
  * Réponse de `POST /auth/identify`, seule porte de connexion : aucune école
  * n'est résolue au préalable, l'identifiant est cherché à travers toutes les
  * écoles actives.
  */
+export type IdentifyOk = LoginResult & {
+  status: 'ok';
+  school: { id: ID; name: string };
+  otherAccounts: OtherAccount[];
+};
+
 export type IdentifyResult =
-  | (LoginResult & { status: 'ok'; school: { id: ID; name: string } })
+  | IdentifyOk
   | { status: 'ambiguous'; schools: { id: ID; name: string; city: string | null }[] };
 
 /** Réponse de `GET /me` — le contexte de session, sans identité. */
 export type AuthContextPayload = {
   userId: ID;
   schoolId: ID;
+  schoolName: string;
   role: Role;
 };
 
@@ -83,6 +119,8 @@ export type PersonRef = { id: ID; firstName: string | null; lastName: string | n
 export type Term = {
   id: ID;
   label: string;
+  /** Année scolaire de rattachement, `null` si la période n'y est pas liée. */
+  schoolYearId: ID | null;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
   /** Période contenant la date du jour. Au plus une l'est. Jamais une archivée. */
@@ -114,6 +152,21 @@ export type TermPayload = {
   label: string;
   startDate: IsoDate | null;
   endDate: IsoDate | null;
+  schoolYearId?: ID | null;
+};
+
+/** `GET /holidays` — un jour férié ou de congé de l'école. */
+export type Holiday = {
+  id: ID;
+  date: IsoDate;
+  label: string;
+  /** Non nul : jour archivé, absent des listes mais rien n'est perdu. */
+  archivedAt: string | null;
+};
+
+export type HolidayPayload = {
+  date: IsoDate;
+  label: string;
 };
 
 /** Catégorie de note : interrogation (poids 1), devoir (2), composition (3). */
@@ -226,11 +279,16 @@ export type ClassDetail = {
   classId: ID;
   className: string;
   level: string;
+  mode: ClassMode;
   termId: ID;
   termLabel: string;
   students: RankedStudentResult[];
   classAverage: number | null;
   stats: ClassStats;
+  /** Faux tant qu'une matière attendue de la classe n'a pas été notée sur la période. */
+  bulletinReady: boolean;
+  /** Noms des matières manquantes quand `bulletinReady` est faux. */
+  missingSubjects: string[];
 };
 
 export type CreateClassPayload = {
@@ -263,10 +321,16 @@ export type AttendanceSheetStudent = {
   comment: string | null;
 };
 
-/** Réponse de `GET /teachers/me/attendance` : la classe entière, pour un jour donné. */
+/**
+ * Réponse de `GET /teachers/me/attendance` : la classe (mode `presence`) ou
+ * le créneau (mode `notes`) entier, pour un jour donné. `slot` porte la
+ * matière et l'horaire quand la cible est un créneau, `null` sinon.
+ */
 export type AttendanceSheet = {
   classId: ID;
   className: string;
+  slotId: ID | null;
+  slot: { subjectName: string; startTime: string; endTime: string } | null;
   date: IsoDate;
   students: AttendanceSheetStudent[];
 };
@@ -278,9 +342,14 @@ export type AttendanceEntry = {
   comment?: string | null;
 };
 
-/** Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour la classe. */
+/**
+ * Corps de `PUT /teachers/me/attendance` : l'état voulu de la journée pour
+ * la classe (mode `presence`) ou le créneau (mode `notes`) — l'un ou
+ * l'autre, jamais les deux.
+ */
 export type AttendanceBatchPayload = {
-  classId: ID;
+  classId?: ID;
+  slotId?: ID;
   date: IsoDate;
   entries: AttendanceEntry[];
 };
@@ -343,6 +412,40 @@ export type Teacher = {
   affectations: TeacherAssignment[];
 };
 
+/** Élève minimal, tel que rattaché à une note ou une présence sur la fiche enseignant. */
+export type TeacherStudentRef = { id: ID; firstName: string; lastName: string };
+
+/** Note saisie par cet enseignant, telle que renvoyée par la fiche enseignant. */
+export type TeacherRecentGrade = {
+  id: ID;
+  value: number;
+  maxValue: number;
+  createdAt: IsoDateTime | null;
+  eleve: TeacherStudentRef;
+  matiere: { id: ID; name: string };
+  type: { label: string };
+};
+
+/** Présence enregistrée par cet enseignant, telle que renvoyée par la fiche enseignant. */
+export type TeacherRecentAttendance = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  eleve: TeacherStudentRef;
+};
+
+/**
+ * Fiche complète d'un enseignant : identité, affectations, dernières notes
+ * saisies et dernières présences enregistrées PAR ce compte (une note ou une
+ * présence saisie par l'administration au nom de cet enseignant n'apparaît
+ * pas ici — voir `getTeacherDetail` côté backend).
+ */
+export type TeacherDetail = Teacher & {
+  totalNotesSaisies: number;
+  dernieresNotes: TeacherRecentGrade[];
+  dernieresPresences: TeacherRecentAttendance[];
+};
+
 export type AssignmentInput = { classId: ID; subjectId: ID };
 
 export type CreateTeacherPayload = {
@@ -361,6 +464,41 @@ export type UpdateTeacherPayload = {
   assignments?: AssignmentInput[];
 };
 
+// ------------------------------------------------------------- Emploi du temps
+
+export type Weekday = 'lundi' | 'mardi' | 'mercredi' | 'jeudi' | 'vendredi' | 'samedi' | 'dimanche';
+
+/**
+ * Créneau récurrent (jour + horaire) d'une affectation enseignant × classe ×
+ * matière. Ne concerne que les classes en mode `notes` — voir `Class.mode`.
+ */
+export type TimetableSlot = {
+  id: ID;
+  teacherAssignmentId: ID;
+  classId: ID;
+  className: string;
+  subjectId: ID;
+  subjectName: string;
+  teacherUserId: ID;
+  teacherFirstName: string | null;
+  teacherLastName: string | null;
+  dayOfWeek: Weekday;
+  /** "HH:MM" */
+  startTime: string;
+  /** "HH:MM" */
+  endTime: string;
+  archivedAt: IsoDateTime | null;
+};
+
+export type CreateSlotPayload = {
+  teacherAssignmentId: ID;
+  dayOfWeek: Weekday;
+  startTime: string;
+  endTime: string;
+};
+
+export type UpdateSlotPayload = Partial<CreateSlotPayload>;
+
 // -------------------------------------------------------------------- Élèves
 
 /** Parent tel qu'exposé à l'administration (coordonnées incluses). */
@@ -373,6 +511,8 @@ export type ParentContact = {
   phone?: string | null;
 };
 
+export type Sex = 'M' | 'F';
+
 export type Student = {
   id: ID;
   schoolId: ID;
@@ -380,6 +520,7 @@ export type Student = {
   firstName: string;
   lastName: string;
   birthDate: IsoDate | null;
+  sex: Sex | null;
   archivedAt: IsoDateTime | null;
   createdAt: IsoDateTime | null;
   classe: ClassRef;
@@ -399,6 +540,7 @@ export type CreateStudentPayload = {
   lastName: string;
   classId: ID;
   birthDate?: IsoDate;
+  sex?: Sex;
 };
 
 export type UpdateStudentPayload = {
@@ -406,6 +548,7 @@ export type UpdateStudentPayload = {
   lastName?: string;
   classId?: ID;
   birthDate?: IsoDate | null;
+  sex?: Sex | null;
 };
 
 /** Une ligne du fichier d'import, telle que le backend l'a comprise. */
@@ -431,6 +574,73 @@ export type ImportReport = {
 export type AttachParentPayload =
   | { parentUserId: ID }
   | { email: string; firstName?: string; lastName?: string; phone?: string };
+
+/** Présence d'un élève, telle que renvoyée par la fiche élève (`GET /students/:id/detail`). */
+export type StudentAttendanceRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+};
+
+/** Note d'un élève, telle que renvoyée par la fiche élève. */
+export type StudentRecentGrade = {
+  id: ID;
+  value: number;
+  maxValue: number;
+  createdAt: IsoDateTime | null;
+  matiere: { id: ID; name: string };
+  type: { label: string };
+  periode: { id: ID; label: string };
+};
+
+/**
+ * Fiche complète d'un élève (`GET /students/:id/detail`) : identité et
+ * parents déjà portés par `Student`, complétés du bulletin de la période
+ * choisie (`null` sans période), de la présence et des notes les plus
+ * récentes.
+ */
+export type StudentDetail = Student & {
+  bulletin: StudentResult | null;
+  /** Moyenne des périodes de l'année scolaire du terme choisi, `null` si non rattaché à une année. */
+  annualAverage: number | null;
+  presence: StudentAttendanceRecord[];
+  dernieresNotes: StudentRecentGrade[];
+};
+
+/**
+ * Élément de `GET /students/:id/attendance` : historique complet de présence
+ * d'un élève (la fiche d'absence individuelle), même forme que l'historique
+ * remis au parent.
+ */
+export type StudentAttendanceHistoryRecord = {
+  id: ID;
+  date: IsoDate;
+  status: AttendanceStatus;
+  comment: string | null;
+  classId: ID;
+  /** Matière du créneau (classe mode `notes`), `null` pour un appel classique. */
+  subjectName: string | null;
+};
+
+/** Compteurs de présence d'un élève sur une période, ligne du récap de classe. */
+export type ClassAttendanceSummaryRow = {
+  studentId: ID;
+  firstName: string;
+  lastName: string;
+  present: number;
+  absent: number;
+  late: number;
+  /** Total des jours (ou créneaux) où un statut a été saisi, quel qu'il soit. */
+  recorded: number;
+};
+
+/** Réponse de `GET /classes/:id/attendance-summary` : récap de la classe sur une période. */
+export type ClassAttendanceSummary = {
+  classId: ID;
+  termId: ID;
+  students: ClassAttendanceSummaryRow[];
+};
 
 // --------------------------------------------------------------------- Notes
 
@@ -619,7 +829,7 @@ export type AdminDashboard = {
     notesDerniers7Jours: number;
     notesTotal: number;
   };
-  /** Présence du jour, école entière — indépendante de la période sélectionnée. */
+  /** Présence du jour, classes mode `presence` — indépendante de la période. */
   presence: {
     classesAvecAppel: number;
     classesTotal: number;
@@ -627,6 +837,22 @@ export type AdminDashboard = {
     retards: number;
     classesSansAppel: string[];
   };
+  /** Appel du jour, classes mode `notes`, par créneau plutôt que par classe. */
+  creneaux: {
+    creneauxCouverts: number;
+    creneauxTotal: number;
+    absents: number;
+    retards: number;
+    creneauxNonCouverts: {
+      slotId: ID;
+      className: string;
+      subjectName: string;
+      startTime: string;
+      endTime: string;
+    }[];
+  };
+  /** Jour férié du jour, `null` sinon — voir `Holiday`. */
+  ferie: { label: string } | null;
   periode: TermRef | null;
   moyenneEcole: number | null;
   classes: DashboardClassRow[];
@@ -661,6 +887,38 @@ export type RecentGrade = {
   periode: TermRef;
 };
 
+/** Élément de `GET /admin/dashboard/absences` : un point par jour. */
+export type AbsenceTrendPoint = {
+  date: string;
+  absents: number;
+  retards: number;
+};
+
+/**
+ * Action tracée par le journal d'audit — volontairement borné à quelques
+ * actions sensibles, pas une trace générique de toute mutation.
+ */
+export type AuditAction =
+  | 'grade.updated'
+  | 'grade.deleted'
+  | 'student.moved'
+  | 'account.archived'
+  | 'account.restored'
+  | 'account.permanently_deleted';
+
+/** Élément de `GET /admin/audit-logs`. */
+export type AuditLogEntry = {
+  id: ID;
+  actorName: string;
+  actorRole: Role;
+  action: AuditAction;
+  targetType: string;
+  targetId: ID | null;
+  targetLabel: string | null;
+  metadata: unknown;
+  createdAt: IsoDateTime;
+};
+
 // -------------------------------------------------------------- Espace parent
 
 /** Élément de `GET /parents/me/children`. */
@@ -677,6 +935,16 @@ export type ChildSummary = {
 export type ChildDetail = StudentResult & {
   termId: ID;
   termLabel: string;
+  /** Moyenne des périodes de l'année scolaire du terme choisi, `null` si non rattaché à une année. */
+  annualAverage: number | null;
+  /** Position dans la classe sur cette période, `null` si l'enfant n'a pas de moyenne ce terme-là. */
+  rank: { position: number; total: number } | null;
+  /** Moyenne générale de chaque période de l'année scolaire, dans l'ordre chronologique. Vide si non rattaché à une année. */
+  termTrend: { termId: ID; termLabel: string; average: number | null }[];
+  /** Faux tant qu'une matière attendue de la classe (pas seulement de cet enfant) n'a pas été notée sur la période. */
+  bulletinReady: boolean;
+  /** Noms des matières manquantes quand `bulletinReady` est faux. */
+  missingSubjects: string[];
 };
 
 /** Élément de `GET /children/:id/attendance` : historique de présence de l'enfant. */
@@ -686,6 +954,8 @@ export type ChildAttendanceRecord = {
   status: AttendanceStatus;
   comment: string | null;
   classId: ID;
+  /** Matière du créneau (classe mode `notes`), `null` pour un appel classique. */
+  subjectName: string | null;
 };
 
 export type Device = {

@@ -1,31 +1,38 @@
+import { FolderInput, Pencil, Search, Trash2, UserRoundPlus } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import {
   classesApi, errorMessage, studentsApi,
-  type AttachParentPayload, type ID, type Student,
+  type ID, type Sex, type Student,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
+import { useDebouncedValue } from '../../hooks/useDebouncedValue';
 import { downloadBlob } from '../../lib/download';
 import { formatCount, plural } from '../../lib/format';
 import { personName } from '../../lib/text';
-import { emailError } from '../../lib/validation';
-import { PageContent, PageHeader } from '../../layouts/PageHeader';
+import { paths } from '../../routes/paths';
 import { DeleteStudentDialog } from './DeleteStudentDialog';
 import { ImportStudentsModal } from './ImportStudentsModal';
+import { LinkParentModal } from './LinkParentModal';
 import {
-  Alert, Avatar, Button, Card, Chip, DataTable, EmptyState, Modal, ModalActions,
-  SelectField, Skeleton, TextField, useToast, type Column,
+  Alert, Avatar, Button, Modal, ModalActions,
+  SelectField, Skeleton, TextField, toneClasses, useToast,
 } from '../../ui';
 
 export default function StudentsPage() {
   const toast = useToast();
+  const navigate = useNavigate();
   const classes = classesApi.useClasses();
 
   const [classFilter, setClassFilter] = useState<ID | ''>('');
   const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const debouncedSearch = useDebouncedValue(search.trim());
   const students = studentsApi.useStudents({
     classId: classFilter === '' ? undefined : classFilter,
     page,
+    search: debouncedSearch || undefined,
   });
 
   const [creating, setCreating] = useState(false);
@@ -82,116 +89,154 @@ export default function StudentsPage() {
   const pageSize = students.data?.pageSize ?? 1;
   const pageCount = Math.max(1, Math.ceil(total / pageSize));
 
-  const columns: Column<Student>[] = [
-    {
-      key: 'identity',
-      header: 'Élève',
-      render: (student) => (
-        <div className="cell-person">
-          <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
-          <span style={{ fontWeight: 600 }}>
-            {student.firstName} {student.lastName}
-          </span>
-        </div>
-      ),
-    },
-    {
-      key: 'class',
-      header: 'Classe',
-      render: (student) => <Chip tone="neutral">{student.classe.name}</Chip>,
-    },
-    {
-      key: 'parents',
-      header: 'Parents associés',
-      render: (student) =>
-        student.parents.length === 0 ? (
-          // Un élève sans parent associé est un parent qui ne recevra jamais
-          // les notes : c'est l'anomalie que cet écran doit rendre visible.
-          <Chip tone="danger">Aucun parent</Chip>
-        ) : (
-          student.parents.map((parent) => personName(parent)).join(', ')
-        ),
-    },
-    {
-      key: 'actions',
-      srHeader: 'Actions',
-      align: 'numeric',
-      render: (student) => (
-        <div className="cell-actions">
-          <Button size="sm" variant="secondary" onClick={() => setLinking(student)}>
-            {student.parents.length === 0 ? 'Associer un parent' : 'Gérer les parents'}
-          </Button>
-          <Button size="sm" variant="tonal" onClick={() => setEditing(student)}>Modifier</Button>
-          <Button size="sm" variant="danger" onClick={() => setToArchive(student)}>Supprimer</Button>
-        </div>
-      ),
-    },
-  ];
-
   return (
     <>
-      <PageHeader
-        title="Élèves"
-        subtitle={
-          students.data ? `${formatCount(total)} ${plural(total, 'élève')} inscrit${total > 1 ? 's' : ''}` : 'Effectifs'
-        }
-        actions={
-          <>
-            <Button variant="tonal" loading={exporting} onClick={() => void exportCsv()}>
-              Exporter en CSV
-            </Button>
-            <Button variant="secondary" onClick={() => setImporting(true)}>
-              Importer une liste
-            </Button>
-            <Button onClick={openCreate}>Ajouter un élève</Button>
-          </>
-        }
-      />
-      <PageContent>
-        <div className="page-stack">
-          <div className="page-toolbar">
-            <label className="ui-field" style={{ minWidth: 220 }}>
-              <span className="sr-only">Filtrer par classe</span>
-              <select
-                className="ui-select"
-                value={classFilter}
-                onChange={(e) => {
-                  setClassFilter(e.target.value ? Number(e.target.value) : '');
-                  setPage(1);
-                }}
-              >
-                <option value="">Toutes les classes</option>
-                {(classes.data ?? []).map((klass) => (
-                  <option key={klass.id} value={klass.id}>{klass.name}</option>
-                ))}
-              </select>
-            </label>
-          </div>
+      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Élèves</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            {students.data ? `${formatCount(total)} ${plural(total, 'élève')} inscrit${total > 1 ? 's' : ''}` : 'Effectifs'}
+          </p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Button variant="tonal" loading={exporting} onClick={() => void exportCsv()}>
+            Exporter en CSV
+          </Button>
+          <Button variant="secondary" onClick={() => setImporting(true)}>
+            <FolderInput size={16} aria-hidden="true" /> Importer une liste
+          </Button>
+          <Button onClick={openCreate}>Ajouter un élève</Button>
+        </div>
+      </div>
 
-          <QueryBoundary query={students} loading={<TableSkeleton />}>
-            {(data) => (
+      <div className="space-y-6 p-8">
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+          <label className="relative min-w-[220px] flex-1">
+            <span className="sr-only">Rechercher un élève</span>
+            <Search size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" aria-hidden="true" />
+            <input
+              type="search"
+              placeholder="Rechercher un élève par nom ou prénom…"
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+          </label>
+          <select
+            className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={classFilter}
+            onChange={(e) => {
+              setClassFilter(e.target.value ? Number(e.target.value) : '');
+              setPage(1);
+            }}
+          >
+            <option value="">Toutes les classes</option>
+            {(classes.data ?? []).map((klass) => (
+              <option key={klass.id} value={klass.id}>{klass.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <QueryBoundary query={students} loading={<TableSkeleton />}>
+          {(data) =>
+            data.students.length === 0 ? (
+              <div className="rounded-xl border border-gray-100 bg-white p-12 text-center shadow-sm">
+                <p className="font-semibold text-gray-900">
+                  {debouncedSearch
+                    ? `Aucun résultat pour « ${debouncedSearch} »`
+                    : classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
+                </p>
+                <p className="mt-1 text-sm text-gray-500">
+                  {debouncedSearch
+                    ? 'Vérifiez l’orthographe, ou affinez avec le nom de famille seul.'
+                    : 'Ajoutez un élève et associez-lui un parent pour qu’il reçoive les notes.'}
+                </p>
+                {debouncedSearch ? null : <Button className="mt-4" onClick={openCreate}>Ajouter un élève</Button>}
+              </div>
+            ) : (
               <>
-                <DataTable
-                  caption="Élèves inscrits"
-                  columns={columns}
-                  rows={data.students}
-                  rowKey={(student) => String(student.id)}
-                  empty={
-                    <EmptyState
-                      icon="⚇"
-                      title={classFilter === '' ? 'Aucun élève' : 'Aucun élève dans cette classe'}
-                      description="Ajoutez un élève et associez-lui un parent pour qu'il reçoive les notes."
-                      action={{ label: 'Ajouter un élève', onClick: openCreate }}
-                    />
-                  }
-                />
+                <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white shadow-sm">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 bg-gray-50 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                        <th className="px-6 py-3">Élève</th>
+                        <th className="px-6 py-3">Classe</th>
+                        <th className="px-6 py-3">Parents associés</th>
+                        <th className="px-6 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {data.students.map((student) => (
+                        <tr
+                          key={student.id}
+                          onClick={() => navigate(paths.admin.studentDetail(student.id))}
+                          className="cursor-pointer hover:bg-gray-50"
+                        >
+                          <td className="px-6 py-4">
+                            <div className="flex items-center gap-3">
+                              <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
+                              <span className="font-semibold text-gray-900">
+                                {student.firstName} {student.lastName}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('neutral')}`}>
+                              {student.classe.name}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4">
+                            {student.parents.length === 0 ? (
+                              <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${toneClasses('danger')}`}>
+                                Aucun parent
+                              </span>
+                            ) : (
+                              <span className="text-gray-700">
+                                {student.parents.map((parent) => personName(parent)).join(', ')}
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-6 py-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center justify-end gap-1">
+                              <button
+                                type="button"
+                                onClick={() => setLinking(student)}
+                                title={student.parents.length === 0 ? 'Associer un parent' : 'Gérer les parents'}
+                                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                              >
+                                <UserRoundPlus size={16} aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditing(student)}
+                                title="Modifier"
+                                className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                              >
+                                <Pencil size={16} aria-hidden="true" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setToArchive(student)}
+                                title="Supprimer"
+                                className="rounded-lg p-2 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                              >
+                                <Trash2 size={16} aria-hidden="true" />
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
 
                 {pageCount > 1 ? (
-                  <div className="page-toolbar">
-                    <span className="t-body-md t-muted">
-                      Page {data.page} sur {pageCount}
-                    </span>
-                    <div className="page-toolbar__end">
+                  <div className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-6 py-4 shadow-sm">
+                    <span className="text-sm text-gray-500">Page {data.page} sur {pageCount}</span>
+                    <div className="flex gap-2">
                       <Button
                         variant="secondary"
                         size="sm"
@@ -212,10 +257,10 @@ export default function StudentsPage() {
                   </div>
                 ) : null}
               </>
-            )}
-          </QueryBoundary>
-        </div>
-      </PageContent>
+            )
+          }
+        </QueryBoundary>
+      </div>
 
       <StudentModal
         key={editing ? editing.id : `new-${creationKey}`}
@@ -274,6 +319,7 @@ function StudentModal({
   const [lastName, setLastName] = useState(student?.lastName ?? '');
   const [classId, setClassId] = useState(String(student?.classId ?? ''));
   const [birthDate, setBirthDate] = useState(student?.birthDate ?? '');
+  const [sex, setSex] = useState<Sex | ''>(student?.sex ?? '');
   const [error, setError] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
 
@@ -307,9 +353,14 @@ function StudentModal({
         classId: Number(classId) as ID,
       };
       if (student) {
-        await update.mutateAsync({ id: student.id, ...base, birthDate: birthDate || null });
+        await update.mutateAsync({
+          id: student.id,
+          ...base,
+          birthDate: birthDate || null,
+          sex: sex || null,
+        });
       } else {
-        await create.mutateAsync({ ...base, birthDate: birthDate || undefined });
+        await create.mutateAsync({ ...base, birthDate: birthDate || undefined, sex: sex || undefined });
       }
       onSaved();
     } catch (cause) {
@@ -353,22 +404,31 @@ function StudentModal({
           />
         </div>
 
-        <SelectField
-          label="Classe"
-          placeholder="— Choisir une classe —"
-          required
+        <SelectFieldClasses
           value={classId}
-          onChange={(e) => setClassId(e.target.value)}
-          options={classes.map((c) => ({ value: String(c.id), label: c.name }))}
+          onChange={setClassId}
+          classes={classes}
           error={submitted ? fieldErrors.classId : undefined}
         />
 
-        <TextField
-          label="Date de naissance"
-          type="date"
-          value={birthDate ?? ''}
-          onChange={(e) => setBirthDate(e.target.value)}
-        />
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+          <TextField
+            label="Date de naissance"
+            type="date"
+            value={birthDate ?? ''}
+            onChange={(e) => setBirthDate(e.target.value)}
+          />
+          <SelectField
+            label="Sexe"
+            placeholder="Non renseigné"
+            options={[
+              { value: 'M', label: 'Masculin' },
+              { value: 'F', label: 'Féminin' },
+            ]}
+            value={sex ?? ''}
+            onChange={(e) => setSex(e.target.value as 'M' | 'F' | '')}
+          />
+        </div>
 
         {student ? null : (
           <Alert tone="info">
@@ -380,203 +440,35 @@ function StudentModal({
   );
 }
 
-/** Association d'un parent : compte existant, ou création par invitation. */
-function LinkParentModal({ student, onClose }: { student: Student | null; onClose: () => void }) {
-  const toast = useToast();
-  const attach = studentsApi.useAttachParent();
-  const detach = studentsApi.useDetachParent();
-  const resend = studentsApi.useResendParentInvitation();
-
-  const [search, setSearch] = useState('');
-  const results = studentsApi.useParentSearch(search);
-
-  const [inviteEmail, setInviteEmail] = useState('');
-  const [inviteFirstName, setInviteFirstName] = useState('');
-  const [inviteLastName, setInviteLastName] = useState('');
-  const [error, setError] = useState<string | null>(null);
-
-  const inviteEmailMessage = emailError(inviteEmail, false);
-
-  async function link(payload: AttachParentPayload) {
-    if (!student) return;
-    setError(null);
-    try {
-      await attach.mutateAsync({ id: student.id, payload });
-      toast.success('Parent associé à l’élève');
-      onClose();
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
-
-  async function unlink(parentId: ID) {
-    if (!student) return;
-    try {
-      await detach.mutateAsync({ id: student.id, parentId });
-      toast.success('Parent dissocié');
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
-
-  async function resendInvite(parentId: ID) {
-    if (!student) return;
-    setError(null);
-    try {
-      await resend.mutateAsync({ id: student.id, parentId });
-      toast.success('Invitation renvoyée');
-    } catch (cause) {
-      setError(errorMessage(cause));
-    }
-  }
-
+/** Évite d'importer `SelectField` juste pour ce seul usage restant sur cette page. */
+function SelectFieldClasses({
+  value, onChange, classes, error,
+}: { value: string; onChange: (v: string) => void; classes: { id: ID; name: string }[]; error?: string }) {
   return (
-    <Modal
-      open={student !== null}
-      onClose={onClose}
-      width={520}
-      title="Parents de l'élève"
-      subtitle={student ? `${student.firstName} ${student.lastName} · ${student.classe.name}` : undefined}
-    >
-      <div className="page-stack" style={{ gap: 'var(--space-5)' }}>
-        {error ? <Alert tone="danger">{error}</Alert> : null}
-
-        <section>
-          <h3 className="t-label-sm t-muted">Parents associés</h3>
-          {student && student.parents.length > 0 ? (
-            <div className="list-rows">
-              {student.parents.map((parent) => (
-                <div key={parent.id} className="list-row">
-                  <Avatar name={personName(parent)} size={32} />
-                  <div className="list-row__body">
-                    <div className="list-row__title">{personName(parent)}</div>
-                    <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
-                  </div>
-                  <div className="cell-actions">
-                    <Button
-                      size="sm"
-                      variant="tonal"
-                      loading={resend.isPending}
-                      onClick={() => void resendInvite(parent.id)}
-                    >
-                      Renvoyer l'invitation
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="danger"
-                      loading={detach.isPending}
-                      onClick={() => void unlink(parent.id)}
-                    >
-                      Dissocier
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-2)' }}>
-              Aucun parent associé : personne ne reçoit les notes de cet élève.
-            </p>
-          )}
-        </section>
-
-        <section>
-          <h3 className="t-label-sm t-muted" style={{ marginBottom: 'var(--space-2)' }}>
-            Associer un compte existant
-          </h3>
-          <TextField
-            label="Rechercher un parent"
-            placeholder="Nom, email ou téléphone"
-            hint="Au moins deux caractères."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
-
-          {results.data && results.data.length > 0 ? (
-            <div className="list-rows" style={{ marginTop: 'var(--space-3)' }}>
-              {results.data.map((parent) => (
-                <div key={parent.id} className="list-row">
-                  <Avatar name={personName(parent)} size={32} />
-                  <div className="list-row__body">
-                    <div className="list-row__title">{personName(parent)}</div>
-                    <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="tonal"
-                    loading={attach.isPending}
-                    onClick={() => void link({ parentUserId: parent.id })}
-                  >
-                    Associer
-                  </Button>
-                </div>
-              ))}
-            </div>
-          ) : null}
-
-          {results.data && results.data.length === 0 && search.trim().length >= 2 ? (
-            <p className="t-body-md t-muted" style={{ marginTop: 'var(--space-2)' }}>
-              Aucun compte trouvé. Créez-en un ci-dessous.
-            </p>
-          ) : null}
-        </section>
-
-        <section>
-          <h3 className="t-label-sm t-muted" style={{ marginBottom: 'var(--space-2)' }}>
-            Ou inviter un nouveau parent
-          </h3>
-          <div className="page-stack" style={{ gap: 'var(--space-3)' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-3)' }}>
-              <TextField
-                label="Prénom"
-                value={inviteFirstName}
-                onChange={(e) => setInviteFirstName(e.target.value)}
-              />
-              <TextField
-                label="Nom"
-                value={inviteLastName}
-                onChange={(e) => setInviteLastName(e.target.value)}
-              />
-            </div>
-            <TextField
-              label="Email"
-              type="email"
-              autoComplete="email"
-              hint="Le parent recevra un lien pour définir son mot de passe."
-              value={inviteEmail}
-              onChange={(e) => setInviteEmail(e.target.value)}
-              // Une adresse fausse crée un compte que l'invitation n'atteint
-              // jamais : le parent reste sans mot de passe, sans que rien ne
-              // le signale.
-              error={inviteEmailMessage}
-            />
-            <Button
-              variant="secondary"
-              disabled={!inviteEmail.trim() || inviteEmailMessage !== undefined}
-              loading={attach.isPending}
-              onClick={() =>
-                void link({
-                  email: inviteEmail.trim(),
-                  firstName: inviteFirstName.trim() || undefined,
-                  lastName: inviteLastName.trim() || undefined,
-                })
-              }
-            >
-              Créer et associer
-            </Button>
-          </div>
-        </section>
-      </div>
-    </Modal>
+    <label className="ui-field">
+      <span className="ui-field__label">Classe</span>
+      <select
+        className="ui-select"
+        aria-invalid={error ? 'true' : undefined}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">— Choisir une classe —</option>
+        {classes.map((c) => (
+          <option key={c.id} value={String(c.id)}>{c.name}</option>
+        ))}
+      </select>
+      {error ? <span className="ui-field__error">{error}</span> : null}
+    </label>
   );
 }
 
 function TableSkeleton() {
   return (
-    <Card padded>
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
       {[0, 1, 2, 3, 4, 5].map((i) => (
         <Skeleton key={i} height={44} style={{ marginBottom: 12 }} />
       ))}
-    </Card>
+    </div>
   );
 }

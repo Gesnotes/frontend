@@ -1,3 +1,4 @@
+import { GraduationCap } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import { errorMessage } from '../../api';
@@ -50,7 +51,7 @@ export function ChildRequired({ children }: { children: ReactNode }) {
   if (child.children.length === 0) {
     return (
       <EmptyState
-        icon="⚇"
+        icon={<GraduationCap size={28} />}
         title="Aucun enfant associé"
         description="Votre compte n'est rattaché à aucun élève. Contactez le secrétariat de l'établissement pour faire l'association."
       />

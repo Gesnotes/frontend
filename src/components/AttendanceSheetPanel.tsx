@@ -1,9 +1,15 @@
 import { useState } from 'react';
 
-import { attendanceApi, errorMessage, type AttendanceSheetStudent, type AttendanceStatus, type ID } from '../api';
+import {
+  attendanceApi, errorMessage, type AttendanceSheetStudent, type AttendanceStatus, type ID,
+} from '../api';
 import { formatDate, plural, todayLocalIso } from '../lib/format';
-import { Alert, attendanceTone, Avatar, Button, Skeleton, toneColor, useToast } from '../ui';
+import { Alert, attendanceTone, Avatar, Button, Chip, Skeleton, toneColor, useToast } from '../ui';
 import { QueryBoundary } from './QueryBoundary';
+
+type AttendanceSheetPanelProps =
+  | { classId: ID; slotId?: undefined; initialDate?: string }
+  | { classId?: undefined; slotId: ID; initialDate?: string };
 
 const STATUS_OPTIONS: { value: AttendanceStatus; label: string }[] = [
   { value: 'present', label: 'Présent' },
@@ -41,26 +47,30 @@ function summarize(students: AttendanceSheetStudent[], overrides: Record<ID, Att
 }
 
 /**
- * Feuille de présence d'une classe, pour un jour : partagée entre
- * l'administration et l'enseignant référent (voir `attendance.service.ts`
- * côté backend — les deux seuls habilités à la saisir).
+ * Feuille de présence, pour un jour : soit d'une classe mode `presence`
+ * (partagée entre l'administration et l'enseignant référent), soit d'un
+ * créneau mode `notes` (administration ou enseignant de ce créneau
+ * uniquement) — voir `attendance.service.ts` côté backend pour le détail
+ * des deux flux.
  *
  * « Présent » est déjà coché pour chaque élève sans saisie du jour : on ne
  * touche qu'aux absences et aux retards, jamais aux présents.
  */
-export function AttendanceSheetPanel({ classId }: { classId: ID }) {
+export function AttendanceSheetPanel({ classId, slotId, initialDate }: AttendanceSheetPanelProps) {
   const toast = useToast();
-  const [date, setDate] = useState(todayLocalIso);
-  const sheet = attendanceApi.useAttendanceSheet(classId, date);
+  const [date, setDate] = useState(initialDate ?? todayLocalIso);
+  const target = slotId !== undefined ? { slotId } : { classId: classId! };
+  const sheet = attendanceApi.useAttendanceSheet(target, date);
   const save = attendanceApi.useSaveAttendance();
 
   // Les retouches de l'utilisateur, gardées à part de la donnée serveur —
-  // remises à zéro quand on change de classe ou de jour (la feuille affichée
+  // remises à zéro quand on change de cible ou de jour (la feuille affichée
   // change alors complètement), sans passer par un effet : ajuster l'état
   // pendant le rendu évite le rendu en cascade d'un `useEffect` équivalent.
-  const [sheetKey, setSheetKey] = useState(`${classId}-${date}`);
+  const targetKey = slotId !== undefined ? `slot-${slotId}` : `class-${classId}`;
+  const [sheetKey, setSheetKey] = useState(`${targetKey}-${date}`);
   const [overrides, setOverrides] = useState<Record<ID, AttendanceStatus>>({});
-  const currentKey = `${classId}-${date}`;
+  const currentKey = `${targetKey}-${date}`;
   if (currentKey !== sheetKey) {
     setSheetKey(currentKey);
     setOverrides({});
@@ -72,7 +82,7 @@ export function AttendanceSheetPanel({ classId }: { classId: ID }) {
     if (!sheet.data) return;
     try {
       const result = await save.mutateAsync({
-        classId,
+        ...target,
         date,
         entries: sheet.data.students.map((student) => ({
           studentId: student.id,
@@ -119,6 +129,13 @@ export function AttendanceSheetPanel({ classId }: { classId: ID }) {
             <Alert tone="info">Aucun élève inscrit dans cette classe.</Alert>
           ) : (
             <>
+              {data.slot ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                  <Chip tone="info">{data.slot.subjectName}</Chip>
+                  <span className="t-body-sm t-muted">{data.slot.startTime}–{data.slot.endTime}</span>
+                </div>
+              ) : null}
+
               <div className="list-rows">
                 {data.students.map((student) => (
                   <div key={student.id} className="list-row">

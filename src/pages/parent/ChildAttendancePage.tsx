@@ -1,3 +1,5 @@
+import { ClipboardCheck } from 'lucide-react';
+
 import { attendanceApi, type ChildAttendanceRecord } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useChildContext } from '../../context/child-context';
@@ -36,7 +38,7 @@ function AttendanceList({ records }: { records: ChildAttendanceRecord[] }) {
   if (records.length === 0) {
     return (
       <EmptyState
-        icon="✓"
+        icon={<ClipboardCheck size={28} />}
         title="Aucune présence enregistrée"
         description="Le journal de présence apparaîtra ici dès la première saisie de l'école."
       />
@@ -54,7 +56,10 @@ function AttendanceList({ records }: { records: ChildAttendanceRecord[] }) {
           <div key={record.id} className="ui-card parent__row">
             <Chip tone={attendanceTone(record.status)}>{LABELS[record.status]}</Chip>
             <span className="parent__row-body">
-              <span className="parent__row-title">{formatDate(record.date)}</span>
+              <span className="parent__row-title">
+                {formatDate(record.date)}
+                {record.subjectName ? ` · ${record.subjectName}` : ''}
+              </span>
               {record.comment ? <span className="parent__row-meta">{record.comment}</span> : null}
             </span>
           </div>

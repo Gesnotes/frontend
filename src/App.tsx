@@ -35,27 +35,39 @@ const ClassAttendancePage = lazy(() => import('./pages/admin/ClassAttendancePage
 const BulletinPage = lazy(() => import('./pages/admin/BulletinPage'));
 const ClassEnrollmentPage = lazy(() => import('./pages/admin/ClassEnrollmentPage'));
 const AdminGradeEntryPage = lazy(() => import('./pages/admin/AdminGradeEntryPage'));
+const SchedulePage = lazy(() => import('./pages/admin/SchedulePage'));
 const SubjectsPage = lazy(() => import('./pages/admin/SubjectsPage'));
 const TeachersPage = lazy(() => import('./pages/admin/TeachersPage'));
+const TeacherDetailPage = lazy(() => import('./pages/admin/TeacherDetailPage'));
 const StudentsPage = lazy(() => import('./pages/admin/StudentsPage'));
-const PeriodsPage = lazy(() => import('./pages/admin/PeriodsPage'));
+const StudentDetailPage = lazy(() => import('./pages/admin/StudentDetailPage'));
+const HolidaysPage = lazy(() => import('./pages/admin/HolidaysPage'));
+const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
 const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 
+const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
 const TeacherAttendancePage = lazy(() => import('./pages/teacher/TeacherAttendancePage'));
+const TeacherSchedulePage = lazy(() => import('./pages/teacher/TeacherSchedulePage'));
 const TeacherHistoryPage = lazy(() => import('./pages/teacher/TeacherHistoryPage'));
+const TeacherStudentsPage = lazy(() => import('./pages/teacher/TeacherStudentsPage'));
+const TeacherStudentDetailPage = lazy(() => import('./pages/teacher/TeacherStudentDetailPage'));
 
 const ParentHomePage = lazy(() => import('./pages/parent/ParentHomePage'));
-const ChildrenPage = lazy(() => import('./pages/parent/ChildrenPage'));
+const ScolaritePage = lazy(() => import('./pages/parent/ScolaritePage'));
+const SuiviParentalPage = lazy(() => import('./pages/parent/SuiviParentalPage'));
 const ChildDetailPage = lazy(() => import('./pages/parent/ChildDetailPage'));
 const ChildAttendancePage = lazy(() => import('./pages/parent/ChildAttendancePage'));
+const ChildSchedulePage = lazy(() => import('./pages/parent/ChildSchedulePage'));
 const GradesHistoryPage = lazy(() => import('./pages/parent/GradesHistoryPage'));
 const GradeDetailPage = lazy(() => import('./pages/parent/GradeDetailPage'));
 const NotificationsPage = lazy(() => import('./pages/parent/NotificationsPage'));
 
 const StaffLoginPage = lazy(() => import('./pages/staff/StaffLoginPage'));
+const StaffForgotPasswordPage = lazy(() => import('./pages/staff/StaffForgotPasswordPage'));
+const StaffResetPasswordPage = lazy(() => import('./pages/staff/StaffResetPasswordPage'));
 const StaffDashboardPage = lazy(() => import('./pages/staff/StaffDashboardPage'));
 const SignupRequestsPage = lazy(() => import('./pages/staff/SignupRequestsPage'));
 const SchoolsPage = lazy(() => import('./pages/staff/SchoolsPage'));
@@ -128,6 +140,15 @@ export default function App() {
               </RedirectIfStaffAuthenticated>
             }
           />
+          <Route
+            path={paths.staff.forgotPassword}
+            element={
+              <RedirectIfStaffAuthenticated>
+                <StaffForgotPasswordPage />
+              </RedirectIfStaffAuthenticated>
+            }
+          />
+          <Route path={paths.staff.resetPassword} element={<StaffResetPasswordPage />} />
           <Route element={<RequireStaffAuth />}>
             <Route path={paths.staff.root} element={<StaffShell />}>
               <Route index element={<StaffDashboardPage />} />
@@ -148,10 +169,14 @@ export default function App() {
                 <Route path="classes/:classId/presence" element={<ClassAttendancePage />} />
                 <Route path="classes/:classId/reinscription" element={<ClassEnrollmentPage />} />
                 <Route path="saisie" element={<AdminGradeEntryPage />} />
+                <Route path="emploi-du-temps" element={<SchedulePage />} />
                 <Route path="matieres" element={<SubjectsPage />} />
                 <Route path="enseignants" element={<TeachersPage />} />
+                <Route path="enseignants/:teacherId" element={<TeacherDetailPage />} />
                 <Route path="eleves" element={<StudentsPage />} />
-                <Route path="periodes" element={<PeriodsPage />} />
+                <Route path="eleves/:studentId" element={<StudentDetailPage />} />
+                <Route path="calendrier" element={<HolidaysPage />} />
+                <Route path="journal-audit" element={<AuditLogPage />} />
                 <Route path="annees-scolaires" element={<SchoolYearsPage />} />
                 <Route path="archives" element={<ArchivesPage />} />
                 <Route path="parametres" element={<SettingsPage />} />
@@ -161,14 +186,12 @@ export default function App() {
 
             <Route element={<RequireRole allow={['teacher']} />}>
               <Route path={paths.teacher.root} element={<TeacherShell />}>
-                {/*
-                  « Mes classes » a fusionné dans « Saisie » : le choix de la
-                  classe ouvre la saisie et porte déjà l'avancement. La racine
-                  redirige donc, plutôt que de dupliquer cet écran.
-                */}
-                <Route index element={<Navigate to={paths.teacher.gradeEntry} replace />} />
+                <Route index element={<TeacherDashboardPage />} />
                 <Route path="saisie" element={<GradeEntryPage />} />
+                <Route path="emploi-du-temps" element={<TeacherSchedulePage />} />
                 <Route path="presence" element={<TeacherAttendancePage />} />
+                <Route path="eleves" element={<TeacherStudentsPage />} />
+                <Route path="eleves/:studentId" element={<TeacherStudentDetailPage />} />
                 <Route path="historique" element={<TeacherHistoryPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
@@ -177,10 +200,12 @@ export default function App() {
             <Route element={<RequireRole allow={['parent']} />}>
               <Route path={paths.parent.root} element={<ParentShell />}>
                 <Route index element={<ParentHomePage />} />
-                <Route path="enfants" element={<ChildrenPage />} />
+                <Route path="scolarite" element={<ScolaritePage />} />
+                <Route path="suivi-parental" element={<SuiviParentalPage />} />
                 <Route path="enfants/:childId" element={<ChildDetailPage />} />
                 <Route path="notes" element={<GradesHistoryPage />} />
                 <Route path="presence" element={<ChildAttendancePage />} />
+                <Route path="emploi-du-temps" element={<ChildSchedulePage />} />
                 <Route path="notes/:gradeId" element={<GradeDetailPage />} />
                 <Route path="alertes" element={<NotificationsPage />} />
                 <Route path="*" element={<NotFoundPage />} />

@@ -33,25 +33,33 @@ const TITLES: Record<string, string> = {
   [paths.admin.subjects]: 'Matières',
   [paths.admin.teachers]: 'Enseignants',
   [paths.admin.students]: 'Élèves',
-  [paths.admin.periods]: 'Périodes scolaires',
-  [paths.admin.schoolYears]: 'Années scolaires',
+  [paths.admin.schoolYears]: 'Années scolaires et périodes',
   [paths.admin.archives]: 'Archives',
   [paths.admin.settings]: 'Paramètres',
+  [paths.admin.schedule]: 'Emploi du temps',
+  [paths.admin.holidays]: 'Calendrier scolaire',
+  [paths.admin.auditLog]: "Journal d'audit",
 
   // `/enseignant` redirige vers la saisie : le titre ne doit pas annoncer un
   // écran « Mes classes » qui n'existe plus.
   [paths.teacher.dashboard]: 'Saisie des notes',
   [paths.teacher.gradeEntry]: 'Saisie des notes',
   [paths.teacher.attendance]: 'Présence',
+  [paths.teacher.students]: 'Élèves',
   [paths.teacher.history]: 'Historique des saisies',
+  [paths.teacher.schedule]: 'Emploi du temps',
 
   [paths.parent.home]: 'Accueil',
-  [paths.parent.children]: 'Mes enfants',
+  [paths.parent.scolarite]: 'Scolarité',
+  [paths.parent.suiviParental]: 'Suivi parental',
   [paths.parent.grades]: 'Notes',
   [paths.parent.attendance]: 'Présence',
   [paths.parent.notifications]: 'Alertes',
+  [paths.parent.schedule]: 'Emploi du temps',
 
   [paths.staff.login]: 'Équipe Gesnotes',
+  [paths.staff.forgotPassword]: 'Mot de passe oublié',
+  [paths.staff.resetPassword]: 'Définir un mot de passe',
   [paths.staff.dashboard]: "Vue d'ensemble",
   [paths.staff.signupRequests]: "Demandes d'inscription",
   [paths.staff.schools]: 'Écoles',
@@ -69,6 +77,9 @@ function dynamicTitle(pathname: string): string | undefined {
   if (/^\/admin\/classes\/[^/]+\/presence$/.test(pathname)) return 'Présence';
   if (/^\/admin\/classes\/[^/]+\/reinscription$/.test(pathname)) return 'Réinscription';
   if (/^\/admin\/classes\/[^/]+$/.test(pathname)) return 'Détail de la classe';
+  if (/^\/admin\/eleves\/[^/]+$/.test(pathname)) return "Fiche de l'élève";
+  if (/^\/enseignant\/eleves\/[^/]+$/.test(pathname)) return "Fiche de l'élève";
+  if (/^\/admin\/enseignants\/[^/]+$/.test(pathname)) return "Fiche de l'enseignant";
   if (/^\/parent\/enfants\/[^/]+$/.test(pathname)) return 'Résultats de mon enfant';
   if (/^\/parent\/notes\/[^/]+$/.test(pathname)) return 'Détail de la note';
   return undefined;

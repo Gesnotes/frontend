@@ -1,3 +1,4 @@
+import { Trophy, TrendingDown } from 'lucide-react';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
@@ -54,6 +55,9 @@ export function ClassBulletinPanel({
           // élève porte la même liste : la lire sur le premier évite les
           // colonnes fantômes.
           const subjects = detail.students[0]?.subjects ?? [];
+          const noted = detail.students.filter((s) => s.average !== null);
+          const bestId = noted[0]?.studentId;
+          const worstId = noted.length > 1 ? noted[noted.length - 1]?.studentId : undefined;
 
           if (subjects.length === 0) {
             return (
@@ -102,7 +106,15 @@ export function ClassBulletinPanel({
                           );
                         })}
                         <td className="is-center" style={{ fontWeight: 800 }}>
-                          {formatGrade(student.average)}
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                            {formatGrade(student.average)}
+                            {student.studentId === bestId ? (
+                              <Trophy size={13} aria-label="Meilleure moyenne de la classe" style={{ color: 'var(--warning, #d97706)' }} />
+                            ) : null}
+                            {student.studentId === worstId ? (
+                              <TrendingDown size={13} aria-label="Moyenne la plus faible de la classe" style={{ color: 'var(--error, #dc2626)' }} />
+                            ) : null}
+                          </span>
                         </td>
                         <td className="is-numeric">{student.rang ?? '—'}</td>
                       </tr>
@@ -110,6 +122,12 @@ export function ClassBulletinPanel({
                   </tbody>
                 </table>
               </div>
+
+              {!detail.bulletinReady ? (
+                <p className="t-body-sm t-muted" style={{ marginTop: 'var(--space-2)' }}>
+                  Bulletin pas encore complet : il manque les notes de {detail.missingSubjects.join(', ')}.
+                </p>
+              ) : null}
 
               <div className="dash-bulletin__actions">
                 {showBulletinLink ? (
@@ -121,6 +139,8 @@ export function ClassBulletinPanel({
                   size="sm"
                   variant="tonal"
                   loading={exporting}
+                  disabled={!detail.bulletinReady}
+                  title={detail.bulletinReady ? undefined : 'Le bulletin sera disponible une fois toutes les matières notées.'}
                   onClick={() => void exportCsv(detail.className, detail.termLabel)}
                 >
                   Exporter en CSV

@@ -1,3 +1,5 @@
+import { Bell } from 'lucide-react';
+
 import { errorMessage, parentApi, type Device } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useAuth } from '../../auth/auth-context';
@@ -52,7 +54,7 @@ export default function NotificationsPage() {
           {(items) =>
             items.length === 0 ? (
               <EmptyState
-                icon="◔"
+                icon={<Bell size={28} />}
                 title="Aucun appareil"
                 description="Activez les notifications ci-dessus pour être prévenu dès qu'une note est saisie."
               />

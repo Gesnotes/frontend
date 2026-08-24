@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api, apiFetchBlob } from '../http';
 import { queryKeys } from '../queryKeys';
-import type { ChildDetail, ChildSummary, Device, ID, ParentGrade } from '../types';
+import type { ChildDetail, ChildSummary, Device, ID, ParentGrade, TimetableSlot } from '../types';
 
 /** `GET /parents/me/children` — sans `term_id`, les moyennes valent `null`. */
 export function fetchMyChildren(termId?: ID): Promise<ChildSummary[]> {
@@ -23,9 +23,19 @@ export function fetchChildGrades(
   });
 }
 
+/** Emploi du temps de la classe de l'enfant — vide si la classe est en mode présence. */
+export function fetchChildSchedule(id: ID): Promise<TimetableSlot[]> {
+  return api.get<TimetableSlot[]>(`/children/${id}/schedule`);
+}
+
 /** Bulletin PDF d'un seul enfant, sans exposer les résultats de sa classe. */
 export function exportChildBulletin(id: ID, termId: ID): Promise<Blob> {
   return apiFetchBlob(`/children/${id}/bulletin/export`, { term_id: termId });
+}
+
+/** Bulletin annuel cumulé d'un seul enfant — pendant annuel de `exportChildBulletin`. */
+export function exportChildAnnualBulletin(id: ID, schoolYearId: ID): Promise<Blob> {
+  return apiFetchBlob(`/children/${id}/bulletin/annual/export`, { school_year_id: schoolYearId });
 }
 
 // --------------------------------------------------------- Notifications push
@@ -63,6 +73,14 @@ export function useChildGrades(id: ID | undefined, filters: { termId?: ID; subje
   return useQuery({
     queryKey: queryKeys.children.grades(id ?? 0, filters.termId, filters.subjectId),
     queryFn: () => fetchChildGrades(id!, filters),
+    enabled: id !== undefined,
+  });
+}
+
+export function useChildSchedule(id: ID | undefined) {
+  return useQuery({
+    queryKey: queryKeys.children.schedule(id ?? 0),
+    queryFn: () => fetchChildSchedule(id!),
     enabled: id !== undefined,
   });
 }

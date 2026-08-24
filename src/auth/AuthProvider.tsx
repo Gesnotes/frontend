@@ -29,23 +29,54 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setMonitoringUser(session ? { id: session.user.id, role: session.user.role } : null);
   }, [session]);
 
+  /**
+   * La file hors-ligne suit le compte connecté, pas la page : cet effet
+   * couvre aussi bien la connexion/déconnexion que la purge automatique de
+   * `sessionStore` par le client HTTP (refresh expiré) — tout changement de
+   * `session`, quelle qu'en soit la cause, fait basculer `offlineQueue` sur
+   * le stockage propre au nouveau compte (ou aucun, hors session). Voir
+   * `offlineQueue.bind` pour ce que ça protège sur un poste partagé.
+   */
+  useEffect(() => {
+    offlineQueue.bind(session?.user.id ?? null);
+  }, [session]);
+
   const identify = useCallback(
     async (identifier: string, password: string, schoolId?: number) => {
       const result = await authApi.identify(identifier, password, schoolId);
       // Le cache appartient à l'utilisateur précédent : le vider évite qu'un
       // écran affiche brièvement les données de la session d'avant.
       //
-      // La file hors-ligne, elle, n'est PAS vidée ici : une session qui
-      // expire pendant que l'enseignant est hors connexion le ramène
-      // justement sur cet écran, et il doit pouvoir se reconnecter sans
-      // perdre sa saisie en attente. Seule la déconnexion volontaire
-      // (`logout`, ci-dessous) la vide — c'est là qu'un poste change
-      // réellement de main.
+      // La file hors-ligne, elle, n'est pas vidée ici : l'effet ci-dessus la
+      // fait basculer sur le stockage du compte qui vient de se connecter
+      // (`offlineQueue.bind`) — même compte après une expiration de session
+      // → sa propre saisie en attente est préservée ; compte différent → sa
+      // propre file, jamais celle laissée par le précédent. Seule la
+      // déconnexion volontaire (`logout`, ci-dessous) vide explicitement la
+      // file du compte courant — c'est là qu'un poste change réellement de
+      // main.
       if (result.status === 'ok') queryClient.clear();
       return result;
     },
     [queryClient],
   );
+
+  /**
+   * Bascule vers un autre compte connu : le cache appartient au compte
+   * précédent (même raisonnement que `identify`, ci-dessus) et doit disparaître
+   * avant que la nouvelle session ne charge ses propres écrans.
+   */
+  const switchAccount = useCallback(
+    async (userId: number) => {
+      await authApi.switchAccount(userId);
+      queryClient.clear();
+    },
+    [queryClient],
+  );
+
+  const linkAccount = useCallback(async (identifier: string, password: string) => {
+    await authApi.linkAccount(identifier, password);
+  }, []);
 
   const logout = useCallback(async () => {
     /**
@@ -75,10 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Stockage indisponible : rien à purger.
     }
 
-    // Sur un poste partagé (salle des profs), une déconnexion volontaire est
-    // le moment où l'appareil change réellement de main : sans ça, les
-    // saisies encore en attente d'un enseignant restaient visibles — et
-    // envoyables sous son nom — par la personne suivante qui s'y connecte.
+    // `offlineQueue.bind` (effet ci-dessus) empêche déjà qu'un autre compte
+    // hérite de cette file. Vider explicitement ici reste une déconnexion
+    // volontaire franche : l'enseignant qui quitte son poste ne laisse
+    // aucune saisie en attente derrière lui, plutôt que de compter sur le
+    // fait qu'il se reconnectera un jour pour la voir rejouée.
     offlineQueue.clear();
   }, [queryClient]);
 
@@ -88,10 +120,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: session?.user.role ?? null,
       isAuthenticated: session !== null,
       displayName: session ? fullNameOf(session.user) : '',
+      schoolName: session?.schoolName ?? '',
+      accounts: session?.accounts ?? [],
       identify,
+      switchAccount,
+      linkAccount,
       logout,
     }),
-    [session, identify, logout],
+    [session, identify, switchAccount, linkAccount, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

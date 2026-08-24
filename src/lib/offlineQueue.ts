@@ -15,6 +15,13 @@ import type { GradeBatchPayload, GradeBatchResult } from '../api';
  * s'est perdue mais que l'écriture a eu lieu — ne produit aucun doublon, le
  * backend répond simplement `unchanged`. Avec l'ancien `POST /grades`, la
  * même file aurait dupliqué les notes de toute une classe.
+ *
+ * **Liée au compte, pas à l'appareil** : `bind(userId)` (appelé par
+ * `AuthProvider` à chaque changement de session) fait basculer la file sur
+ * le stockage propre à ce compte. Sur un poste partagé, un enseignant qui
+ * se reconnecte après une expiration de session récupère sa propre file ;
+ * un collègue qui se connecte ensuite sur le même poste ne voit — et ne
+ * peut envoyer — que la sienne, jamais celle laissée par le précédent.
  */
 
 const STORAGE_KEY = 'gesnotes.pending-batches';
@@ -39,7 +46,8 @@ export type FlushReport = {
 type Listener = (queue: PendingBatch[]) => void;
 
 class OfflineQueue {
-  private queue: PendingBatch[] = read();
+  private userId: number | null = null;
+  private queue: PendingBatch[] = [];
   private listeners = new Set<Listener>();
   private flushing = false;
 
@@ -54,6 +62,24 @@ class OfflineQueue {
   subscribe(listener: Listener): () => void {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
+  }
+
+  /**
+   * Fait basculer la file sur le compte donné, `null` hors session.
+   *
+   * Recharge son stockage propre plutôt que de garder la file du compte
+   * précédent en mémoire : sans ça, un poste partagé qui passe d'un
+   * enseignant à un autre continuerait de proposer — et de pouvoir envoyer
+   * sous le nouveau compte — les saisies encore en attente de l'ancien.
+   * Se reconnecter sous le MÊME compte (session expirée pendant une saisie
+   * hors connexion) recharge au contraire cette même file, intacte : c'est
+   * le cas que ce mécanisme doit justement préserver (voir `AuthProvider`).
+   */
+  bind(userId: number | null): void {
+    if (userId === this.userId) return;
+    this.userId = userId;
+    this.queue = userId === null ? [] : read(userId);
+    this.notify();
   }
 
   /**
@@ -133,7 +159,13 @@ class OfflineQueue {
   }
 
   private persist() {
-    write(this.queue);
+    // Sans compte lié, la file reste valable pour l'onglet mais n'est pas
+    // écrite sous une clé non scopée — voir `bind`.
+    if (this.userId !== null) write(this.userId, this.queue);
+    this.notify();
+  }
+
+  private notify() {
     for (const listener of this.listeners) listener(this.queue);
   }
 }
@@ -143,9 +175,13 @@ function evaluationKey(payload: GradeBatchPayload): string {
   return String(payload.evaluationId);
 }
 
-function read(): PendingBatch[] {
+function storageKey(userId: number): string {
+  return `${STORAGE_KEY}.${userId}`;
+}
+
+function read(userId: number): PendingBatch[] {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(storageKey(userId));
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     return Array.isArray(parsed) ? (parsed as PendingBatch[]) : [];
@@ -156,10 +192,11 @@ function read(): PendingBatch[] {
   }
 }
 
-function write(queue: PendingBatch[]): void {
+function write(userId: number, queue: PendingBatch[]): void {
   try {
-    if (queue.length === 0) localStorage.removeItem(STORAGE_KEY);
-    else localStorage.setItem(STORAGE_KEY, JSON.stringify(queue));
+    const key = storageKey(userId);
+    if (queue.length === 0) localStorage.removeItem(key);
+    else localStorage.setItem(key, JSON.stringify(queue));
   } catch {
     // Quota atteint ou mode privé : la file reste valable pour cet onglet.
   }

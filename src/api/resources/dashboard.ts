@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '../http';
 import { todayLocalIso } from '../../lib/format';
 import { queryKeys } from '../queryKeys';
-import type { AdminDashboard, ID, RecentGrade } from '../types';
+import type { AbsenceTrendPoint, AdminDashboard, ID, RecentGrade } from '../types';
 
 /**
  * `GET /admin/dashboard`.
@@ -22,6 +22,11 @@ export function fetchRecentGrades(limit = 20): Promise<RecentGrade[]> {
   return api.get<RecentGrade[]>('/admin/dashboard/recent-grades', { limit });
 }
 
+/** `GET /admin/dashboard/absences` : absences et retards, un point par jour. */
+export function fetchAbsenceTrend(days = 14): Promise<AbsenceTrendPoint[]> {
+  return api.get<AbsenceTrendPoint[]>('/admin/dashboard/absences', { days, date: todayLocalIso() });
+}
+
 // ------------------------------------------------------------------- Hooks
 
 export function useDashboard(termId?: ID) {
@@ -35,5 +40,12 @@ export function useRecentGrades(limit = 20) {
   return useQuery({
     queryKey: queryKeys.dashboard.recentGrades(limit),
     queryFn: () => fetchRecentGrades(limit),
+  });
+}
+
+export function useAbsenceTrend(days = 14) {
+  return useQuery({
+    queryKey: queryKeys.dashboard.absences(days),
+    queryFn: () => fetchAbsenceTrend(days),
   });
 }

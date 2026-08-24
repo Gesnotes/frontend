@@ -1,0 +1,71 @@
+/*
+ * Pas de `@import "tailwindcss";` (sucre pour theme+preflight+utilities) :
+ * `preflight` réinitialise les styles d'éléments globaux (marges, boutons,
+ * champs...) et casserait les espaces enseignant/parent, qui restent sur
+ * l'ancien système de jetons CSS (base.css) et sont hors périmètre de cette
+ * refonte. On ne prend que le thème et les classes utilitaires.
+ */
+@layer theme, base, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/*
+ * Sans `preflight`, un `<button>` sans classe `bg-*`/`border-*` retombe sur le
+ * chrome natif du navigateur (fond gris ButtonFace, bordure 3D outset) — visible
+ * sur les segments et onglets de l'espace parent. Ce reset vit dans le calque
+ * `base`, sous `utilities`, pour qu'une classe Tailwind le remplace toujours ;
+ * les boutons de l'ancien système de jetons (`.ui-btn`...) restent hors calque
+ * et gagnent donc aussi, comme avant ce changement.
+ */
+@layer base {
+  button {
+    appearance: none;
+    -webkit-appearance: none;
+    background: transparent;
+    border: none;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+}
+
+/**
+ * Thème DaisyUI « gesnotes » — mêmes couleurs que src/styles/tokens.css
+ * (bleu institutionnel), pour que les écrans reconstruits en Tailwind/DaisyUI
+ * (admin, cf. maquette Front-Admin) restent cohérents avec le reste de
+ * l'application qui utilise encore les jetons CSS maison.
+ */
+@plugin "daisyui" {
+  themes: gesnotes --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "gesnotes";
+  default: true;
+  color-scheme: light;
+  --color-base-100: #ffffff;
+  --color-base-200: #eff4ff;
+  --color-base-300: #dce9ff;
+  --color-base-content: #0b1c30;
+  --color-primary: #00288e;
+  --color-primary-content: #ffffff;
+  --color-secondary: #1e40af;
+  --color-secondary-content: #ffffff;
+  --color-accent: #173bab;
+  --color-accent-content: #ffffff;
+  --color-neutral: #444653;
+  --color-neutral-content: #ffffff;
+  --color-info: #1e40af;
+  --color-info-content: #ffffff;
+  --color-success: #006c49;
+  --color-success-content: #ffffff;
+  --color-warning: #802a00;
+  --color-warning-content: #ffffff;
+  --color-error: #ba1a1a;
+  --color-error-content: #ffffff;
+  --radius-selector: 0.5rem;
+  --radius-field: 0.5rem;
+  --radius-box: 1rem;
+  --border: 1px;
+}
