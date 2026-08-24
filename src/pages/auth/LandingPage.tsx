@@ -8,22 +8,45 @@ import { Button, BrandMark } from '../../ui';
 
 const HAS_DEMO = Boolean(DEMO_IDENTIFIER && DEMO_PASSWORD);
 
+/**
+ * Ce que la confiance des familles veut concrètement dire — trois choses déjà
+ * construites (bus d'événements côté notifications, détail par catégorie du
+ * bulletin, PWA mobile), pas des chiffres inventés pour l'occasion.
+ */
+const TRUST = [
+  {
+    icon: '◷',
+    title: 'Informées en quelques secondes',
+    body: "Une note saisie, une absence signalée : la famille reçoit une notification aussitôt — jamais découverte en fin de trimestre.",
+  },
+  {
+    icon: '▤',
+    title: 'Un calcul jamais une boîte noire',
+    body: 'Chaque moyenne se décompose devant les parents — interrogation, devoir, composition — pour qu’aucune contestation ne reste sans réponse.',
+  },
+  {
+    icon: '▦',
+    title: 'Depuis le téléphone qu’elles ont déjà',
+    body: "Pas d'ordinateur ni de compte compliqué à créer : les familles suivent la scolarité depuis leur téléphone, comme le reste de leur quotidien.",
+  },
+];
+
 const FEATURES = [
+  {
+    icon: '✉',
+    title: 'Communication avec les familles',
+    body: "Notification aux parents dès qu'une note est saisie ou qu'une absence est signalée — la confiance se construit note après note, pas au bulletin trimestriel.",
+    highlight: true,
+  },
   {
     icon: '◫',
     title: 'Notes et bulletins',
-    body: 'Moyennes calculées automatiquement, bulletins prêts à remettre aux familles, période par période.',
+    body: 'Moyennes calculées automatiquement et vérifiables par les familles, bulletins prêts à remettre aux familles, période par période.',
   },
   {
     icon: '✓',
     title: 'Présence',
-    body: "Un statut par élève et par jour : la feuille de présence pour l'administration comme pour l'enseignant référent.",
-  },
-  {
-    icon: '✉',
-    title: 'Communication avec les familles',
-    body: "Notification aux parents dès qu'une note est saisie ou qu'une absence est signalée.",
-    highlight: true,
+    body: "Un statut par élève et par jour, visible par la famille le jour même — la feuille de présence pour l'administration comme pour l'enseignant référent.",
   },
 ];
 
@@ -51,6 +74,11 @@ const AUDIENCE = [
  * atterrir directement sur un formulaire de connexion qui suppose déjà un
  * compte. « Se connecter » reste accessible, mais discret : ce n'est pas ce
  * que vient chercher un visiteur qui découvre le produit.
+ *
+ * Positionnement : la confiance des familles, pas seulement le gain de temps
+ * administratif — c'est ce qui distingue Gesnotes d'un simple carnet de notes
+ * numérique. Le bandeau de confiance juste sous le hero porte cet argument en
+ * premier, avant même la liste de fonctionnalités.
  */
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -64,6 +92,8 @@ export default function LandingPage() {
 
   return (
     <div className="landing">
+      <div className="landing__accent-bar" aria-hidden="true" />
+
       <header className="landing__header">
         <div className="landing__header-inner">
           <div className="landing__brand">
@@ -81,11 +111,13 @@ export default function LandingPage() {
 
       <main>
         <section className="landing__section landing__hero">
+          <div className="landing__hero-glow" aria-hidden="true" />
           <div className="landing__hero-copy">
-            <h1 className="landing__hero-title">Le suivi scolaire, simplifié pour toute l’école.</h1>
+            <span className="landing__badge">Conçu pour la confiance des familles</span>
+            <h1 className="landing__hero-title">Des familles informées, une école de confiance.</h1>
             <p className="t-body-lg t-muted">
-              Notes, présence, bulletins et communication avec les familles — une seule plateforme,
-              pensée pour être claire dès la première prise en main.
+              Notes, présence et bulletins partagés avec les parents dès qu'ils existent — la
+              transparence devient une habitude, pas un effort de plus pour l'administration.
             </p>
             <div className="landing__hero-actions">
               <Link to={paths.signup}>
@@ -103,10 +135,24 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <RevealSection className="landing__trust">
+          <div className="landing__trust-inner">
+            {TRUST.map((item, index) => (
+              <div key={item.title} className="landing__trust-item" style={{ transitionDelay: `${index * 80}ms` }}>
+                <span className="landing__trust-icon" aria-hidden="true">{item.icon}</span>
+                <div>
+                  <h3 className="t-title-md" style={{ fontWeight: 700 }}>{item.title}</h3>
+                  <p>{item.body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </RevealSection>
+
         <RevealSection className="landing__section" style={{ background: 'var(--surface-container-low)' }}>
           <div className="landing__section-head">
-            <h2 className="t-headline-lg">Fonctionnalités clés</h2>
-            <p className="t-body-lg t-muted">Ce que Gesnotes change au quotidien pour votre établissement.</p>
+            <h2 className="t-headline-lg">Ce qui fait la confiance, au quotidien</h2>
+            <p className="t-body-lg t-muted">Ce que Gesnotes change pour votre établissement — et pour les familles qui le suivent.</p>
           </div>
           <div className="landing__features">
             {FEATURES.map((feature, index) => (
@@ -142,20 +188,25 @@ export default function LandingPage() {
           </div>
         </RevealSection>
 
-        <RevealSection className="landing__section landing__cta">
-          <h2 className="t-headline-lg">Prête à essayer Gesnotes dans votre école ?</h2>
-          <p className="t-body-lg" style={{ opacity: 0.85 }}>
-            Décrivez votre établissement, l'équipe Gesnotes vous recontacte pour la mise en route.
-          </p>
-          <Link to={paths.signup}>
-            <Button size="lg" variant="secondary">Demander un accès</Button>
-          </Link>
+        <RevealSection className="landing__cta">
+          <div className="landing__cta-inner">
+            <h2 className="t-headline-lg">Prête à donner aux familles la transparence qu'elles attendent ?</h2>
+            <p className="t-body-lg" style={{ opacity: 0.85 }}>
+              Décrivez votre établissement, l'équipe Gesnotes vous recontacte pour la mise en route.
+            </p>
+            <Link to={paths.signup}>
+              <Button size="lg" variant="secondary">Demander un accès</Button>
+            </Link>
+          </div>
         </RevealSection>
       </main>
 
       <footer className="landing__footer">
         <div className="landing__footer-inner">
-          <span className="landing__footer-brand">Gesnotes</span>
+          <div>
+            <span className="landing__footer-brand">Gesnotes</span>
+            <p className="landing__footer-tagline">La confiance des familles, à chaque note.</p>
+          </div>
           <span className="landing__footer-meta">
             <a href="mailto:contact@gesnotes.bj">contact@gesnotes.bj</a>
           </span>
