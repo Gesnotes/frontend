@@ -17,6 +17,7 @@ export default function SchoolsPage() {
   const suspend = staffApi.useSuspendSchool();
   const restore = staffApi.useRestoreSchool();
   const remove = staffApi.useDeleteSchoolPermanently();
+  const resendInvitation = staffApi.useResendSchoolInvitation();
 
   const [toSuspend, setToSuspend] = useState<SchoolWithMetrics | null>(null);
   const [toDelete, setToDelete] = useState<SchoolWithMetrics | null>(null);
@@ -36,6 +37,15 @@ export default function SchoolsPage() {
     try {
       await restore.mutateAsync(school.id);
       toast.success(`« ${school.name} » réactivée`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  async function runResendInvitation(school: SchoolWithMetrics) {
+    try {
+      await resendInvitation.mutateAsync(school.id);
+      toast.success(`Invitation renvoyée pour « ${school.name} »`);
     } catch (cause) {
       toast.error(errorMessage(cause));
     }
@@ -111,6 +121,14 @@ export default function SchoolsPage() {
           </div>
         ) : (
           <div className="cell-actions">
+            <Button
+              size="sm"
+              variant="tonal"
+              loading={resendInvitation.isPending}
+              onClick={() => void runResendInvitation(school)}
+            >
+              Renvoyer l'invitation
+            </Button>
             <Button size="sm" variant="danger" onClick={() => setToSuspend(school)}>
               Suspendre
             </Button>
