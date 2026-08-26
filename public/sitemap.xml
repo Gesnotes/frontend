@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  sitemap.xml — Gesnotes
+  URLs publiques indexables. Les espaces authentifiés sont exclus.
+  Mettre à jour lastmod à chaque refonte majeure de la landing page.
+-->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+
+  <!-- Page d'accueil / Landing page — priorité maximale -->
+  <url>
+    <loc>https://gesnotes.bj/</loc>
+    <lastmod>2026-08-26</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://gesnotes.bj/" />
+  </url>
+
+  <!-- Page de connexion -->
+  <url>
+    <loc>https://gesnotes.bj/connexion</loc>
+    <lastmod>2026-08-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Page d'inscription / demande d'accès -->
+  <url>
+    <loc>https://gesnotes.bj/inscription</loc>
+    <lastmod>2026-08-26</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+</urlset>

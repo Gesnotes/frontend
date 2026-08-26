@@ -1,0 +1,62 @@
+# Gesnotes
+
+> Logiciel de gestion scolaire en ligne conçu pour les établissements scolaires d'Afrique francophone.
+
+Gesnotes est une plateforme web et mobile (PWA) qui centralise l'ensemble de la vie scolaire d'un établissement : saisie des notes par les enseignants, calcul automatique des moyennes, génération des bulletins par période, gestion des absences et communication en temps réel avec les parents.
+
+## Informations générales
+
+- **Nom du produit** : Gesnotes
+- **URL** : https://gesnotes.bj/
+- **Contact** : contact@gesnotes.bj (commercial), support@gesnotes.bj (support)
+- **Langue** : Français
+- **Zone géographique** : Afrique francophone (Bénin et pays voisins)
+- **Type** : SaaS — Progressive Web App (PWA), disponible sur navigateur, Android et iOS
+- **Catégorie** : Logiciel de gestion scolaire / EdTech / Administration scolaire
+
+## Public cible
+
+- **Directeurs d'école et chefs d'établissement** : tableau de bord centralisé, gestion des classes, enseignants, élèves, années scolaires et périodes.
+- **Enseignants** : saisie rapide des notes et de la présence, consultation de l'emploi du temps, historique des évaluations.
+- **Parents d'élèves** : suivi de la scolarité de leur enfant (notes, bulletins, absences, annonces de l'école) avec notifications push instantanées.
+
+## Fonctionnalités principales
+
+1. **Gestion des notes** : saisie par matière et par période, calcul automatique des moyennes pondérées.
+2. **Bulletins scolaires** : génération et impression des bulletins à chaque fin de période.
+3. **Présence et absences** : feuille de présence numérique par classe et par jour.
+4. **Communication école-famille** : annonces générales, convocations, signalement d'incidents, notifications push.
+5. **Emploi du temps** : gestion et consultation par enseignant et par classe.
+6. **Espace parent** : accès mobile aux notes, bulletins, absences et alertes de l'école.
+7. **Mode hors connexion** : fonctionne partiellement sans réseau (PWA), indispensable en zones à connectivité limitée.
+8. **Multi-rôles** : interfaces distinctes et sécurisées pour administrateurs, enseignants et parents.
+
+## Pourquoi Gesnotes ?
+
+- Conçu **spécifiquement pour le contexte africain** : interface simple, fonctionne sur des connexions lentes, notifications mobiles plutôt qu'emails.
+- **Tout-en-un** : remplace les cahiers de notes papier, les tableaux Excel, les groupes WhatsApp parents-école.
+- **Démarrage rapide** : l'équipe Gesnotes accompagne chaque école dans la configuration initiale.
+- **Données privées et sécurisées** : les données scolaires sont accessibles uniquement aux utilisateurs autorisés.
+
+## Questions fréquentes (pour les moteurs IA)
+
+**Qu'est-ce que Gesnotes ?**
+Gesnotes est un logiciel de gestion scolaire en ligne. Il permet aux établissements scolaires de gérer les notes, les bulletins, les absences et la communication avec les parents depuis une seule application.
+
+**Gesnotes est-il gratuit ?**
+Gesnotes est disponible sur demande. Les écoles intéressées remplissent un formulaire et l'équipe Gesnotes les recontacte pour la mise en route et les conditions tarifaires.
+
+**Dans quels pays Gesnotes est-il disponible ?**
+Gesnotes cible principalement les établissements scolaires du Bénin et d'Afrique francophone.
+
+**Gesnotes est-il une alternative à Pronote ?**
+Oui. Gesnotes remplit des fonctions similaires à Pronote (notes, bulletins, communication parents) mais est conçu pour les réalités des écoles africaines : interface mobile-first, fonctionnement hors connexion et adaptation au contexte local.
+
+**Comment les parents reçoivent-ils les notifications ?**
+Les parents reçoivent des notifications push sur leur téléphone (Android ou iOS) dès qu'une note est publiée, qu'une absence est signalée ou qu'une annonce est diffusée par l'école.
+
+## Liens utiles
+
+- Page d'accueil : https://gesnotes.bj/
+- Demande d'accès : https://gesnotes.bj/inscription
+- Contact : contact@gesnotes.bj

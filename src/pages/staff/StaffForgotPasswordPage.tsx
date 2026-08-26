@@ -32,7 +32,7 @@ export default function StaffForgotPasswordPage() {
         title="Vérifiez votre boîte de réception"
         lead={`Si un compte existe pour ${email}, un lien de réinitialisation vient d'être envoyé. Il expire dans une heure.`}
       >
-        <div className="auth__form">
+        <div className="mt-6 flex flex-col gap-4">
           <Link to={paths.staff.login}>
             <Button variant="secondary" block>Retour à la connexion</Button>
           </Link>
@@ -46,7 +46,7 @@ export default function StaffForgotPasswordPage() {
       title="Mot de passe oublié"
       lead="Saisissez l'adresse email de votre compte équipe. Nous vous enverrons un lien de réinitialisation."
     >
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField
