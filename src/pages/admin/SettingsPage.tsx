@@ -49,16 +49,15 @@ function SchoolCard({
   const [edited, setEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Même logique de resynchronisation que PassingGradeCard : ne reprend le
-  // serveur que tant que l'utilisateur n'a pas commencé à modifier le formulaire.
-  const [syncedInitial, setSyncedInitial] = useState(initial);
-  if (
-    !edited &&
-    (syncedInitial.email !== initial.email || syncedInitial.phone !== initial.phone || syncedInitial.address !== initial.address)
-  ) {
-    setSyncedInitial(initial);
-    setValues(initial);
-  }
+  useEffect(() => {
+    if (!edited) {
+      setValues({
+        email: email ?? '',
+        phone: phone ?? '',
+        address: address ?? '',
+      });
+    }
+  }, [email, phone, address, edited]);
 
   const dirty =
     values.email.trim() !== initial.email ||
@@ -138,20 +137,11 @@ function PassingGradeCard({ current }: { current: number }) {
   const [edited, setEdited] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /**
-   * Resynchronise avec le serveur si `current` change pendant que la page
-   * reste ouverte (ex. refetch après une coupure réseau) — tant que
-   * l'utilisateur n'a pas touché au champ, sans quoi un enregistrement
-   * écraserait silencieusement une valeur plus récente qu'un autre admin
-   * aurait entre-temps enregistrée. Ajustement pendant le rendu (pas un
-   * effet) : le même style que `EvaluationSaisie` pour repartir d'un état
-   * neuf quand une prop externe change.
-   */
-  const [syncedCurrent, setSyncedCurrent] = useState(current);
-  if (current !== syncedCurrent && !edited) {
-    setSyncedCurrent(current);
-    setValue(String(current));
-  }
+  useEffect(() => {
+    if (!edited) {
+      setValue(String(current));
+    }
+  }, [current, edited]);
 
   const dirty = value.trim() !== String(current);
 

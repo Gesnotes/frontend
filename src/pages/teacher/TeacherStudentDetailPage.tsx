@@ -5,6 +5,7 @@ import { studentsApi, type StudentDetail, type SubjectResult } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { formatDate, formatGrade } from '../../lib/format';
+import { personName } from '../../lib/text';
 import {
   Avatar, Card, Chip, EmptyState, Skeleton, attendanceTone, gradeTone,
 } from '../../ui';
@@ -48,10 +49,39 @@ function StudentBody({ data, termLabel }: { data: StudentDetail; termLabel: stri
         </div>
       </div>
 
+      <ParentsSection parents={data.parents} />
       <AverageSummary data={data} />
       <SubjectList data={data} />
       <AttendanceSection records={data.presence} />
     </div>
+  );
+}
+
+function ParentsSection({ parents }: { parents: StudentDetail['parents'] }) {
+  if (!parents || parents.length === 0) return null;
+
+  return (
+    <Card padded>
+      <div className="parent__row-title" style={{ marginBottom: 'var(--space-3)' }}>
+        Parents & Contacts
+      </div>
+      <div className="page-stack" style={{ gap: 'var(--space-2)' }}>
+        {parents.map((parent) => (
+          <div key={parent.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+            <Avatar name={personName(parent)} size={36} />
+            <div>
+              <div className="t-body-md" style={{ fontWeight: 600 }}>{personName(parent)}</div>
+              <div className="t-body-sm" style={{ color: '#2563eb', fontWeight: 600 }}>
+                {parent.phone ? <span>📞 {parent.phone}</span> : null}
+                {parent.phone && parent.email ? <span style={{ color: '#6b7280' }}> · </span> : null}
+                {parent.email ? <span style={{ color: '#374151' }}>✉️ {parent.email}</span> : null}
+                {!parent.phone && !parent.email ? '—' : null}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
   );
 }
 

@@ -13,6 +13,7 @@ const adminNav: NavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: '▦', end: true },
   { to: paths.admin.classes, label: 'Classes', icon: '◫' },
   { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: '✎' },
+  { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: '📢' },
   { to: paths.admin.subjects, label: 'Matières', icon: '≣' },
   { to: paths.admin.teachers, label: 'Enseignants', icon: '☰' },
   { to: paths.admin.students, label: 'Élèves', icon: '⚇' },
@@ -24,6 +25,7 @@ const adminNav: NavItem[] = [
 const teacherNav: NavItem[] = [
   { to: paths.teacher.dashboard, label: 'Mes classes', icon: '▦', end: true },
   { to: paths.teacher.gradeEntry, label: 'Saisie des notes', icon: '✎' },
+  { to: paths.teacher.annonces, label: 'Annonces aux parents', icon: '📢' },
   { to: paths.teacher.history, label: 'Historique', icon: '↺' },
 ];
 

@@ -126,4 +126,10 @@ export const queryKeys = {
     schools: ['staff', 'schools'] as const,
     signupRequests: (status?: string) => ['staff', 'signup-requests', status ?? 'all'] as const,
   },
+
+  notifications: {
+    all: ['notifications'] as const,
+    list: (unreadOnly?: boolean) => ['notifications', 'list', unreadOnly ?? false] as const,
+    sent: ['notifications', 'sent'] as const,
+  },
 } as const;
