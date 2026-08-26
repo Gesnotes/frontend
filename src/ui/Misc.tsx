@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { initials } from '../lib/text';
 import { toneColor, type ChipTone } from './tone';
 
@@ -34,15 +34,61 @@ export function ProgressBar({
   );
 }
 
-export function BrandMark({ size = 34, label = 'G' }: { size?: number; label?: string }) {
+/**
+ * Monogramme « GN » : deux lettres identifient Gesnotes sans dépendre d'un
+ * seul caractère générique. Le badge coche, concentrique avec l'arrondi du
+ * coin bas-droit, rappelle la notification envoyée aux familles dès qu'une
+ * note est validée — le différenciateur mis en avant sur la landing.
+ * `useId` évite les collisions d'identifiants de dégradé quand plusieurs
+ * `BrandMark` apparaissent sur une même page (en-tête + pied de page).
+ */
+export function BrandMark({ size = 34 }: { size?: number }) {
+  const uid = useId();
+  const bgId = `${uid}-bg`;
+  const badgeId = `${uid}-badge`;
   return (
-    <span
-      className="ui-avatar ui-avatar--brand"
-      style={{ width: size, height: size, borderRadius: 'var(--radius-md)', fontSize: Math.round(size * 0.5) }}
-      aria-hidden="true"
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 512 512"
+      role="img"
+      aria-label="Gesnotes"
+      style={{ flexShrink: 0 }}
     >
-      {label}
-    </span>
+      <defs>
+        <linearGradient id={bgId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--primary)" />
+          <stop offset="1" stopColor="var(--surface-tint)" />
+        </linearGradient>
+        <linearGradient id={badgeId} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="var(--secondary-container)" />
+          <stop offset="1" stopColor="var(--secondary)" />
+        </linearGradient>
+      </defs>
+      <rect width="512" height="512" rx="112" fill={`url(#${bgId})`} />
+      <text
+        x="226"
+        y="222"
+        fill="var(--on-primary)"
+        fontFamily="Inter, system-ui, sans-serif"
+        fontSize="168"
+        fontWeight="800"
+        textAnchor="middle"
+        dominantBaseline="central"
+        letterSpacing="-6"
+      >
+        GN
+      </text>
+      <circle cx="400" cy="400" r="72" fill={`url(#${badgeId})`} stroke="var(--on-primary)" strokeWidth="8" />
+      <path
+        d="M368 404 L392 428 L438 372"
+        fill="none"
+        stroke="var(--on-primary)"
+        strokeWidth="16"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
   );
 }
 

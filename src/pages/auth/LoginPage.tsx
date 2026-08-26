@@ -97,8 +97,9 @@ export default function LoginPage() {
       <AuthLayout
         title="Quelle est votre école ?"
         lead="Ces identifiants correspondent à plusieurs établissements. Choisissez le vôtre."
+        linkBrand
       >
-        <div className="auth__form">
+        <div className="mt-6 flex flex-col gap-4">
           {error ? <Alert tone="danger">{error}</Alert> : null}
 
           <div className="list-rows">
@@ -128,8 +129,9 @@ export default function LoginPage() {
       title="Connexion"
       lead="Accédez à votre espace"
       footnote="Votre établissement vous a transmis vos identifiants par email."
+      linkBrand
     >
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         {state?.demoIdentifier ? (
@@ -157,8 +159,8 @@ export default function LoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <div className="auth__row-end">
-          <Link to={paths.forgotPassword}>Mot de passe oublié ?</Link>
+        <div className="flex justify-end text-sm">
+          <Link to={paths.forgotPassword} className="font-semibold text-primary hover:underline">Mot de passe oublié ?</Link>
         </div>
 
         <Button type="submit" block loading={submitting} disabled={!identifier || !password}>

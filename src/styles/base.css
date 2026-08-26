@@ -39,13 +39,22 @@ ol {
   list-style: none;
 }
 
-a {
-  color: var(--primary-container);
-  text-decoration: none;
-}
+/*
+ * Dans le calque `base` (pas hors calque comme le reste de ce fichier) :
+ * les pages Tailwind (admin, et désormais landing/auth) doivent pouvoir
+ * surcharger la couleur d'un lien avec une classe `text-*` (calque
+ * `utilities`, cf. tailwind.css). Hors calque, cette règle globale gagnait
+ * toujours contre une classe Tailwind, quelle que soit sa spécificité.
+ */
+@layer base {
+  a {
+    color: var(--primary-container);
+    text-decoration: none;
+  }
 
-a:hover {
-  color: var(--primary);
+  a:hover {
+    color: var(--primary);
+  }
 }
 
 button {

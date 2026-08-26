@@ -40,7 +40,7 @@ export default function StaffLoginPage() {
 
   return (
     <AuthLayout title="Équipe Gesnotes" lead="Connexion réservée à l'équipe.">
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField
@@ -63,8 +63,8 @@ export default function StaffLoginPage() {
           onChange={(e) => setPassword(e.target.value)}
         />
 
-        <div className="auth__row-end">
-          <Link to={paths.staff.forgotPassword}>Mot de passe oublié ?</Link>
+        <div className="flex justify-end text-sm">
+          <Link to={paths.staff.forgotPassword} className="font-semibold text-primary hover:underline">Mot de passe oublié ?</Link>
         </div>
 
         <Button type="submit" block loading={submitting} disabled={!email || !password}>

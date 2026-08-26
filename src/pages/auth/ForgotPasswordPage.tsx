@@ -31,8 +31,9 @@ export default function ForgotPasswordPage() {
       <AuthLayout
         title="Vérifiez votre boîte de réception"
         lead={`Si un compte est associé à ${email}, un lien de réinitialisation vient d'être envoyé. Il expire dans une heure.`}
+        linkBrand
       >
-        <div className="auth__form">
+        <div className="mt-6 flex flex-col gap-4">
           <Link to={paths.login}>
             <Button variant="secondary" block>Retour à la connexion</Button>
           </Link>
@@ -45,8 +46,9 @@ export default function ForgotPasswordPage() {
     <AuthLayout
       title="Mot de passe oublié"
       lead="Saisissez l'adresse email associée à votre compte. Nous vous enverrons un lien de réinitialisation."
+      linkBrand
     >
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField

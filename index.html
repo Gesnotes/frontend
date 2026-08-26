@@ -4,29 +4,187 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Gesnotes — Le suivi scolaire, en toute confiance</title>
 
-    <!--
-      Ce titre est celui de la page d'entrée ; chaque écran le remplace ensuite
-      (voir `DocumentTitle`). Les métadonnées ci-dessous, elles, sont figées :
-      l'application est une SPA derrière authentification, seule la page
-      publique est partagée par lien.
-    -->
+    <!-- ═══════════════════════════════════════════════════════════════
+         SEO — Titre et description
+         Chaque page de l'application remplace le title via DocumentTitle.
+         Seule la landing page est publiquement indexable.
+    ════════════════════════════════════════════════════════════════════ -->
+    <title>Gesnotes — Logiciel de gestion scolaire | Notes, bulletins & communication</title>
+
     <meta
       name="description"
-      content="Gesnotes suit les notes scolaires et les partage avec les familles : saisie par les enseignants, moyennes et bulletins par période, notifications aux parents."
+      content="Gesnotes est le logiciel de gestion scolaire conçu pour les établissements d'Afrique francophone. Gestion des notes, bulletins automatiques, suivi des absences et notifications aux parents en temps réel."
     />
+    <meta
+      name="keywords"
+      content="Gesnotes, logiciel gestion scolaire, application scolaire, gestion des notes, bulletins scolaires, suivi pédagogique, communication école parents, feuille de présence, école Bénin, école Afrique, plateforme éducative, directeur école, chef établissement, logiciel enseignant"
+    />
+    <meta name="author" content="Gesnotes" />
+    <meta name="application-name" content="Gesnotes" />
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large" />
     <meta name="theme-color" content="#1e40af" />
 
+    <!-- Canonical : évite le contenu dupliqué -->
+    <link rel="canonical" href="https://gesnotes.bj/" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Open Graph — Partage sur réseaux sociaux & messageries
+    ════════════════════════════════════════════════════════════════════ -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Gesnotes" />
-    <meta property="og:title" content="Gesnotes — Le suivi scolaire, en toute confiance" />
+    <meta property="og:url" content="https://gesnotes.bj/" />
+    <meta property="og:locale" content="fr_FR" />
+    <meta property="og:title" content="Gesnotes — Logiciel de gestion scolaire | Notes, bulletins &amp; communication" />
     <meta
       property="og:description"
-      content="Saisie des notes par les enseignants, moyennes et bulletins par période, notifications aux parents."
+      content="Gesnotes simplifie la gestion scolaire : saisie des notes par les enseignants, bulletins par période, suivi des absences et notifications push aux parents — tout depuis une seule plateforme."
     />
-    <meta property="og:image" content="/favicon.svg" />
-    <meta name="twitter:card" content="summary" />
+    <meta property="og:image" content="https://gesnotes.bj/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Gesnotes — Logiciel de gestion scolaire" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Twitter / X Card
+    ════════════════════════════════════════════════════════════════════ -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Gesnotes — Logiciel de gestion scolaire" />
+    <meta
+      name="twitter:description"
+      content="Notes, bulletins, présences et communication avec les parents — une seule plateforme pour toute l'école."
+    />
+    <meta name="twitter:image" content="https://gesnotes.bj/og-image.png" />
+
+    <!-- ═══════════════════════════════════════════════════════════════
+         Schema.org JSON-LD — Signal majeur pour Google & les LLMs (GEO)
+         SoftwareApplication décrit le produit de manière structurée.
+         FAQPage répond aux questions que posent les moteurs IA.
+    ════════════════════════════════════════════════════════════════════ -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://gesnotes.bj/#app",
+          "name": "Gesnotes",
+          "url": "https://gesnotes.bj/",
+          "applicationCategory": "EducationalApplication",
+          "applicationSubCategory": "School Management Software",
+          "operatingSystem": "Web, Android, iOS",
+          "description": "Gesnotes est un logiciel de gestion scolaire destiné aux établissements scolaires d'Afrique francophone. Il permet la saisie des notes par les enseignants, le calcul automatique des moyennes, la génération des bulletins par période, la gestion des absences et la communication en temps réel avec les parents via notifications push.",
+          "keywords": "gestion scolaire, logiciel scolaire, gestion des notes, bulletins scolaires, suivi pédagogique, communication école parents, Gesnotes, école Bénin, Afrique francophone",
+          "inLanguage": "fr",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "XOF",
+            "description": "Essai sur demande — contactez l'équipe Gesnotes pour démarrer."
+          },
+          "featureList": [
+            "Saisie des notes par les enseignants",
+            "Calcul automatique des moyennes par matière et par période",
+            "Génération et impression des bulletins scolaires",
+            "Gestion des absences et feuilles de présence numériques",
+            "Notifications push aux parents en temps réel",
+            "Tableau de bord administrateur pour chef d'établissement",
+            "Espace enseignant avec emploi du temps et historique",
+            "Espace parent pour suivre la scolarité de son enfant",
+            "Annonces, convocations et signalement d'incidents",
+            "Fonctionne hors connexion (PWA)"
+          ],
+          "audience": {
+            "@type": "Audience",
+            "audienceType": "Directeurs d'école, Enseignants, Parents d'élèves"
+          },
+          "provider": {
+            "@type": "Organization",
+            "@id": "https://gesnotes.bj/#organization",
+            "name": "Gesnotes",
+            "url": "https://gesnotes.bj/",
+            "email": "contact@gesnotes.bj",
+            "areaServed": {
+              "@type": "Place",
+              "name": "Afrique francophone"
+            },
+            "knowsAbout": [
+              "Gestion scolaire",
+              "Logiciel éducatif",
+              "Suivi pédagogique",
+              "Communication école-famille"
+            ]
+          },
+          "screenshot": "https://gesnotes.bj/og-image.png"
+        },
+        {
+          "@type": "FAQPage",
+          "@id": "https://gesnotes.bj/#faq",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "Qu'est-ce que Gesnotes ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Gesnotes est un logiciel de gestion scolaire en ligne conçu pour les établissements scolaires. Il centralise la saisie des notes, le calcul des moyennes, la génération des bulletins et la communication avec les parents dans une seule application accessible sur web et mobile."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Comment fonctionne la gestion des notes sur Gesnotes ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Les enseignants saisissent les notes depuis leur espace dédié. Gesnotes calcule automatiquement les moyennes par matière et par période. Les bulletins sont générés instantanément et les parents reçoivent une notification push dès qu'une note est publiée."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Gesnotes est-il disponible pour les écoles au Bénin et en Afrique ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui. Gesnotes est conçu pour les établissements scolaires d'Afrique francophone, avec une interface en français adaptée aux réalités locales (système de notation, calendrier scolaire, communication par notification mobile)."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Les parents peuvent-ils suivre les notes de leurs enfants ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui. Les parents disposent d'un espace personnel sur Gesnotes où ils peuvent consulter les notes, les bulletins, les absences et les annonces de l'école. Ils reçoivent des notifications push sur leur téléphone dès qu'il y a du nouveau."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Gesnotes fonctionne-t-il sans connexion internet ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Oui. Gesnotes est une Progressive Web App (PWA) qui peut fonctionner partiellement hors connexion. Les données consultées récemment restent accessibles même sans réseau, ce qui est essentiel dans des zones à connectivité limitée."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Comment démarrer avec Gesnotes pour mon école ?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Il suffit de remplir le formulaire de demande d'accès sur gesnotes.bj. L'équipe Gesnotes vous recontacte pour configurer votre établissement, importer vos classes et vous accompagner dans la prise en main."
+              }
+            }
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://gesnotes.bj/#website",
+          "url": "https://gesnotes.bj/",
+          "name": "Gesnotes",
+          "description": "Logiciel de gestion scolaire pour les établissements d'Afrique francophone",
+          "inLanguage": "fr",
+          "publisher": {
+            "@id": "https://gesnotes.bj/#organization"
+          }
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

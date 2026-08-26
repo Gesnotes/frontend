@@ -1,7 +1,8 @@
-import { useId } from 'react';
+import { useId, useState } from 'react';
 import type {
   InputHTMLAttributes, ReactNode, SelectHTMLAttributes, TextareaHTMLAttributes,
 } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 
 type FieldShellProps = {
   label: string;
@@ -31,10 +32,35 @@ type Common = { label: string; hint?: string; error?: string };
 export function TextField({
   label, hint, error, ...rest
 }: Common & Omit<InputHTMLAttributes<HTMLInputElement>, 'id'>) {
+  const [revealed, setRevealed] = useState(false);
+  const isPassword = rest.type === 'password';
+
   return (
     <FieldShell label={label} hint={hint} error={error}>
       {({ id, invalid, describedBy }) => (
-        <input id={id} className="ui-input" aria-invalid={invalid} aria-describedby={describedBy} {...rest} />
+        isPassword ? (
+          <div className="ui-input-wrap">
+            <input
+              id={id}
+              className="ui-input ui-input--password"
+              aria-invalid={invalid}
+              aria-describedby={describedBy}
+              {...rest}
+              type={revealed ? 'text' : 'password'}
+            />
+            <button
+              type="button"
+              className="ui-input-reveal"
+              onClick={() => setRevealed((current) => !current)}
+              aria-label={revealed ? 'Masquer le mot de passe' : 'Afficher le mot de passe'}
+              aria-pressed={revealed}
+            >
+              {revealed ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        ) : (
+          <input id={id} className="ui-input" aria-invalid={invalid} aria-describedby={describedBy} {...rest} />
+        )
       )}
     </FieldShell>
   );

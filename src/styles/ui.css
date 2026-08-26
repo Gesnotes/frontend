@@ -233,6 +233,35 @@
   line-height: 1.5;
 }
 
+/* ---- Champ mot de passe : bouton afficher/masquer ---- */
+.ui-input-wrap {
+  position: relative;
+  display: flex;
+}
+
+.ui-input--password {
+  padding-right: 40px;
+}
+
+.ui-input-reveal {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  color: var(--on-surface-variant);
+  transition: color var(--motion-fast), background var(--motion-fast);
+}
+
+.ui-input-reveal:hover {
+  color: var(--on-background);
+  background: var(--surface-container-low);
+}
+
 .ui-select {
   appearance: none;
   background-image: linear-gradient(45deg, transparent 50%, var(--outline) 50%),
