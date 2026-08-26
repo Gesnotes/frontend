@@ -29,8 +29,9 @@ export default function ResetPasswordPage() {
       <AuthLayout
         title="Lien invalide"
         lead="Ce lien de réinitialisation est incomplet ou a déjà été utilisé. Demandez-en un nouveau."
+        linkBrand
       >
-        <div className="auth__form">
+        <div className="mt-6 flex flex-col gap-4">
           <Link to={paths.forgotPassword}>
             <Button block>Demander un nouveau lien</Button>
           </Link>
@@ -58,8 +59,9 @@ export default function ResetPasswordPage() {
     <AuthLayout
       title="Nouveau mot de passe"
       lead="Choisissez un mot de passe d'au moins 8 caractères. Vos autres sessions seront déconnectées."
+      linkBrand
     >
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField

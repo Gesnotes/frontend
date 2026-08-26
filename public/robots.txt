@@ -1,0 +1,27 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# robots.txt — Gesnotes
+#
+# Seule la page publique (landing + auth publique) est indexable.
+# Les espaces authentifiés n'ont aucun intérêt SEO et ne doivent pas être
+# crawlés (données privées, contenu derrière connexion).
+# ──────────────────────────────────────────────────────────────────────────────
+
+User-agent: *
+
+# Espaces authentifiés — interdits au crawl
+Disallow: /admin/
+Disallow: /enseignant/
+Disallow: /parent/
+Disallow: /equipe/
+
+# Pages API — jamais à indexer
+Disallow: /api/
+
+# Pages autorisées (explicitement)
+Allow: /
+Allow: /connexion
+Allow: /inscription
+Allow: /mot-de-passe-oublie
+
+# Sitemap
+Sitemap: https://gesnotes.bj/sitemap.xml

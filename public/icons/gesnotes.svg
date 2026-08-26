@@ -1,12 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Gesnotes">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1e40af"/>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#00288e"/>
       <stop offset="1" stop-color="#3755c3"/>
     </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6cf8bb"/>
+      <stop offset="1" stop-color="#006c49"/>
+    </linearGradient>
   </defs>
-  <rect width="512" height="512" rx="112" fill="url(#g)"/>
-  <text x="256" y="256" fill="#ffffff" font-family="Inter, system-ui, sans-serif"
-        font-size="288" font-weight="800" text-anchor="middle" dominant-baseline="central"
-        letter-spacing="-8">G</text>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <text x="226" y="222" fill="#ffffff" font-family="Inter, system-ui, sans-serif"
+        font-size="168" font-weight="800" text-anchor="middle" dominant-baseline="central"
+        letter-spacing="-6">GN</text>
+  <circle cx="400" cy="400" r="72" fill="url(#badge)" stroke="#ffffff" stroke-width="8"/>
+  <path d="M368 404 L392 428 L438 372" fill="none" stroke="#ffffff" stroke-width="16"
+        stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

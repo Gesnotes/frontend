@@ -2,6 +2,7 @@ import type { Role } from '../api';
 
 /** Chemins de l'application. Source unique : ne pas écrire d'URL en dur ailleurs. */
 export const paths = {
+  landing: '/',
   login: '/connexion',
   forgotPassword: '/mot-de-passe-oublie',
   resetPassword: '/reinitialiser-mot-de-passe',

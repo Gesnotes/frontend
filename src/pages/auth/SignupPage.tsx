@@ -1,9 +1,9 @@
 import { useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { errorMessage, onboardingApi } from '../../api';
 import { paths } from '../../routes/paths';
-import { Alert, Button, CheckboxChip, TextField } from '../../ui';
+import { Alert, Button, CheckboxChip, TextField, useToast } from '../../ui';
 import { AuthLayout } from './AuthLayout';
 
 const NIVEAUX = ['Garderie', 'Maternelle', 'Primaire', 'Collège', 'Secondaire'];
@@ -15,6 +15,9 @@ const NIVEAUX = ['Garderie', 'Maternelle', 'Primaire', 'Collège', 'Secondaire']
  * plus tard, par un lien transmis pendant l'appel.
  */
 export default function SignupPage() {
+  const navigate = useNavigate();
+  const toast = useToast();
+
   const [schoolName, setSchoolName] = useState('');
   const [contactName, setContactName] = useState('');
   const [email, setEmail] = useState('');
@@ -23,7 +26,6 @@ export default function SignupPage() {
   const [levels, setLevels] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [sent, setSent] = useState(false);
 
   function toggleLevel(level: string) {
     setLevels((current) =>
@@ -44,7 +46,11 @@ export default function SignupPage() {
         city: city.trim(),
         levels,
       });
-      setSent(true);
+      // Retour à la landing plutôt qu'un écran de remerciement isolé : la
+      // confirmation voyage avec le toast, et le visiteur retombe sur une
+      // page qui a une suite (explorer, se connecter) au lieu d'un cul-de-sac.
+      toast.success(`Demande envoyée — l’équipe Gesnotes rappelle ${schoolName.trim()} sous 48h.`);
+      navigate(paths.landing, { replace: true });
     } catch (cause) {
       setError(errorMessage(cause));
     } finally {
@@ -52,40 +58,18 @@ export default function SignupPage() {
     }
   }
 
-  if (sent) {
-    const firstName = contactName.trim().split(' ')[0] || contactName.trim();
-    return (
-      <AuthLayout
-        title={`Merci, ${firstName} !`}
-        lead={`Un membre de l’équipe vous appelle sous 48h pour configurer ${schoolName.trim()} avec vous.`}
-        footnote={
-          <>
-            Une question avant l’appel ?
-            <br />
-            contact@gesnotes.bj
-          </>
-        }
-      >
-        <div className="auth__form">
-          <Link to={paths.login}>
-            <Button variant="secondary" block>Retour à la connexion</Button>
-          </Link>
-        </div>
-      </AuthLayout>
-    );
-  }
-
   return (
     <AuthLayout
       title="Essayez Gesnotes dans votre école"
       lead="Deux minutes. On vous rappelle."
+      linkBrand
       footnote={
         <>
-          Déjà cliente ? <Link to={paths.login}>Connectez-vous</Link>
+          Vous avez déjà un compte ? <Link to={paths.login}>Connectez-vous</Link>
         </>
       }
     >
-      <form className="auth__form" onSubmit={onSubmit} noValidate>
+      <form className="mt-6 flex flex-col gap-4" onSubmit={onSubmit} noValidate>
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField
@@ -134,7 +118,7 @@ export default function SignupPage() {
 
         <div className="ui-field">
           <span className="ui-field__label">Niveaux présents</span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 'var(--space-3)' }}>
+          <div className="flex flex-wrap gap-3">
             {NIVEAUX.map((level) => (
               <CheckboxChip
                 key={level}
