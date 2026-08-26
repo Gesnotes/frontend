@@ -46,6 +46,7 @@ const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
 const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
+const AnnoncesIncidentsPage = lazy(() => import('./pages/admin/AnnoncesIncidentsPage'));
 
 const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
@@ -179,6 +180,7 @@ export default function App() {
                 <Route path="journal-audit" element={<AuditLogPage />} />
                 <Route path="annees-scolaires" element={<SchoolYearsPage />} />
                 <Route path="archives" element={<ArchivesPage />} />
+                <Route path="annonces" element={<AnnoncesIncidentsPage />} />
                 <Route path="parametres" element={<SettingsPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>
@@ -192,6 +194,7 @@ export default function App() {
                 <Route path="presence" element={<TeacherAttendancePage />} />
                 <Route path="eleves" element={<TeacherStudentsPage />} />
                 <Route path="eleves/:studentId" element={<TeacherStudentDetailPage />} />
+                <Route path="annonces" element={<AnnoncesIncidentsPage />} />
                 <Route path="historique" element={<TeacherHistoryPage />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Route>

@@ -82,7 +82,12 @@ function StudentBody({ data, onManageParents }: { data: StudentDetail; onManageP
                   <Avatar name={personName(parent)} size={32} />
                   <div className="min-w-0">
                     <div className="truncate text-sm font-semibold text-gray-900">{personName(parent)}</div>
-                    <div className="truncate text-xs text-gray-500">{parent.email ?? parent.phone ?? '—'}</div>
+                    <div className="truncate text-xs text-gray-600">
+                      {parent.phone ? <span className="font-semibold text-blue-700">📞 {parent.phone}</span> : null}
+                      {parent.phone && parent.email ? <span> · </span> : null}
+                      {parent.email ? <span>✉️ {parent.email}</span> : null}
+                      {!parent.phone && !parent.email ? '—' : null}
+                    </div>
                   </div>
                 </div>
               ))}

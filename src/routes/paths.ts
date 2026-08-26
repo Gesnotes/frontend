@@ -26,6 +26,7 @@ export const paths = {
     auditLog: '/admin/journal-audit',
     schoolYears: '/admin/annees-scolaires',
     archives: '/admin/archives',
+    annonces: '/admin/annonces',
     settings: '/admin/parametres',
   },
 
@@ -38,6 +39,7 @@ export const paths = {
     history: '/enseignant/historique',
     students: '/enseignant/eleves',
     studentDetail: (id: number | string) => `/enseignant/eleves/${id}`,
+    annonces: '/enseignant/annonces',
   },
 
   parent: {

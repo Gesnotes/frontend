@@ -1067,3 +1067,62 @@ export type AcceptSignupRequestResult = {
   school: { id: ID; name: string; city: string | null };
   adminEmail: string;
 };
+
+// ------------------------------------------------------------- Notifications & Annonces
+
+export type NotificationType = 'annonce' | 'convocation' | 'incident';
+export type NotificationTargetType = 'parent' | 'class_parents' | 'school_parents';
+export type NotificationResourceType = 'grade' | 'student' | 'attendance' | 'enrollment' | 'other';
+
+export type NotificationItem = {
+  id: ID;
+  recipientId: ID;
+  title: string;
+  body: string;
+  type: NotificationType;
+  severity: number;
+  targetType: NotificationTargetType;
+  resourceType: NotificationResourceType | null;
+  resourceId: ID | null;
+  creatorName: string;
+  creatorRole: Role;
+  readAt: IsoDateTime | null;
+  createdAt: IsoDateTime;
+};
+
+export type NotificationListResponse = {
+  items: NotificationItem[];
+  unreadCount: number;
+};
+
+export type SentNotificationStats = {
+  totalRecipients: number;
+  readRecipients: number;
+  readPercentage: number;
+};
+
+export type SentNotificationItem = {
+  id: ID;
+  title: string;
+  body: string;
+  type: NotificationType;
+  severity: number;
+  targetType: NotificationTargetType;
+  targetId: ID | null;
+  createdAt: IsoDateTime;
+  creatorName: string;
+  creatorRole: Role;
+  stats: SentNotificationStats;
+};
+
+export type CreateNotificationPayload = {
+  title: string;
+  body: string;
+  type: NotificationType;
+  severity?: number;
+  targetType: NotificationTargetType;
+  targetId?: ID | null;
+  resourceType?: NotificationResourceType | null;
+  resourceId?: ID | null;
+};
+
