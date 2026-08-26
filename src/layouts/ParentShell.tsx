@@ -10,11 +10,9 @@ import { OfflineBar } from '../pwa/OfflineBar';
 import { useForegroundNotifications } from '../push/useForegroundNotifications';
 import { paths } from '../routes/paths';
 
-// Onglets inspirés de la maquette Flutter (Accueil / Scolarité / Suivi
-// Parental), moins la messagerie (hors périmètre : ce serait une vraie
-// fonctionnalité de messagerie temps réel avec les enseignants, pas une
-// reprise visuelle). Pas d'onglet Enfants : changer d'enfant se fait sur
-// l'accueil, via la rangée d'avatars (ParentHomePage), comme la maquette.
+import { notificationsApi } from '../api';
+
+// Onglets inspirés de la maquette Flutter
 const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
   { to: paths.parent.home, label: 'Accueil', icon: Home, end: true },
   { to: paths.parent.scolarite, label: 'Scolarité', icon: BookOpen },
@@ -25,6 +23,8 @@ const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = 
 /** Coquille mobile de l'espace parent : colonne unique et navigation basse. */
 export function ParentShell() {
   useForegroundNotifications();
+  const notificationsQuery = notificationsApi.useNotifications(true);
+  const unreadCount = notificationsQuery.data?.unreadCount ?? 0;
 
   return (
     <TermProvider>
@@ -42,18 +42,26 @@ export function ParentShell() {
           >
             {items.map((item) => {
               const Icon = item.icon;
+              const isAlerts = item.to === paths.parent.notifications;
               return (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.end}
                   className={({ isActive }) =>
-                    `flex max-w-[130px] flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
+                    `relative flex max-w-[130px] flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
                       isActive ? 'bg-[#dde1ff] text-[#173bab]' : 'text-gray-400'
                     }`
                   }
                 >
-                  <Icon size={20} aria-hidden="true" />
+                  <div className="relative">
+                    <Icon size={20} aria-hidden="true" />
+                    {isAlerts && unreadCount > 0 ? (
+                      <span className="absolute -right-2 -top-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                        {unreadCount > 99 ? '99+' : unreadCount}
+                      </span>
+                    ) : null}
+                  </div>
                   {item.label}
                 </NavLink>
               );

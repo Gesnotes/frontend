@@ -31,3 +31,4 @@ export * as auditLogsApi from './resources/auditLogs';
 export * as onboardingApi from './resources/onboarding';
 export * as staffApi from './resources/staff';
 export * as schoolApi from './resources/school';
+export * as notificationsApi from './resources/notifications';
