@@ -3,7 +3,7 @@ import { useState } from 'react';
 import {
   classesApi, errorMessage, holidaysApi, referentialsApi, schoolYearsApi, studentsApi, subjectsApi,
   teachersApi,
-  type Holiday, type ID, type SchoolYear, type Term,
+  type GradeType, type Holiday, type ID, type SchoolYear, type Term,
 } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { formatCount, formatDate, plural } from '../../lib/format';
@@ -14,7 +14,9 @@ import {
 } from '../../ui';
 import { PermanentDeleteDialog } from '../../components/PermanentDeleteDialog';
 
-type Tab = 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears' | 'holidays';
+type Tab =
+  | 'classes' | 'subjects' | 'teachers' | 'students' | 'terms' | 'schoolYears' | 'holidays'
+  | 'gradeTypes';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'classes', label: 'Classes' },
@@ -24,6 +26,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'terms', label: 'Périodes' },
   { id: 'schoolYears', label: 'Années scolaires' },
   { id: 'holidays', label: 'Jours fériés' },
+  { id: 'gradeTypes', label: 'Types de note' },
 ];
 
 /**
@@ -75,6 +78,7 @@ export default function ArchivesPage() {
           {tab === 'terms' ? <ArchivedTerms /> : null}
           {tab === 'schoolYears' ? <ArchivedSchoolYears /> : null}
           {tab === 'holidays' ? <ArchivedHolidays /> : null}
+          {tab === 'gradeTypes' ? <ArchivedGradeTypes /> : null}
         </div>
       </PageContent>
     </>
@@ -736,6 +740,113 @@ function ArchivedHolidays() {
         open={toDelete !== null}
         title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
         description="Le jour férié est effacé de la liste."
+        confirmName={toDelete?.label}
+        pending={remove.isPending}
+        onCancel={() => setToDelete(null)}
+        onConfirm={async (typedLabel) => {
+          if (!toDelete) return;
+          await remove.mutateAsync({ id: toDelete.id, confirmLabel: typedLabel });
+          toast.success(`« ${toDelete.label} » supprimé définitivement`);
+          setToDelete(null);
+        }}
+      />
+    </>
+  );
+}
+
+/**
+ * Types de note archivés.
+ *
+ * Diverge des autres archives de cette page : la suppression définitive ne
+ * cascade jamais sur les notes ou évaluations qui référencent le type — le
+ * backend la refuse tant qu'il en reste (409, affiché tel quel dans la boîte
+ * de dialogue). Un type de note archivé ne peut disparaître pour de bon
+ * qu'une fois vraiment inutilisé.
+ */
+function ArchivedGradeTypes() {
+  const toast = useToast();
+  const gradeTypes = referentialsApi.useGradeTypes(true);
+  const restore = referentialsApi.useRestoreGradeType();
+  const remove = referentialsApi.useDeleteGradeTypePermanently();
+
+  const [toDelete, setToDelete] = useState<GradeType | null>(null);
+
+  async function runRestore(gradeType: GradeType) {
+    try {
+      await restore.mutateAsync(gradeType.id);
+      toast.success(`« ${gradeType.label} » restauré`);
+    } catch (cause) {
+      toast.error(errorMessage(cause));
+    }
+  }
+
+  return (
+    <>
+      <QueryBoundary query={gradeTypes} loading={<TableSkeleton />}>
+        {(items) => {
+          const rows = onlyArchived(items);
+          const columns: Column<GradeType>[] = [
+            { key: 'label', header: 'Type de note', render: (row) => <strong>{row.label}</strong> },
+            {
+              key: 'weight',
+              header: 'Poids',
+              render: (row) => <span className="t-muted">{row.weight}</span>,
+            },
+            {
+              key: 'content',
+              header: 'Utilisation',
+              render: (row) => (
+                <Chip tone={row.gradeCount > 0 ? 'warning' : 'neutral'}>
+                  {formatCount(row.evaluationCount)} {plural(row.evaluationCount, 'évaluation')} ·{' '}
+                  {formatCount(row.gradeCount)} {plural(row.gradeCount, 'note')}
+                </Chip>
+              ),
+            },
+            {
+              key: 'archivedAt',
+              header: 'Archivé le',
+              render: (row) => <span className="t-muted">{formatDate(row.archivedAt)}</span>,
+            },
+            {
+              key: 'actions',
+              srHeader: 'Actions',
+              align: 'numeric',
+              render: (row) => (
+                <RowActions
+                  restoring={restore.isPending}
+                  onRestore={() => void runRestore(row)}
+                  onDelete={() => setToDelete(row)}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <DataTable
+              caption="Types de note archivés"
+              columns={columns}
+              rows={rows}
+              rowKey={(row) => String(row.id)}
+              empty={
+                <EmptyState
+                  icon="✓"
+                  title="Aucun type de note archivé"
+                  description="Tout est actif. Les éléments archivés apparaîtront ici."
+                />
+              }
+            />
+          );
+        }}
+      </QueryBoundary>
+
+      <PermanentDeleteDialog
+        open={toDelete !== null}
+        title={`Supprimer « ${toDelete?.label ?? ''} » définitivement ?`}
+        description={
+          toDelete && (toDelete.evaluationCount > 0 || toDelete.gradeCount > 0)
+            ? `${formatCount(toDelete.evaluationCount)} ${plural(toDelete.evaluationCount, 'évaluation')} et ${formatCount(toDelete.gradeCount)} ${plural(toDelete.gradeCount, 'note')} référencent encore ce type : la suppression définitive sera refusée tant qu'elles existent.`
+            : "Ce type de note n'est utilisé par aucune évaluation ni aucune note."
+        }
         confirmName={toDelete?.label}
         pending={remove.isPending}
         onCancel={() => setToDelete(null)}

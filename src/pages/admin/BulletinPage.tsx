@@ -4,6 +4,7 @@ import { Link, useParams } from 'react-router-dom';
 import {
   classesApi, errorMessage, type BulletinExportFormat, type ClassDetail, type RankedStudentResult,
 } from '../../api';
+import { ExportFilenameModal } from '../../components/ExportFilenameModal';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { useTermContext } from '../../context/term-context';
 import { downloadBlob, safeFilename } from '../../lib/download';
@@ -24,6 +25,7 @@ export default function BulletinPage() {
 
   const bulletin = classesApi.useClassBulletin(Number.isFinite(id) ? id : undefined, termId);
   const [exporting, setExporting] = useState<BulletinExportFormat | 'csv' | 'annuel' | null>(null);
+  const [csvFilenamePrompt, setCsvFilenamePrompt] = useState(false);
 
   /**
    * Le bulletin n'est remis aux familles qu'à la fin d'une période, quand
@@ -79,20 +81,18 @@ export default function BulletinPage() {
   }
 
   /** Le PDF se remet aux familles ; le CSV se retravaille dans un tableur. */
-  async function exportCsv() {
+  async function exportCsv(filename: string) {
     if (termId === undefined || !bulletin.data) return;
     setExporting('csv');
     try {
       const blob = await classesApi.exportClassBulletinCsv(id, termId);
-      downloadBlob(
-        blob,
-        `${safeFilename(bulletin.data.className)}-${safeFilename(bulletin.data.termLabel)}.csv`,
-      );
+      downloadBlob(blob, filename);
       toast.success('Bulletin exporté');
     } catch (cause) {
       toast.error(errorMessage(cause));
     } finally {
       setExporting(null);
+      setCsvFilenamePrompt(false);
     }
   }
 
@@ -114,7 +114,7 @@ export default function BulletinPage() {
               loading={exporting === 'csv'}
               disabled={!printable}
               title={printableHint}
-              onClick={() => void exportCsv()}
+              onClick={() => setCsvFilenamePrompt(true)}
             >
               Export CSV
             </Button>
@@ -158,6 +158,18 @@ export default function BulletinPage() {
           </QueryBoundary>
         </TermRequired>
       </PageContent>
+
+      <ExportFilenameModal
+        open={csvFilenamePrompt}
+        defaultName={
+          bulletin.data
+            ? `${safeFilename(bulletin.data.className)}-${safeFilename(bulletin.data.termLabel)}`
+            : ''
+        }
+        extension="csv"
+        onClose={() => setCsvFilenamePrompt(false)}
+        onConfirm={(filename) => void exportCsv(filename)}
+      />
     </>
   );
 }

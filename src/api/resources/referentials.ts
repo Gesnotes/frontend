@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { api } from '../http';
 import { queryKeys } from '../queryKeys';
-import type { GradeType, ID, Term, TermPayload } from '../types';
+import type { GradeType, GradeTypePayload, ID, Term, TermPayload } from '../types';
 
 /**
  * Référentiels de l'établissement : périodes et catégories de notes.
@@ -25,9 +25,16 @@ export function fetchTerms(includeArchived = false): Promise<Term[]> {
   return api.get<Term[]>(includeArchived ? '/terms?include_archived=true' : '/terms');
 }
 
-/** `GET /grade-types` — triées par position, réservé à l'équipe pédagogique. */
-export function fetchGradeTypes(): Promise<GradeType[]> {
-  return api.get<GradeType[]>('/grade-types');
+/**
+ * `GET /grade-types` — triées par position, réservé à l'équipe pédagogique.
+ *
+ * Les types archivés sont exclus côté serveur par défaut : ils n'ont rien à
+ * faire dans le sélecteur de saisie. Seul l'écran des archives les demande.
+ */
+export function fetchGradeTypes(includeArchived = false): Promise<GradeType[]> {
+  return api.get<GradeType[]>(
+    includeArchived ? '/grade-types?include_archived=true' : '/grade-types',
+  );
 }
 
 // --------------------------------------------- Administration des périodes
@@ -89,10 +96,10 @@ export function useTerms(includeArchived = false) {
   });
 }
 
-export function useGradeTypes() {
+export function useGradeTypes(includeArchived = false) {
   return useQuery({
-    queryKey: queryKeys.gradeTypes.all,
-    queryFn: fetchGradeTypes,
+    queryKey: queryKeys.gradeTypes.list(includeArchived),
+    queryFn: () => fetchGradeTypes(includeArchived),
     staleTime: REFERENTIAL_STALE_TIME,
   });
 }
@@ -158,6 +165,92 @@ export function useDeleteTermPermanently() {
   return useMutation({
     mutationFn: ({ id, confirmLabel }: { id: ID; confirmLabel: string }) =>
       deleteTermPermanently(id, confirmLabel),
+    onSuccess: invalidate,
+  });
+}
+
+// -------------------------------------- Administration des types de note
+
+export function createGradeType(payload: GradeTypePayload): Promise<GradeType> {
+  return api.post<GradeType>('/grade-types', payload);
+}
+
+export function updateGradeType(id: ID, payload: Partial<GradeTypePayload>): Promise<GradeType> {
+  return api.patch<GradeType>(`/grade-types/${id}`, payload);
+}
+
+/**
+ * Archivage : toujours autorisé, même sur un type déjà utilisé — il sort du
+ * sélecteur de saisie sans rien perdre de l'historique déjà noté avec.
+ */
+export function archiveGradeType(id: ID): Promise<void> {
+  return api.delete<void>(`/grade-types/${id}`);
+}
+
+export function restoreGradeType(id: ID): Promise<GradeType> {
+  return api.post<GradeType>(`/grade-types/${id}/restore`, {});
+}
+
+/**
+ * Suppression définitive depuis les archives : refusée par le backend tant
+ * que des notes ou évaluations référencent encore ce type (409) — un type de
+ * note utilisé ne peut jamais disparaître avec ses notes, contrairement à une
+ * période ou une matière.
+ */
+export function deleteGradeTypePermanently(id: ID, confirmLabel: string): Promise<void> {
+  const query = new URLSearchParams({ permanent: 'true', confirm_label: confirmLabel });
+  return api.delete<void>(`/grade-types/${id}?${query.toString()}`);
+}
+
+/**
+ * Toucher aux types de note change les moyennes affichées partout, comme les
+ * périodes — même liste d'invalidation que `useInvalidateTerms`.
+ */
+function useInvalidateGradeTypes() {
+  const queryClient = useQueryClient();
+  return () => {
+    for (const key of [
+      queryKeys.gradeTypes.all,
+      queryKeys.classes.all,
+      queryKeys.dashboard.all,
+      queryKeys.teacherMe.all,
+      queryKeys.children.all,
+      queryKeys.parentMe.all,
+    ]) {
+      queryClient.invalidateQueries({ queryKey: key });
+    }
+  };
+}
+
+export function useCreateGradeType() {
+  const invalidate = useInvalidateGradeTypes();
+  return useMutation({ mutationFn: createGradeType, onSuccess: invalidate });
+}
+
+export function useUpdateGradeType() {
+  const invalidate = useInvalidateGradeTypes();
+  return useMutation({
+    mutationFn: ({ id, ...payload }: Partial<GradeTypePayload> & { id: ID }) =>
+      updateGradeType(id, payload),
+    onSuccess: invalidate,
+  });
+}
+
+export function useArchiveGradeType() {
+  const invalidate = useInvalidateGradeTypes();
+  return useMutation({ mutationFn: archiveGradeType, onSuccess: invalidate });
+}
+
+export function useRestoreGradeType() {
+  const invalidate = useInvalidateGradeTypes();
+  return useMutation({ mutationFn: restoreGradeType, onSuccess: invalidate });
+}
+
+export function useDeleteGradeTypePermanently() {
+  const invalidate = useInvalidateGradeTypes();
+  return useMutation({
+    mutationFn: ({ id, confirmLabel }: { id: ID; confirmLabel: string }) =>
+      deleteGradeTypePermanently(id, confirmLabel),
     onSuccess: invalidate,
   });
 }
