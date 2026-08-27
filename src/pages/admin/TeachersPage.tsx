@@ -45,14 +45,18 @@ export default function TeachersPage() {
   const withoutAssignment = list.filter((t) => t.affectations.length === 0).length;
   const totalAssignments = list.reduce((sum, t) => sum + t.affectations.length, 0);
 
+  // Dépend de `teachers.data` (référence stable côté cache TanStack Query),
+  // pas de `list` : `list` vaut `[]` par un `??` réévalué à chaque rendu tant
+  // que la requête n'a pas de données, ce qui invaliderait ces memos à chaque
+  // rendu pendant le chargement.
   const subjects = useMemo(
-    () => Array.from(new Set(list.flatMap((t) => t.affectations.map((a) => a.subjectName)))).sort((a, b) => a.localeCompare(b, 'fr')),
-    [list],
+    () => Array.from(new Set((teachers.data ?? []).flatMap((t) => t.affectations.map((a) => a.subjectName)))).sort((a, b) => a.localeCompare(b, 'fr')),
+    [teachers.data],
   );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return list.filter((teacher) => {
+    return (teachers.data ?? []).filter((teacher) => {
       if (subjectFilter && !teacher.affectations.some((a) => a.subjectName === subjectFilter)) return false;
       if (query) {
         const haystack = `${personName(teacher, teacher.email)} ${teacher.email}`.toLowerCase();
@@ -60,7 +64,7 @@ export default function TeachersPage() {
       }
       return true;
     });
-  }, [list, search, subjectFilter]);
+  }, [teachers.data, search, subjectFilter]);
 
   async function confirmArchive() {
     if (!toArchive) return;
