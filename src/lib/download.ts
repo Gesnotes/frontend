@@ -21,7 +21,7 @@ export function downloadBlob(blob: Blob, filename: string): void {
 export function safeFilename(value: string): string {
   return value
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-zA-Z0-9-_ ]/g, '')
     .trim()
     .replace(/\s+/g, '-');
