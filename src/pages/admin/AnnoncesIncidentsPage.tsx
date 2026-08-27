@@ -122,9 +122,13 @@ export default function AnnoncesIncidentsPage() {
 
   const sentItems = sentQuery.data?.items ?? [];
 
+  // Dépend de `sentQuery.data` (référence stable côté cache TanStack Query),
+  // pas de `sentItems` : `sentItems` vaut `[]` par un `??` réévalué à chaque
+  // rendu tant que la requête n'a pas de données, ce qui invaliderait ce memo
+  // à chaque rendu pendant le chargement.
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return sentItems.filter((item) => {
+    return (sentQuery.data?.items ?? []).filter((item) => {
       if (typeFilter && item.type !== typeFilter) return false;
       if (
         query &&
@@ -136,7 +140,7 @@ export default function AnnoncesIncidentsPage() {
       }
       return true;
     });
-  }, [sentItems, search, typeFilter]);
+  }, [sentQuery.data, search, typeFilter]);
 
   // Statics
   const totalReadRates = sentItems.reduce((acc, curr) => acc + curr.stats.readPercentage, 0);

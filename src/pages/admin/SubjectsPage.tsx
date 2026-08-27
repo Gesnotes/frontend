@@ -38,11 +38,16 @@ export default function SubjectsPage() {
   const totalCoefficients = list.reduce((sum, s) => sum + Number(s.coefficient), 0);
   const teacherCount = new Set(list.flatMap((s) => s.enseignants.map((t) => t.id))).size;
 
+  // Dépend de `subjects.data` (référence stable côté cache TanStack Query),
+  // pas de `list` : `list` vaut `[]` par un `??` réévalué à chaque rendu tant
+  // que la requête n'a pas de données, ce qui invaliderait ce memo à chaque
+  // rendu pendant le chargement.
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    if (!query) return list;
-    return list.filter((s) => s.name.toLowerCase().includes(query));
-  }, [list, search]);
+    const source = subjects.data ?? [];
+    if (!query) return source;
+    return source.filter((s) => s.name.toLowerCase().includes(query));
+  }, [subjects.data, search]);
 
   async function confirmArchive() {
     if (!toArchive) return;

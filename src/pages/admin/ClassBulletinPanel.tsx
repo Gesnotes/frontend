@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { classesApi, errorMessage, type ID } from '../../api';
+import { ExportFilenameModal } from '../../components/ExportFilenameModal';
 import { QueryBoundary } from '../../components/QueryBoundary';
 import { downloadBlob, safeFilename } from '../../lib/download';
 import { formatGrade } from '../../lib/format';
@@ -32,18 +33,20 @@ export function ClassBulletinPanel({
   const toast = useToast();
   const bulletin = classesApi.useClassBulletin(classId, termId);
   const [exporting, setExporting] = useState(false);
+  const [pendingExport, setPendingExport] = useState<{ className: string; termLabel: string } | null>(null);
 
-  async function exportCsv(className: string, termLabel: string) {
+  async function exportCsv(filename: string) {
     if (termId === undefined) return;
     setExporting(true);
     try {
       const blob = await classesApi.exportClassBulletinCsv(classId, termId);
-      downloadBlob(blob, `${safeFilename(className)}-${safeFilename(termLabel)}.csv`);
+      downloadBlob(blob, filename);
       toast.success('Bulletin exporté');
     } catch (cause) {
       toast.error(errorMessage(cause));
     } finally {
       setExporting(false);
+      setPendingExport(null);
     }
   }
 
@@ -141,7 +144,7 @@ export function ClassBulletinPanel({
                   loading={exporting}
                   disabled={!detail.bulletinReady}
                   title={detail.bulletinReady ? undefined : 'Le bulletin sera disponible une fois toutes les matières notées.'}
-                  onClick={() => void exportCsv(detail.className, detail.termLabel)}
+                  onClick={() => setPendingExport({ className: detail.className, termLabel: detail.termLabel })}
                 >
                   Exporter en CSV
                 </Button>
@@ -150,6 +153,18 @@ export function ClassBulletinPanel({
           );
         }}
       </QueryBoundary>
+
+      <ExportFilenameModal
+        open={pendingExport !== null}
+        defaultName={
+          pendingExport
+            ? `${safeFilename(pendingExport.className)}-${safeFilename(pendingExport.termLabel)}`
+            : ''
+        }
+        extension="csv"
+        onClose={() => setPendingExport(null)}
+        onConfirm={(filename) => void exportCsv(filename)}
+      />
     </div>
   );
 }

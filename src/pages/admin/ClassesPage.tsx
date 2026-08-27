@@ -84,19 +84,23 @@ export default function ClassesPage() {
     return map;
   }, [teachers.data]);
 
+  // Dépend de `classes.data` (référence stable côté cache TanStack Query),
+  // pas de `list` : `list` vaut `[]` par un `??` réévalué à chaque rendu tant
+  // que la requête n'a pas de données, ce qui invaliderait ces memos à chaque
+  // rendu pendant le chargement.
   const levels = useMemo(
-    () => Array.from(new Set(list.map((item) => item.level))).sort((a, b) => a.localeCompare(b, 'fr')),
-    [list],
+    () => Array.from(new Set((classes.data ?? []).map((item) => item.level))).sort((a, b) => a.localeCompare(b, 'fr')),
+    [classes.data],
   );
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return list.filter((item) => {
+    return (classes.data ?? []).filter((item) => {
       if (levelFilter && item.level !== levelFilter) return false;
       if (query && !item.name.toLowerCase().includes(query) && !item.level.toLowerCase().includes(query)) return false;
       return true;
     });
-  }, [list, search, levelFilter]);
+  }, [classes.data, search, levelFilter]);
 
   async function confirmDelete() {
     if (!toDelete) return;

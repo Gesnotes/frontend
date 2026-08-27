@@ -1,7 +1,5 @@
-name: CI
+name: CI Frontend
 
-# Bloque la CI sur toute PR — jusqu'ici seul deploy.yml existait, déclenché
-# uniquement sur push vers main, sans aucune vérification avant le déploiement.
 on:
   pull_request:
 
@@ -19,6 +17,8 @@ jobs:
 
       - run: npm ci
 
-      - run: npm run lint
+      - name: Vérification du code (Linter)
+        run: npm run lint
 
-      - run: npm run build
+      - name: Validation du build production
+        run: npm run build

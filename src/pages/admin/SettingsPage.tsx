@@ -1,9 +1,13 @@
-import { FileText, School, Trash2, Upload } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from 'react';
+import {
+  ChevronDown, ChevronUp, FileText, ListChecks, School, Trash2, Upload,
+} from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 
-import { errorMessage, schoolApi } from '../../api';
+import { errorMessage, isApiError, referentialsApi, schoolApi, type GradeType } from '../../api';
 import { QueryBoundary } from '../../components/QueryBoundary';
-import { Alert, Button, Skeleton, TextField, useToast } from '../../ui';
+import {
+  Alert, Button, CheckboxChip, ConfirmDialog, Modal, ModalActions, Skeleton, TextField, useToast,
+} from '../../ui';
 
 /**
  * Réglages propres à l'école — pour l'instant, le seul champ configurable est
@@ -30,6 +34,7 @@ export default function SettingsPage() {
                 hasHeaderImage={data.hasBulletinHeaderImage}
                 hasFooterImage={data.hasBulletinFooterImage}
               />
+              <GradeTypesCard />
             </>
           )}
         </QueryBoundary>
@@ -45,29 +50,22 @@ function SchoolCard({
   const update = schoolApi.useUpdateContactInfo();
 
   const initial = { email: email ?? '', phone: phone ?? '', address: address ?? '' };
-  const [values, setValues] = useState(initial);
-  const [edited, setEdited] = useState(false);
+  // `null` tant que l'utilisateur n'a rien touché : le formulaire suit alors
+  // directement les props (dérivé au rendu, pas un effet qui resynchronise
+  // — un effet ici écraserait une saisie en cours si les props changent,
+  // par ex. après l'invalidation de la requête déclenchée par `submit`).
+  const [edited, setEdited] = useState<typeof initial | null>(null);
+  const values = edited ?? initial;
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!edited) {
-      setValues({
-        email: email ?? '',
-        phone: phone ?? '',
-        address: address ?? '',
-      });
-    }
-  }, [email, phone, address, edited]);
 
   const dirty =
     values.email.trim() !== initial.email ||
     values.phone.trim() !== initial.phone ||
     values.address.trim() !== initial.address;
 
-  function field(key: keyof typeof values) {
+  function field(key: keyof typeof initial) {
     return (e: ChangeEvent<HTMLInputElement>) => {
-      setValues((v) => ({ ...v, [key]: e.target.value }));
-      setEdited(true);
+      setEdited({ ...values, [key]: e.target.value });
     };
   }
 
@@ -79,8 +77,7 @@ function SchoolCard({
         phone: values.phone.trim() || null,
         address: values.address.trim() || null,
       });
-      setValues({ email: saved.email ?? '', phone: saved.phone ?? '', address: saved.address ?? '' });
-      setEdited(false);
+      setEdited({ email: saved.email ?? '', phone: saved.phone ?? '', address: saved.address ?? '' });
       toast.success('Coordonnées enregistrées');
     } catch (cause) {
       setError(errorMessage(cause));
@@ -130,18 +127,12 @@ function SchoolCard({
 function PassingGradeCard({ current }: { current: number }) {
   const toast = useToast();
   const update = schoolApi.useUpdatePassingGrade();
-  const [value, setValue] = useState(String(current));
-  // Distinct de `dirty` (qui compare juste value à current) : sert à ne
-  // resynchroniser automatiquement que tant que l'utilisateur n'a pas
-  // commencé à taper, pour ne jamais écraser une saisie en cours.
-  const [edited, setEdited] = useState(false);
+  // `null` tant que l'utilisateur n'a rien touché : le champ suit alors
+  // directement `current` (dérivé au rendu, pas un effet qui resynchronise
+  // — voir le même choix sur `SchoolCard` ci-dessus).
+  const [edited, setEdited] = useState<string | null>(null);
+  const value = edited ?? String(current);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!edited) {
-      setValue(String(current));
-    }
-  }, [current, edited]);
 
   const dirty = value.trim() !== String(current);
 
@@ -154,8 +145,7 @@ function PassingGradeCard({ current }: { current: number }) {
     }
     try {
       const saved = await update.mutateAsync(parsed);
-      setValue(String(saved.passingGrade));
-      setEdited(false);
+      setEdited(String(saved.passingGrade));
       toast.success('Seuil de passage enregistré');
     } catch (cause) {
       setError(errorMessage(cause));
@@ -184,10 +174,7 @@ function PassingGradeCard({ current }: { current: number }) {
           max={20}
           step={0.25}
           value={value}
-          onChange={(e) => {
-            setValue(e.target.value);
-            setEdited(true);
-          }}
+          onChange={(e) => setEdited(e.target.value)}
         />
         <Button disabled={!dirty} loading={update.isPending} onClick={() => void submit()}>
           Enregistrer
@@ -335,6 +322,261 @@ function BulletinImageSlotCard({
         ) : null}
       </div>
     </div>
+  );
+}
+
+/**
+ * Catégories de notes (interrogation, devoir, composition — et toute autre
+ * catégorie ajoutée par l'école) et leur poids dans la moyenne.
+ *
+ * Le référentiel n'est plus fermé (voir gradeType.service.ts côté backend) :
+ * l'administration peut désormais ajouter, modifier, réordonner et archiver
+ * ses propres types — par exemple deux devoirs de même poids à la place du
+ * duo devoir/composition. Un type déjà utilisé s'archive toujours (sort du
+ * formulaire de saisie sans rien perdre) mais ne peut être supprimé pour de
+ * bon que depuis les Archives, et seulement s'il n'est plus référencé par
+ * aucune note.
+ */
+function GradeTypesCard() {
+  const toast = useToast();
+  const gradeTypes = referentialsApi.useGradeTypes();
+  const archive = referentialsApi.useArchiveGradeType();
+  const reorder = referentialsApi.useUpdateGradeType();
+
+  const [creating, setCreating] = useState(false);
+  const [creationKey, setCreationKey] = useState(0);
+  const [editing, setEditing] = useState<GradeType | null>(null);
+  const [toArchive, setToArchive] = useState<GradeType | null>(null);
+  const [archiveError, setArchiveError] = useState<string | null>(null);
+
+  function openCreate() {
+    setCreationKey((key) => key + 1);
+    setCreating(true);
+  }
+
+  async function confirmArchive() {
+    if (!toArchive) return;
+    setArchiveError(null);
+    try {
+      await archive.mutateAsync(toArchive.id);
+      toast.success(`« ${toArchive.label} » archivé`);
+      setToArchive(null);
+    } catch (cause) {
+      setArchiveError(errorMessage(cause));
+      if (!isApiError(cause) || !cause.isConflict) toast.error(errorMessage(cause));
+    }
+  }
+
+  /** Échange la position avec le voisin — pas de glisser-déposer pour une liste aussi courte. */
+  async function move(list: GradeType[], index: number, direction: -1 | 1) {
+    const current = list[index];
+    const swapWith = list[index + direction];
+    if (!current || !swapWith) return;
+    await Promise.all([
+      reorder.mutateAsync({ id: current.id, position: swapWith.position }),
+      reorder.mutateAsync({ id: swapWith.id, position: current.position }),
+    ]);
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm lg:col-span-2">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#dde1ff] text-[#173bab]">
+            <ListChecks size={20} aria-hidden="true" />
+          </div>
+          <div>
+            <h2 className="text-base font-bold text-gray-900">Types de note</h2>
+            <p className="text-sm text-gray-500">
+              Catégories utilisées pour saisir les évaluations, et leur poids dans la moyenne.
+            </p>
+          </div>
+        </div>
+        <Button size="sm" onClick={openCreate}>Ajouter un type</Button>
+      </div>
+
+      <QueryBoundary query={gradeTypes} loading={<Skeleton height={140} />}>
+        {(items) =>
+          items.length === 0 ? (
+            <p className="text-sm text-gray-500">Aucun type de note actif.</p>
+          ) : (
+            <div className="divide-y divide-gray-100">
+              {items.map((gradeType, index) => (
+                <div key={gradeType.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <button
+                        type="button"
+                        disabled={index === 0}
+                        onClick={() => void move(items, index, -1)}
+                        className="text-gray-400 transition-colors hover:text-gray-700 disabled:opacity-25"
+                        aria-label={`Monter « ${gradeType.label} »`}
+                      >
+                        <ChevronUp size={16} />
+                      </button>
+                      <button
+                        type="button"
+                        disabled={index === items.length - 1}
+                        onClick={() => void move(items, index, 1)}
+                        className="text-gray-400 transition-colors hover:text-gray-700 disabled:opacity-25"
+                        aria-label={`Descendre « ${gradeType.label} »`}
+                      >
+                        <ChevronDown size={16} />
+                      </button>
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">{gradeType.label}</span>
+                        {gradeType.required ? (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">
+                            Obligatoire
+                          </span>
+                        ) : null}
+                      </div>
+                      <span className="text-sm text-gray-500">Poids {gradeType.weight}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="tonal" onClick={() => setEditing(gradeType)}>Modifier</Button>
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => {
+                        setArchiveError(null);
+                        setToArchive(gradeType);
+                      }}
+                    >
+                      Archiver
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        }
+      </QueryBoundary>
+
+      <GradeTypeModal
+        key={editing ? editing.id : `new-${creationKey}`}
+        open={creating || editing !== null}
+        gradeType={editing}
+        onClose={() => {
+          setCreating(false);
+          setEditing(null);
+        }}
+        onSaved={(label) => {
+          setCreating(false);
+          setEditing(null);
+          toast.success(`« ${label} » enregistré`);
+        }}
+      />
+
+      <ConfirmDialog
+        open={toArchive !== null}
+        title={`Archiver « ${toArchive?.label ?? ''} » ?`}
+        description={
+          archiveError ??
+          "Ce type sort du formulaire de saisie, mais rien n'est perdu : vous pouvez le restaurer — ou le supprimer définitivement s'il n'est plus utilisé — depuis les Archives."
+        }
+        confirmLabel="Archiver"
+        loading={archive.isPending}
+        onCancel={() => setToArchive(null)}
+        onConfirm={() => void confirmArchive()}
+      />
+    </div>
+  );
+}
+
+function GradeTypeModal({
+  open, gradeType, onClose, onSaved,
+}: {
+  open: boolean;
+  gradeType: GradeType | null;
+  onClose: () => void;
+  onSaved: (label: string) => void;
+}) {
+  const create = referentialsApi.useCreateGradeType();
+  const update = referentialsApi.useUpdateGradeType();
+
+  const [label, setLabel] = useState(gradeType?.label ?? '');
+  const [weight, setWeight] = useState(gradeType ? String(gradeType.weight) : '1');
+  const [required, setRequired] = useState(gradeType?.required ?? false);
+  const [error, setError] = useState<string | null>(null);
+
+  const pending = create.isPending || update.isPending;
+
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
+    setError(null);
+
+    const parsedWeight = Number(weight.replace(',', '.'));
+    if (!label.trim()) {
+      setError('Le libellé est obligatoire.');
+      return;
+    }
+    if (!Number.isFinite(parsedWeight) || parsedWeight <= 0) {
+      setError('Le poids doit être un nombre strictement positif.');
+      return;
+    }
+
+    const payload = { label: label.trim(), weight: parsedWeight, required };
+    try {
+      if (gradeType) await update.mutateAsync({ id: gradeType.id, ...payload });
+      else await create.mutateAsync(payload);
+      onSaved(payload.label);
+    } catch (cause) {
+      setError(errorMessage(cause));
+    }
+  }
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={gradeType ? 'Modifier le type de note' : 'Ajouter un type de note'}
+      footer={
+        <ModalActions
+          onCancel={onClose}
+          onConfirm={() => void submit()}
+          confirmLabel={gradeType ? 'Enregistrer' : 'Ajouter'}
+          loading={pending}
+        />
+      }
+    >
+      <form onSubmit={submit} className="flex flex-col gap-4">
+        {error ? <Alert tone="danger">{error}</Alert> : null}
+
+        <TextField
+          label="Libellé"
+          placeholder="Ex. Devoir 2"
+          maxLength={50}
+          required
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+        />
+
+        <TextField
+          label="Poids dans la moyenne"
+          type="number"
+          inputMode="decimal"
+          min={0.01}
+          step={0.5}
+          required
+          value={weight}
+          onChange={(e) => setWeight(e.target.value)}
+        />
+
+        <CheckboxChip
+          label="Obligatoire pour publier la moyenne"
+          checked={required}
+          onChange={(e) => setRequired(e.target.checked)}
+        />
+        <p className="text-xs text-gray-500">
+          Une moyenne de matière n'est publiée que si l'élève a au moins une note de chaque type
+          marqué obligatoire.
+        </p>
+      </form>
+    </Modal>
   );
 }
 

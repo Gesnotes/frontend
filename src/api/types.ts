@@ -169,13 +169,33 @@ export type HolidayPayload = {
   label: string;
 };
 
-/** Catégorie de note : interrogation (poids 1), devoir (2), composition (3). */
+/**
+ * Catégorie de note : interrogation (poids 1), devoir (2), composition (3)
+ * par défaut, mais configurable par l'école — `required` et `code` portent
+ * la logique qui reposait avant sur ces 3 libellés fixes (voir le backend,
+ * `grading/compute.ts` et `bulletin/pdf.ts`).
+ */
 export type GradeType = {
   id: ID;
   code: string;
   label: string;
   weight: number;
   position: number;
+  /** Obligatoire pour qu'une moyenne de matière soit publiée (voir DESIGN.md / compute.ts). */
+  required: boolean;
+  /** Non nul : type archivé, absent des sélecteurs de saisie mais rien n'est perdu. */
+  archivedAt: string | null;
+  /** Ce qu'une suppression définitive emporterait. */
+  gradeCount: number;
+  evaluationCount: number;
+};
+
+/** Création ou modification d'un type de note. `code` est dérivé du libellé côté serveur, jamais saisi. */
+export type GradeTypePayload = {
+  label: string;
+  weight: number;
+  required: boolean;
+  position?: number;
 };
 
 // -------------------------------------------------------- Années scolaires
