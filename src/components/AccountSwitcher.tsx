@@ -65,24 +65,31 @@ export function AccountSwitcher() {
   }
 
   return (
-    <div className="account-switcher" ref={ref}>
+    <div className="relative min-w-0 shrink" ref={ref}>
       <button
         type="button"
         ref={triggerRef}
-        className="account-switcher__trigger"
+        className="flex max-w-[220px] items-center gap-2 rounded-lg border border-gray-100 bg-white px-3 py-2 text-sm font-semibold text-gray-900 max-[480px]:max-w-[130px]"
         aria-haspopup="true"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <span className="account-switcher__school">{schoolName}</span>
-        {accounts.length > 0 ? <span className="account-switcher__badge">{accounts.length + 1}</span> : null}
+        <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">{schoolName}</span>
+        {accounts.length > 0 ? (
+          <span className="grid h-[18px] min-w-[18px] shrink-0 place-items-center rounded-full bg-[#dde1ff] px-1 text-[11px] font-bold text-[#173bab]">
+            {accounts.length + 1}
+          </span>
+        ) : null}
       </button>
 
       {open ? (
-        <div className="account-switcher__panel" role="menu">
-          <div className="account-switcher__item account-switcher__item--active">
-            <span className="account-switcher__item-school">{schoolName}</span>
-            <span className="account-switcher__item-role">{role ? spaceLabel(role) : ''}</span>
+        <div
+          className="absolute right-0 top-[calc(100%+4px)] z-20 flex min-w-[240px] flex-col gap-0.5 rounded-lg border border-gray-100 bg-white p-2 shadow-lg"
+          role="menu"
+        >
+          <div className="flex flex-col gap-0.5 rounded-md bg-gray-50 px-3 py-2 text-left">
+            <span className="text-sm font-semibold text-gray-900">{schoolName}</span>
+            <span className="text-xs text-gray-400">{role ? spaceLabel(role) : ''}</span>
           </div>
 
           {accounts.map((account) => (
@@ -90,12 +97,12 @@ export function AccountSwitcher() {
               key={account.userId}
               type="button"
               role="menuitem"
-              className="account-switcher__item account-switcher__item--button"
+              className="flex flex-col gap-0.5 rounded-md px-3 py-2 text-left hover:not-disabled:bg-gray-50 disabled:cursor-default disabled:opacity-60"
               disabled={switchingTo !== null}
               onClick={() => void choose(account)}
             >
-              <span className="account-switcher__item-school">{account.schoolName}</span>
-              <span className="account-switcher__item-role">
+              <span className="text-sm font-semibold text-gray-900">{account.schoolName}</span>
+              <span className="text-xs text-gray-400">
                 {switchingTo === account.userId ? 'Connexion…' : spaceLabel(account.role)}
               </span>
             </button>
@@ -104,7 +111,7 @@ export function AccountSwitcher() {
           <button
             type="button"
             role="menuitem"
-            className="account-switcher__item account-switcher__item--link"
+            className="mt-1 rounded-md border-t border-gray-100 px-3 pb-2 pt-3 text-left text-sm font-semibold text-[#173bab] hover:bg-gray-50"
             onClick={() => {
               close();
               setLinking(true);
@@ -178,7 +185,7 @@ function LinkAccountModal({ open, onClose }: { open: boolean; onClose: () => voi
         />
       }
     >
-      <form onSubmit={submit} className="page-stack" style={{ gap: 'var(--space-4)' }}>
+      <form onSubmit={submit} className="flex flex-col gap-4">
         {error ? <Alert tone="danger">{error}</Alert> : null}
 
         <TextField
