@@ -45,32 +45,64 @@ async function isFile(candidate) {
 }
 
 /**
+ * Résout `pathname` sous `DIST` sans jamais pouvoir en sortir : un `..`
+ * (encodé ou non) reste confiné, `null` sinon. Ce serveur n'écoute que sur
+ * `localhost` pendant le build, pour le seul Chromium lancé juste après par
+ * ce script — mais rien n'empêche ce fichier d'être copié un jour vers un
+ * contexte moins fermé, autant ne jamais dépendre de ça pour rester sûr.
+ */
+function resolveSafe(pathname) {
+  const decoded = decodeURIComponent(pathname);
+  const resolved = path.resolve(DIST, `.${decoded}`);
+  if (resolved === DIST || resolved.startsWith(DIST + path.sep)) return resolved;
+  return null;
+}
+
+/**
  * Sert `dist/` en imitant le `try_files $uri $uri/ /index.html` de
  * `nginx.conf` : le prérendu doit voir exactement le routage de production,
  * sinon il capture une page qui ne correspond pas à ce qui sera vraiment
  * servi une fois déployé.
+ *
+ * `shellHtml` est lu une seule fois, avant que la première route ne soit
+ * prérendue, et sert de repli constant pour toute route pas encore écrite.
+ * Un repli qui relirait `dist/index.html` sur le disque se ferait piéger dès
+ * la deuxième route : la première a déjà écrasé ce fichier avec son propre
+ * contenu rendu, donc la deuxième route recevrait ce contenu-là au lieu de
+ * la coquille SPA vide — `waitForFunction` sur le `<h1>` se satisferait
+ * alors du `<h1>` de la première page, capturée avant même que React ait
+ * rendu la bonne route.
  */
-function startStaticServer() {
+function startStaticServer(shellHtml) {
   return new Promise((resolve) => {
     const server = createServer(async (req, res) => {
       const { pathname } = new URL(req.url ?? '/', `http://localhost:${PORT}`);
-      const requested = path.join(DIST, decodeURIComponent(pathname));
+      const requested = resolveSafe(pathname);
 
-      let filePath = requested;
-      if (!(await isFile(filePath))) {
-        const indexInDir = path.join(requested, 'index.html');
-        filePath = (await isFile(indexInDir)) ? indexInDir : path.join(DIST, 'index.html');
+      if (requested === null) {
+        res.writeHead(400);
+        res.end('Chemin invalide');
+        return;
       }
 
-      try {
-        const content = await readFile(filePath);
-        const type = MIME_TYPES[path.extname(filePath)] ?? 'application/octet-stream';
+      if (await isFile(requested)) {
+        const content = await readFile(requested);
+        const type = MIME_TYPES[path.extname(requested)] ?? 'application/octet-stream';
         res.writeHead(200, { 'Content-Type': type });
         res.end(content);
-      } catch {
-        res.writeHead(404);
-        res.end('Introuvable');
+        return;
       }
+
+      const indexInDir = path.join(requested, 'index.html');
+      if (await isFile(indexInDir)) {
+        const content = await readFile(indexInDir);
+        res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
+        res.end(content);
+        return;
+      }
+
+      res.writeHead(200, { 'Content-Type': MIME_TYPES['.html'] });
+      res.end(shellHtml);
     });
     server.listen(PORT, () => resolve(server));
   });
@@ -83,7 +115,10 @@ const ROUTES = [
 ];
 
 async function main() {
-  const server = await startStaticServer();
+  // Lue une seule fois, avant toute écriture : voir le commentaire sur
+  // `startStaticServer`.
+  const shellHtml = await readFile(path.join(DIST, 'index.html'), 'utf8');
+  const server = await startStaticServer(shellHtml);
   // `--no-sandbox` : requis pour lancer Chromium dans un conteneur/sandbox
   // (CI, build Docker) où le sandbox natif de Chrome n'a pas les privilèges
   // nécessaires et bloquerait sinon indéfiniment au lancement.
