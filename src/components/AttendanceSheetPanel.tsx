@@ -99,12 +99,12 @@ export function AttendanceSheetPanel({ classId, slotId, initialDate }: Attendanc
   }
 
   return (
-    <div className="page-stack" style={{ gap: 'var(--space-4)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+    <div className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
         <Button variant="ghost" size="sm" aria-label="Jour précédent" onClick={() => setDate((d) => addDays(d, -1))}>
           ‹
         </Button>
-        <span className="t-body-md" style={{ fontWeight: 600, minWidth: '14ch', textAlign: 'center' }}>
+        <span className="min-w-[14ch] text-center text-sm font-semibold">
           {isToday ? "Aujourd'hui" : formatDate(date)}
         </span>
         <Button
@@ -130,29 +130,29 @@ export function AttendanceSheetPanel({ classId, slotId, initialDate }: Attendanc
           ) : (
             <>
               {data.slot ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+                <div className="flex items-center gap-2">
                   <Chip tone="info">{data.slot.subjectName}</Chip>
                   <span className="t-body-sm t-muted">{data.slot.startTime}–{data.slot.endTime}</span>
                 </div>
               ) : null}
 
-              <div className="list-rows">
+              <div className="flex flex-col">
                 {data.students.map((student) => (
-                  <div key={student.id} className="list-row">
-                    <div className="list-row__body cell-person">
+                  <div key={student.id} className="flex items-center gap-3 border-b border-gray-100 py-3 last:border-b-0">
+                    <div className="flex min-w-0 flex-1 items-center gap-3">
                       <Avatar name={`${student.firstName} ${student.lastName}`} size={32} />
-                      <span className="list-row__title">
+                      <span className="text-sm font-semibold">
                         {student.firstName} {student.lastName}
                       </span>
                     </div>
-                    <div className="attendance-toggle">
+                    <div className="inline-flex shrink-0 overflow-hidden rounded-full border border-gray-200">
                       {STATUS_OPTIONS.map((option) => {
                         const active = effectiveStatus(student, overrides) === option.value;
                         return (
                           <button
                             key={option.value}
                             type="button"
-                            className="attendance-toggle__option"
+                            className="border-r border-gray-200 px-3 py-2 text-xs font-semibold text-gray-500 last:border-r-0"
                             aria-pressed={active}
                             style={active ? { background: toneColor(attendanceTone(option.value)), color: '#fff' } : undefined}
                             onClick={() =>
@@ -168,13 +168,7 @@ export function AttendanceSheetPanel({ classId, slotId, initialDate }: Attendanc
                 ))}
               </div>
 
-              <div
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 'var(--space-3)',
-                  padding: 'var(--space-3) var(--space-4)', background: 'var(--surface-container-low)',
-                  borderRadius: 'var(--radius)', flexWrap: 'wrap',
-                }}
-              >
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-[#eff4ff] px-4 py-3">
                 <span className="t-body-md">{summarize(data.students, overrides)}</span>
                 <Button loading={save.isPending} onClick={() => void onSave()}>
                   Enregistrer
