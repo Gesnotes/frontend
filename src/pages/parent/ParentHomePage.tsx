@@ -1,4 +1,5 @@
 import { AlertTriangle, CheckCheck, Megaphone, NotebookPen, ShieldAlert } from 'lucide-react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { errorMessage, notificationsApi, parentApi, type ID, type ParentGrade } from '../../api';
@@ -9,6 +10,8 @@ import { useTermContext } from '../../context/term-context';
 import { formatRelative } from '../../lib/format';
 import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
+import { TourButton } from '../../tour/TourButton';
+import { useTour } from '../../tour/tour-context';
 import { Chip, Skeleton, gradeTone, useToast } from '../../ui';
 import { ChildHero, ChildStatsRow } from './ChildHeroStats';
 import { ChildRequired } from './ChildRequired';
@@ -18,16 +21,27 @@ export default function ParentHomePage() {
   const { displayName } = useAuth();
   const { termId, term } = useTermContext();
   const { child } = useChildContext();
+  const { startIfFirstVisit } = useTour();
 
   const detail = parentApi.useChildDetail(child?.id, termId);
 
+  useEffect(() => {
+    startIfFirstVisit('parent');
+  }, [startIfFirstVisit]);
+
   return (
     <main className="mx-auto flex w-full max-w-[520px] flex-col gap-6 px-4 pb-24 pt-5">
-      <header>
-        <p className="text-sm text-gray-500">Bonjour,</p>
-        {/* Titre de niveau 1 de l'écran d'accueil : chaque page doit en
-            porter un, et c'est bien ce libellé qui la nomme. */}
-        <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
+      <header className="flex items-start justify-between gap-3">
+        <div>
+          <p className="text-sm text-gray-500">Bonjour,</p>
+          {/* Titre de niveau 1 de l'écran d'accueil : chaque page doit en
+              porter un, et c'est bien ce libellé qui la nomme. */}
+          <h1 className="text-xl font-bold text-gray-900">{displayName}</h1>
+        </div>
+        <TourButton
+          space="parent"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-100 text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+        />
       </header>
 
       <InstallCard compact />

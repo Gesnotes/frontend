@@ -12,22 +12,22 @@ import { OfflineBar } from '../pwa/OfflineBar';
 import { paths } from '../routes/paths';
 import { Avatar, BrandMark } from '../ui';
 
-type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
+type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; tourId?: string };
 
 const adminNav: AdminNavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true },
-  { to: paths.admin.classes, label: 'Classes', icon: School },
+  { to: paths.admin.classes, label: 'Classes', icon: School, tourId: 'admin-classes' },
   { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: NotebookPen },
   { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: Megaphone },
   { to: paths.admin.schedule, label: 'Emploi du temps', icon: CalendarClock },
-  { to: paths.admin.subjects, label: 'Matières', icon: BookOpen },
-  { to: paths.admin.teachers, label: 'Enseignants', icon: Contact },
-  { to: paths.admin.students, label: 'Élèves', icon: GraduationCap },
-  { to: paths.admin.schoolYears, label: 'Années scolaires', icon: CalendarDays },
+  { to: paths.admin.subjects, label: 'Matières', icon: BookOpen, tourId: 'admin-subjects' },
+  { to: paths.admin.teachers, label: 'Enseignants', icon: Contact, tourId: 'admin-teachers' },
+  { to: paths.admin.students, label: 'Élèves', icon: GraduationCap, tourId: 'admin-students' },
+  { to: paths.admin.schoolYears, label: 'Années scolaires', icon: CalendarDays, tourId: 'admin-school-years' },
   { to: paths.admin.holidays, label: 'Calendrier scolaire', icon: CalendarOff },
   { to: paths.admin.archives, label: 'Archives', icon: Archive },
   { to: paths.admin.auditLog, label: "Journal d'audit", icon: ScrollText },
-  { to: paths.admin.settings, label: 'Paramètres', icon: Settings },
+  { to: paths.admin.settings, label: 'Paramètres', icon: Settings, tourId: 'admin-settings' },
 ];
 
 /**
@@ -67,6 +67,7 @@ export function AppShell() {
                     <NavLink
                       to={item.to}
                       end={item.end}
+                      data-tour={item.tourId}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                           isActive
