@@ -1,4 +1,4 @@
-import { CalendarClock, NotebookPen } from 'lucide-react';
+import { CalendarClock, CheckCircle2, NotebookPen } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { gradesApi, scheduleApi, type ID, type TeacherClassAssignment, type TimetableSlot } from '../../api';
@@ -6,7 +6,7 @@ import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, plural, todayLocalIso } from '../../lib/format';
 import { paths } from '../../routes/paths';
-import { Alert, Card, ClickableCard, EmptyState, ErrorState, Skeleton } from '../../ui';
+import { Alert, Card, ClickableCard, EmptyState, ErrorState, Skeleton, toneColor } from '../../ui';
 
 /**
  * Accueil enseignant : ce qui compte en arrivant sur l'app — les cours du
@@ -58,9 +58,21 @@ function TodaySection({ schedule }: { schedule: ReturnType<typeof scheduleApi.us
             <Link key={slot.id} to={`${paths.teacher.attendance}?creneau=${slot.id}`} className="tpick">
               <span className="tpick__body">
                 <span className="tpick__title">{slot.className} · {slot.subjectName}</span>
-                <span className="tpick__meta">{slot.startTime}–{slot.endTime} · faire l'appel</span>
+                <span className="tpick__meta">
+                  {slot.startTime}–{slot.endTime} ·{' '}
+                  {slot.attendanceTakenToday ? 'présence enregistrée' : "faire l'appel"}
+                </span>
               </span>
-              <span className="tpick__chevron" aria-hidden="true">›</span>
+              {slot.attendanceTakenToday ? (
+                <CheckCircle2
+                  size={20}
+                  className="tpick__chevron"
+                  style={{ color: toneColor('success') }}
+                  aria-hidden="true"
+                />
+              ) : (
+                <span className="tpick__chevron" aria-hidden="true">›</span>
+              )}
             </Link>
           ))}
         </div>
