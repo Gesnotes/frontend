@@ -71,7 +71,7 @@ export default function SubjectsPage() {
               : "Programme de l'établissement"}
           </p>
         </div>
-        <Button onClick={openCreate}>Créer une matière</Button>
+        <Button data-tour="admin-add-matiere" onClick={openCreate}>Créer une matière</Button>
       </div>
 
       <div className="space-y-6 p-8">

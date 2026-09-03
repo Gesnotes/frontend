@@ -541,7 +541,7 @@ function PeriodsSection() {
       </Alert>
 
       <div className="page-toolbar" style={{ justifyContent: 'flex-end' }}>
-        <Button onClick={openCreate}>Créer une période</Button>
+        <Button data-tour="admin-add-periode" onClick={openCreate}>Créer une période</Button>
       </div>
 
       <QueryBoundary query={terms} loading={<PeriodsTableSkeleton />}>

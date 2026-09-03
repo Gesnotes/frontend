@@ -1,15 +1,10 @@
 import { lazy, Suspense, useCallback, useMemo, useState, type ReactNode } from 'react';
 import { STATUS, type EventData, type Step } from 'react-joyride';
+import { useNavigate } from 'react-router-dom';
 
-import { ADMIN_TOUR_STEPS, PARENT_TOUR_STEPS, TEACHER_TOUR_STEPS } from './steps';
+import { adminSteps, parentSteps, teacherSteps } from './steps';
 import { TourContext, type TourContextValue } from './tour-context';
 import { hasSeenTour, markTourSeen, type TourSpace } from './tourStorage';
-
-const STEPS_BY_SPACE: Record<TourSpace, Step[]> = {
-  admin: ADMIN_TOUR_STEPS,
-  teacher: TEACHER_TOUR_STEPS,
-  parent: PARENT_TOUR_STEPS,
-};
 
 /**
  * `react-joyride` pèse dans les ~80 Ko : chargé en retard, pas dans le
@@ -28,10 +23,24 @@ const LazyJoyride = lazy(() => import('react-joyride').then((m) => ({ default: m
  * parallèle. Remplace l'ancienne checklist de configuration de l'espace
  * admin — celle-ci n'expliquait que la mise en route, celui-ci montre
  * l'interface elle-même et se relance à tout moment.
+ *
+ * Chaque étape change de page (voir `steps.ts::goTo`) : le tour a besoin de
+ * `useNavigate`, donc de vivre sous `<BrowserRouter>` — c'est déjà le cas
+ * dans `main.tsx`.
  */
 export function TourProvider({ children }: { children: ReactNode }) {
+  const navigate = useNavigate();
   const [space, setSpace] = useState<TourSpace | null>(null);
   const [run, setRun] = useState(false);
+
+  const stepsBySpace = useMemo<Record<TourSpace, Step[]>>(
+    () => ({
+      admin: adminSteps(navigate),
+      teacher: teacherSteps(navigate),
+      parent: parentSteps(navigate),
+    }),
+    [navigate],
+  );
 
   const start = useCallback((next: TourSpace) => {
     setSpace(next);
@@ -63,7 +72,7 @@ export function TourProvider({ children }: { children: ReactNode }) {
         <Suspense fallback={null}>
           <LazyJoyride
             run={run}
-            steps={STEPS_BY_SPACE[space]}
+            steps={stepsBySpace[space]}
             continuous
             scrollToFirstStep
             onEvent={handleEvent}
@@ -80,6 +89,11 @@ export function TourProvider({ children }: { children: ReactNode }) {
               zIndex: 10000,
               buttons: ['back', 'close', 'primary', 'skip'],
               showProgress: true,
+              // Chaque étape navigue vers une nouvelle page avant d'afficher
+              // sa cible (voir steps.ts::goTo) : le défaut (1000 ms) laisse
+              // trop peu de temps au rendu de la page et à ses propres
+              // données pour apparaître avant que Joyride n'abandonne.
+              targetWaitTimeout: 6000,
             }}
           />
         </Suspense>

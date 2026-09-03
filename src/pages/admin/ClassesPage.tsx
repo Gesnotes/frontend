@@ -128,7 +128,7 @@ export default function ClassesPage() {
         </div>
         <div className="flex items-center gap-3">
           <TermSelect />
-          <Button onClick={() => setCreating(true)}>Créer une classe</Button>
+          <Button data-tour="admin-add-classe" onClick={() => setCreating(true)}>Créer une classe</Button>
         </div>
       </div>
 

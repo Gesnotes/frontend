@@ -161,7 +161,7 @@ export default function AnnoncesIncidentsPage() {
         </div>
         <div className="flex items-center gap-3">
           <TermSelect />
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button data-tour="admin-add-annonce" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} className="mr-2" />
             Créer un envoi
           </Button>

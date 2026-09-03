@@ -105,7 +105,7 @@ export default function StudentsPage() {
           <Button variant="secondary" onClick={() => setImporting(true)}>
             <FolderInput size={16} aria-hidden="true" /> Importer une liste
           </Button>
-          <Button onClick={openCreate}>Ajouter un élève</Button>
+          <Button data-tour="admin-add-eleve" onClick={openCreate}>Ajouter un élève</Button>
         </div>
       </div>
 
