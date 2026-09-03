@@ -508,6 +508,12 @@ export type TimetableSlot = {
   /** "HH:MM" */
   endTime: string;
   archivedAt: IsoDateTime | null;
+  /**
+   * Présence déjà enregistrée pour ce créneau à la date demandée à
+   * `useMySchedule` — absent quand appelé sans date (vue « mon emploi du
+   * temps »), où « déjà fait » n'a pas de sens pour un jour récurrent.
+   */
+  attendanceTakenToday?: boolean;
 };
 
 export type CreateSlotPayload = {
