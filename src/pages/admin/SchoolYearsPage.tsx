@@ -51,6 +51,7 @@ export default function SchoolYearsPage() {
               aria-selected={tab === 'periods'}
               variant={tab === 'periods' ? 'primary' : 'secondary'}
               size="sm"
+              data-tour="admin-tab-periodes"
               onClick={() => setTab('periods')}
             >
               Périodes
@@ -163,7 +164,7 @@ function YearsSection() {
   return (
     <div className="page-stack">
       <div className="page-toolbar" style={{ justifyContent: 'flex-end' }}>
-        <Button onClick={openCreate}>+ Nouvelle année scolaire</Button>
+        <Button data-tour="admin-open-annee" onClick={openCreate}>+ Nouvelle année scolaire</Button>
       </div>
 
       <QueryBoundary query={years} loading={<YearsTableSkeleton />}>
@@ -273,6 +274,7 @@ function SchoolYearModal({
           placeholder="Ex. 2026-2027"
           maxLength={50}
           required
+          data-tour="admin-annee-libelle"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
@@ -281,6 +283,7 @@ function SchoolYearModal({
           <TextField
             label="Début"
             type="date"
+            data-tour="admin-annee-debut"
             value={startDate ?? ''}
             onChange={(e) => setStartDate(e.target.value)}
             error={halfBounded && !startDate ? 'Date manquante.' : undefined}
@@ -288,6 +291,7 @@ function SchoolYearModal({
           <TextField
             label="Fin"
             type="date"
+            data-tour="admin-annee-fin"
             value={endDate ?? ''}
             onChange={(e) => setEndDate(e.target.value)}
             error={
@@ -758,6 +762,7 @@ function TermModal({
           placeholder="Ex. Trimestre 1"
           maxLength={50}
           required
+          data-tour="admin-periode-libelle"
           value={label}
           onChange={(e) => setLabel(e.target.value)}
         />
@@ -766,6 +771,7 @@ function TermModal({
           <TextField
             label="Début"
             type="date"
+            data-tour="admin-periode-debut"
             value={startDate ?? ''}
             onChange={(e) => setStartDate(e.target.value)}
             error={halfBounded && !startDate ? 'Date manquante.' : undefined}
@@ -773,6 +779,7 @@ function TermModal({
           <TextField
             label="Fin"
             type="date"
+            data-tour="admin-periode-fin"
             value={endDate ?? ''}
             onChange={(e) => setEndDate(e.target.value)}
             error={
@@ -793,6 +800,7 @@ function TermModal({
         <SelectField
           label="Année scolaire"
           placeholder="— Aucune —"
+          data-tour="admin-periode-annee"
           value={schoolYearId}
           onChange={(e) => setSchoolYearId(e.target.value)}
           options={(years.data ?? []).map((y) => ({ value: String(y.id), label: y.label }))}
