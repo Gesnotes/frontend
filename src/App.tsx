@@ -47,6 +47,7 @@ const SchoolYearsPage = lazy(() => import('./pages/admin/SchoolYearsPage'));
 const ArchivesPage = lazy(() => import('./pages/admin/ArchivesPage'));
 const SettingsPage = lazy(() => import('./pages/admin/SettingsPage'));
 const AnnoncesIncidentsPage = lazy(() => import('./pages/admin/AnnoncesIncidentsPage'));
+const UpcomingEvaluationsPage = lazy(() => import('./pages/admin/UpcomingEvaluationsPage'));
 
 const TeacherDashboardPage = lazy(() => import('./pages/teacher/TeacherDashboardPage'));
 const GradeEntryPage = lazy(() => import('./pages/teacher/GradeEntryPage'));
@@ -170,6 +171,7 @@ export default function App() {
                 <Route path="classes/:classId/presence" element={<ClassAttendancePage />} />
                 <Route path="classes/:classId/reinscription" element={<ClassEnrollmentPage />} />
                 <Route path="saisie" element={<AdminGradeEntryPage />} />
+                <Route path="evaluations" element={<UpcomingEvaluationsPage />} />
                 <Route path="emploi-du-temps" element={<SchedulePage />} />
                 <Route path="matieres" element={<SubjectsPage />} />
                 <Route path="enseignants" element={<TeachersPage />} />
@@ -190,6 +192,7 @@ export default function App() {
               <Route path={paths.teacher.root} element={<TeacherShell />}>
                 <Route index element={<TeacherDashboardPage />} />
                 <Route path="saisie" element={<GradeEntryPage />} />
+                <Route path="evaluations" element={<UpcomingEvaluationsPage />} />
                 <Route path="emploi-du-temps" element={<TeacherSchedulePage />} />
                 <Route path="presence" element={<TeacherAttendancePage />} />
                 <Route path="eleves" element={<TeacherStudentsPage />} />

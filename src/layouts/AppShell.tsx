@@ -1,5 +1,5 @@
 import {
-  Archive, BookOpen, CalendarClock, CalendarDays, CalendarOff, Contact,
+  Archive, BookOpen, CalendarCheck2, CalendarClock, CalendarDays, CalendarOff, Contact,
   GraduationCap, LayoutDashboard, LogOut, Megaphone, NotebookPen, School, ScrollText, Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -15,19 +15,20 @@ import { Avatar, BrandMark } from '../ui';
 type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; tourId?: string };
 
 const adminNav: AdminNavItem[] = [
-  { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true, tourId: 'admin-nav-dashboard' },
-  { to: paths.admin.classes, label: 'Classes', icon: School, tourId: 'admin-nav-classes' },
-  { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: NotebookPen, tourId: 'admin-nav-grade-entry' },
-  { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: Megaphone, tourId: 'admin-nav-annonces' },
-  { to: paths.admin.schedule, label: 'Emploi du temps', icon: CalendarClock, tourId: 'admin-nav-schedule' },
-  { to: paths.admin.subjects, label: 'Matières', icon: BookOpen, tourId: 'admin-nav-subjects' },
-  { to: paths.admin.teachers, label: 'Enseignants', icon: Contact, tourId: 'admin-nav-teachers' },
-  { to: paths.admin.students, label: 'Élèves', icon: GraduationCap, tourId: 'admin-nav-students' },
-  { to: paths.admin.schoolYears, label: 'Années scolaires', icon: CalendarDays, tourId: 'admin-nav-school-years' },
-  { to: paths.admin.holidays, label: 'Calendrier scolaire', icon: CalendarOff, tourId: 'admin-nav-holidays' },
-  { to: paths.admin.archives, label: 'Archives', icon: Archive, tourId: 'admin-nav-archives' },
-  { to: paths.admin.auditLog, label: "Journal d'audit", icon: ScrollText, tourId: 'admin-nav-audit-log' },
-  { to: paths.admin.settings, label: 'Paramètres', icon: Settings, tourId: 'admin-nav-settings' },
+  { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true },
+  { to: paths.admin.classes, label: 'Classes', icon: School },
+  { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: NotebookPen },
+  { to: paths.admin.evaluations, label: 'Évaluations à venir', icon: CalendarCheck2 },
+  { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: Megaphone },
+  { to: paths.admin.schedule, label: 'Emploi du temps', icon: CalendarClock },
+  { to: paths.admin.subjects, label: 'Matières', icon: BookOpen },
+  { to: paths.admin.teachers, label: 'Enseignants', icon: Contact },
+  { to: paths.admin.students, label: 'Élèves', icon: GraduationCap },
+  { to: paths.admin.schoolYears, label: 'Années scolaires', icon: CalendarDays },
+  { to: paths.admin.holidays, label: 'Calendrier scolaire', icon: CalendarOff },
+  { to: paths.admin.archives, label: 'Archives', icon: Archive },
+  { to: paths.admin.auditLog, label: "Journal d'audit", icon: ScrollText },
+  { to: paths.admin.settings, label: 'Paramètres', icon: Settings },
 ];
 
 /**

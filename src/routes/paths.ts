@@ -17,6 +17,7 @@ export const paths = {
     classAttendance: (id: number | string) => `/admin/classes/${id}/presence`,
     classEnrollment: (id: number | string) => `/admin/classes/${id}/reinscription`,
     gradeEntry: '/admin/saisie',
+    evaluations: '/admin/evaluations',
     schedule: '/admin/emploi-du-temps',
     subjects: '/admin/matieres',
     teachers: '/admin/enseignants',
@@ -35,6 +36,7 @@ export const paths = {
     root: '/enseignant',
     dashboard: '/enseignant',
     gradeEntry: '/enseignant/saisie',
+    evaluations: '/enseignant/evaluations',
     schedule: '/enseignant/emploi-du-temps',
     attendance: '/enseignant/presence',
     history: '/enseignant/historique',
@@ -77,6 +79,23 @@ export const paths = {
  */
 export function gradeEntryPath(classId: number, subjectId: number): string {
   return `${paths.teacher.gradeEntry}?classe=${classId}&matiere=${subjectId}`;
+}
+
+/**
+ * Lien direct vers la grille de saisie d'une évaluation précise, depuis le
+ * calendrier des évaluations à venir — fonctionne même si l'évaluation
+ * n'est pas dans la période actuellement sélectionnée (`eval` déclenche le
+ * rendu de la grille avant toute résolution de `classe`/`matiere`, voir
+ * `AdminGradeEntryPage.tsx`/`GradeEntryPage.tsx`).
+ */
+export function evaluationGradingPath(
+  role: 'admin' | 'teacher',
+  classId: number,
+  subjectId: number,
+  evaluationId: number,
+): string {
+  const base = role === 'admin' ? paths.admin.gradeEntry : paths.teacher.gradeEntry;
+  return `${base}?classe=${classId}&matiere=${subjectId}&eval=${evaluationId}`;
 }
 
 /** Écran d'accueil d'un rôle après connexion. */
