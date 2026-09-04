@@ -1,4 +1,5 @@
 import { AlertTriangle, Bell, CheckCheck, Megaphone, NotebookPen, ShieldAlert } from 'lucide-react';
+import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import { errorMessage, notificationsApi, parentApi, type ID, type ParentGrade } from '../../api';
