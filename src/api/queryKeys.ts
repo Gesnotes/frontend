@@ -29,6 +29,11 @@ export const queryKeys = {
     list: (includeArchived?: boolean) => ['grade-types', 'list', includeArchived ?? false] as const,
   },
 
+  evaluations: {
+    all: ['evaluations'] as const,
+    upcoming: ['evaluations', 'upcoming'] as const,
+  },
+
   school: {
     all: ['school'] as const,
     bulletinImage: (slot: 'header' | 'footer') => ['school', 'bulletin-image', slot] as const,

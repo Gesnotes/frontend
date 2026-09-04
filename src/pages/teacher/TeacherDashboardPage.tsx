@@ -1,4 +1,5 @@
 import { CalendarClock, NotebookPen } from 'lucide-react';
+import { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { gradesApi, scheduleApi, type ID, type TeacherClassAssignment, type TimetableSlot } from '../../api';
@@ -6,6 +7,8 @@ import { useAuth } from '../../auth/auth-context';
 import { useTermContext } from '../../context/term-context';
 import { formatCount, plural, todayLocalIso } from '../../lib/format';
 import { paths } from '../../routes/paths';
+import { TourButton } from '../../tour/TourButton';
+import { useTour } from '../../tour/tour-context';
 import { Alert, Card, ClickableCard, EmptyState, ErrorState, Skeleton } from '../../ui';
 
 /**
@@ -20,12 +23,20 @@ export default function TeacherDashboardPage() {
   const today = todayLocalIso();
   const schedule = scheduleApi.useMySchedule(today);
   const assignments = gradesApi.useMyClasses(termId);
+  const { startIfFirstVisit } = useTour();
+
+  useEffect(() => {
+    startIfFirstVisit('teacher');
+  }, [startIfFirstVisit]);
 
   return (
     <>
-      <div>
-        <h1 className="tshell__page-title">Bonjour, {displayName}</h1>
-        <p className="tshell__page-subtitle">{term ? term.label : 'Tableau de bord'}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="tshell__page-title">Bonjour, {displayName}</h1>
+          <p className="tshell__page-subtitle">{term ? term.label : 'Tableau de bord'}</p>
+        </div>
+        <TourButton space="teacher" className="tshell__logout" />
       </div>
 
       <TodaySection schedule={schedule} />

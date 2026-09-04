@@ -30,6 +30,7 @@ const TITLES: Record<string, string> = {
   [paths.admin.dashboard]: 'Tableau de bord',
   [paths.admin.classes]: 'Classes',
   [paths.admin.gradeEntry]: 'Saisie des notes',
+  [paths.admin.evaluations]: 'Évaluations à venir',
   [paths.admin.subjects]: 'Matières',
   [paths.admin.teachers]: 'Enseignants',
   [paths.admin.students]: 'Élèves',
@@ -44,6 +45,7 @@ const TITLES: Record<string, string> = {
   // écran « Mes classes » qui n'existe plus.
   [paths.teacher.dashboard]: 'Saisie des notes',
   [paths.teacher.gradeEntry]: 'Saisie des notes',
+  [paths.teacher.evaluations]: 'Évaluations à venir',
   [paths.teacher.attendance]: 'Présence',
   [paths.teacher.students]: 'Élèves',
   [paths.teacher.history]: 'Historique des saisies',
