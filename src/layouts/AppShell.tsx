@@ -1,5 +1,5 @@
 import {
-  Archive, BookOpen, CalendarClock, CalendarDays, CalendarOff, Contact,
+  Archive, BookOpen, CalendarCheck2, CalendarClock, CalendarDays, CalendarOff, Contact,
   GraduationCap, LayoutDashboard, LogOut, Megaphone, NotebookPen, School, ScrollText, Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -18,6 +18,7 @@ const adminNav: AdminNavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true },
   { to: paths.admin.classes, label: 'Classes', icon: School },
   { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: NotebookPen },
+  { to: paths.admin.evaluations, label: 'Évaluations à venir', icon: CalendarCheck2 },
   { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: Megaphone },
   { to: paths.admin.schedule, label: 'Emploi du temps', icon: CalendarClock },
   { to: paths.admin.subjects, label: 'Matières', icon: BookOpen },

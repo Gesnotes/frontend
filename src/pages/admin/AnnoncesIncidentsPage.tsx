@@ -1,6 +1,7 @@
 import { useState, useMemo, type FormEvent } from 'react';
 import {
   AlertTriangle,
+  Bell,
   CheckCircle2,
   Eye,
   Megaphone,
@@ -196,6 +197,7 @@ export default function AnnoncesIncidentsPage() {
             <option value="annonce">📢 Annonces</option>
             <option value="convocation">⚠️ Convocations</option>
             <option value="incident">🚨 Incidents Graves</option>
+            <option value="rappel">🔔 Rappels</option>
           </select>
         </div>
 
@@ -232,6 +234,10 @@ export default function AnnoncesIncidentsPage() {
                           ) : item.type === 'convocation' ? (
                             <Chip tone="warning">
                               <AlertTriangle size={14} className="mr-1 inline" /> Convocation
+                            </Chip>
+                          ) : item.type === 'rappel' ? (
+                            <Chip tone="neutral">
+                              <Bell size={14} className="mr-1 inline" /> Rappel automatique
                             </Chip>
                           ) : (
                             <Chip tone="info">

@@ -1,4 +1,4 @@
-import { AlertTriangle, CheckCheck, Megaphone, NotebookPen, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, Bell, CheckCheck, Megaphone, NotebookPen, ShieldAlert } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 import { errorMessage, notificationsApi, parentApi, type ID, type ParentGrade } from '../../api';
@@ -120,6 +120,8 @@ function UnreadAnnouncementsSection() {
                 ? 'border-red-500 bg-red-50/50'
                 : item.type === 'convocation'
                 ? 'border-amber-500 bg-amber-50/50'
+                : item.type === 'rappel'
+                ? 'border-gray-400 bg-gray-50/50'
                 : 'border-blue-500 bg-blue-50/50'
             }`}
           >
@@ -129,6 +131,8 @@ function UnreadAnnouncementsSection() {
                   <ShieldAlert size={18} className="text-red-500" />
                 ) : item.type === 'convocation' ? (
                   <AlertTriangle size={18} className="text-amber-500" />
+                ) : item.type === 'rappel' ? (
+                  <Bell size={18} className="text-gray-500" />
                 ) : (
                   <Megaphone size={18} className="text-blue-500" />
                 )}
@@ -137,6 +141,8 @@ function UnreadAnnouncementsSection() {
                     ? '🚨 Incident'
                     : item.type === 'convocation'
                     ? '⚠️ Convocation'
+                    : item.type === 'rappel'
+                    ? '🔔 Rappel'
                     : '📢 Annonce'}
                 </span>
               </div>
