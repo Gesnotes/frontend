@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 import { errorMessage, studentsApi, type AttachParentPayload, type ID, type Student } from '../../api';
 import { personName } from '../../lib/text';
-import { emailError } from '../../lib/validation';
+import { emailError, phoneError } from '../../lib/validation';
 import { Alert, Avatar, Button, Modal, TextField, useToast } from '../../ui';
 
 /**
@@ -21,11 +21,13 @@ export function LinkParentModal({ student, onClose }: { student: Student | null;
   const results = studentsApi.useParentSearch(search);
 
   const [inviteEmail, setInviteEmail] = useState('');
+  const [invitePhone, setInvitePhone] = useState('');
   const [inviteFirstName, setInviteFirstName] = useState('');
   const [inviteLastName, setInviteLastName] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const inviteEmailMessage = emailError(inviteEmail, false);
+  const invitePhoneMessage = phoneError(invitePhone);
 
   async function link(payload: AttachParentPayload) {
     if (!student) return;
@@ -80,7 +82,9 @@ export function LinkParentModal({ student, onClose }: { student: Student | null;
                   <Avatar name={personName(parent)} size={32} />
                   <div className="list-row__body">
                     <div className="list-row__title">{personName(parent)}</div>
-                    <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
+                    <div className="list-row__meta">
+                      {[parent.phone, parent.email].filter(Boolean).join(' · ') || '—'}
+                    </div>
                   </div>
                   <div className="cell-actions">
                     <Button
@@ -129,7 +133,9 @@ export function LinkParentModal({ student, onClose }: { student: Student | null;
                   <Avatar name={personName(parent)} size={32} />
                   <div className="list-row__body">
                     <div className="list-row__title">{personName(parent)}</div>
-                    <div className="list-row__meta">{parent.email ?? parent.phone ?? '—'}</div>
+                    <div className="list-row__meta">
+                      {[parent.phone, parent.email].filter(Boolean).join(' · ') || '—'}
+                    </div>
                   </div>
                   <Button
                     size="sm"
@@ -180,13 +186,23 @@ export function LinkParentModal({ student, onClose }: { student: Student | null;
               // le signale.
               error={inviteEmailMessage}
             />
+            <TextField
+              label="Téléphone"
+              type="tel"
+              autoComplete="tel"
+              hint="Facultatif — utile à l'école pour joindre le parent directement."
+              value={invitePhone}
+              onChange={(e) => setInvitePhone(e.target.value)}
+              error={invitePhoneMessage}
+            />
             <Button
               variant="secondary"
-              disabled={!inviteEmail.trim() || inviteEmailMessage !== undefined}
+              disabled={!inviteEmail.trim() || inviteEmailMessage !== undefined || invitePhoneMessage !== undefined}
               loading={attach.isPending}
               onClick={() =>
                 void link({
                   email: inviteEmail.trim(),
+                  phone: invitePhone.trim() || undefined,
                   firstName: inviteFirstName.trim() || undefined,
                   lastName: inviteLastName.trim() || undefined,
                 })

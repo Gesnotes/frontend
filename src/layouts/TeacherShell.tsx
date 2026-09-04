@@ -1,5 +1,6 @@
 import {
-  CalendarClock, ClipboardCheck, History, LayoutDashboard, LogOut, Megaphone, NotebookPen, type LucideIcon,
+  CalendarCheck2, CalendarClock, ClipboardCheck, History, LayoutDashboard, LogOut, Megaphone,
+  NotebookPen, type LucideIcon,
 } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 
@@ -22,13 +23,14 @@ import { TermSelect } from './TermSelect';
  */
 // « Mes classes » a fusionné dans « Saisie » : la saisie commence par le choix
 // de la classe, avec l'avancement affiché sur chaque carte.
-const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
-  { to: paths.teacher.dashboard, label: 'Accueil', icon: LayoutDashboard, end: true },
-  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: NotebookPen },
-  { to: paths.teacher.attendance, label: 'Présence', icon: ClipboardCheck },
-  { to: paths.teacher.annonces, label: 'Annonces', icon: Megaphone },
-  { to: paths.teacher.schedule, label: 'Emploi du temps', icon: CalendarClock },
-  { to: paths.teacher.history, label: 'Historique', icon: History },
+const items: { to: string; label: string; icon: LucideIcon; end?: boolean; tourId?: string }[] = [
+  { to: paths.teacher.dashboard, label: 'Accueil', icon: LayoutDashboard, end: true, tourId: 'teacher-home' },
+  { to: paths.teacher.gradeEntry, label: 'Saisie', icon: NotebookPen, tourId: 'teacher-grade-entry' },
+  { to: paths.teacher.evaluations, label: 'Évaluations à venir', icon: CalendarCheck2 },
+  { to: paths.teacher.attendance, label: 'Présence', icon: ClipboardCheck, tourId: 'teacher-attendance' },
+  { to: paths.teacher.annonces, label: 'Annonces', icon: Megaphone, tourId: 'teacher-annonces' },
+  { to: paths.teacher.schedule, label: 'Emploi du temps', icon: CalendarClock, tourId: 'teacher-schedule' },
+  { to: paths.teacher.history, label: 'Historique', icon: History, tourId: 'teacher-history' },
 ];
 
 export function TeacherShell() {
@@ -73,6 +75,7 @@ export function TeacherShell() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                data-tour={item.tourId}
                 className={({ isActive }) =>
                   `flex max-w-[150px] flex-1 flex-col items-center gap-[3px] rounded-lg py-1.5 text-xs font-semibold ${
                     isActive ? 'bg-[#eff4ff] text-[#1e40af]' : 'text-gray-400'

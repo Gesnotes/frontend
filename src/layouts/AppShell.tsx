@@ -1,5 +1,5 @@
 import {
-  Archive, BookOpen, CalendarClock, CalendarDays, CalendarOff, Contact,
+  Archive, BookOpen, CalendarCheck2, CalendarClock, CalendarDays, CalendarOff, Contact,
   GraduationCap, LayoutDashboard, LogOut, Megaphone, NotebookPen, School, ScrollText, Settings,
   type LucideIcon,
 } from 'lucide-react';
@@ -12,12 +12,13 @@ import { OfflineBar } from '../pwa/OfflineBar';
 import { paths } from '../routes/paths';
 import { Avatar, BrandMark } from '../ui';
 
-type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
+type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; tourId?: string };
 
 const adminNav: AdminNavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true },
   { to: paths.admin.classes, label: 'Classes', icon: School },
   { to: paths.admin.gradeEntry, label: 'Saisie des notes', icon: NotebookPen },
+  { to: paths.admin.evaluations, label: 'Évaluations à venir', icon: CalendarCheck2 },
   { to: paths.admin.annonces, label: 'Annonces & Incidents', icon: Megaphone },
   { to: paths.admin.schedule, label: 'Emploi du temps', icon: CalendarClock },
   { to: paths.admin.subjects, label: 'Matières', icon: BookOpen },
@@ -67,6 +68,7 @@ export function AppShell() {
                     <NavLink
                       to={item.to}
                       end={item.end}
+                      data-tour={item.tourId}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                           isActive

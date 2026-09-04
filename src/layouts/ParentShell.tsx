@@ -13,11 +13,11 @@ import { paths } from '../routes/paths';
 import { notificationsApi } from '../api';
 
 // Onglets inspirés de la maquette Flutter
-const items: { to: string; label: string; icon: LucideIcon; end?: boolean }[] = [
-  { to: paths.parent.home, label: 'Accueil', icon: Home, end: true },
-  { to: paths.parent.scolarite, label: 'Scolarité', icon: BookOpen },
-  { to: paths.parent.suiviParental, label: 'Suivi parental', icon: ClipboardCheck },
-  { to: paths.parent.notifications, label: 'Alertes', icon: Bell },
+const items: { to: string; label: string; icon: LucideIcon; end?: boolean; tourId: string }[] = [
+  { to: paths.parent.home, label: 'Accueil', icon: Home, end: true, tourId: 'parent-home' },
+  { to: paths.parent.scolarite, label: 'Scolarité', icon: BookOpen, tourId: 'parent-scolarite' },
+  { to: paths.parent.suiviParental, label: 'Suivi parental', icon: ClipboardCheck, tourId: 'parent-suivi-parental' },
+  { to: paths.parent.notifications, label: 'Alertes', icon: Bell, tourId: 'parent-notifications' },
 ];
 
 /** Coquille mobile de l'espace parent : colonne unique et navigation basse. */
@@ -48,6 +48,7 @@ export function ParentShell() {
                   key={item.to}
                   to={item.to}
                   end={item.end}
+                  data-tour={item.tourId}
                   className={({ isActive }) =>
                     `relative flex max-w-[130px] flex-1 flex-col items-center gap-1 rounded-lg py-1.5 text-xs font-semibold transition-colors ${
                       isActive ? 'bg-[#dde1ff] text-[#173bab]' : 'text-gray-400'

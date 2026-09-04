@@ -20,12 +20,20 @@ export default function TeacherDashboardPage() {
   const today = todayLocalIso();
   const schedule = scheduleApi.useMySchedule(today);
   const assignments = gradesApi.useMyClasses(termId);
+  const { startIfFirstVisit } = useTour();
+
+  useEffect(() => {
+    startIfFirstVisit('teacher');
+  }, [startIfFirstVisit]);
 
   return (
     <>
-      <div>
-        <h1 className="tshell__page-title">Bonjour, {displayName}</h1>
-        <p className="tshell__page-subtitle">{term ? term.label : 'Tableau de bord'}</p>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h1 className="tshell__page-title">Bonjour, {displayName}</h1>
+          <p className="tshell__page-subtitle">{term ? term.label : 'Tableau de bord'}</p>
+        </div>
+        <TourButton space="teacher" className="tshell__logout" />
       </div>
 
       <TodaySection schedule={schedule} />

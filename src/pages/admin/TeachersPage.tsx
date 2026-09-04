@@ -97,7 +97,7 @@ export default function TeachersPage() {
               : 'Équipe pédagogique'}
           </p>
         </div>
-        <Button onClick={openCreate}>Créer un compte</Button>
+        <Button data-tour="admin-add-enseignant" onClick={openCreate}>Créer un compte</Button>
       </div>
 
       <div className="space-y-6 p-8">

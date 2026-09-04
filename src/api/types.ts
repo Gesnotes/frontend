@@ -742,6 +742,16 @@ export type Evaluation = {
   type: { id: ID; code: string; label: string; weight: number };
 };
 
+/**
+ * Une évaluation à venir, avec le nom de sa classe et de sa matière — pour
+ * le calendrier transversal (par opposition à `Evaluation`, toujours lue
+ * dans le contexte d'une classe × matière déjà connue).
+ */
+export type UpcomingEvaluation = Evaluation & {
+  class: { id: ID; name: string };
+  subject: { id: ID; name: string };
+};
+
 export type CreateEvaluationPayload = {
   classId: ID;
   subjectId: ID;
@@ -1101,7 +1111,7 @@ export type AcceptSignupRequestResult = {
 
 // ------------------------------------------------------------- Notifications & Annonces
 
-export type NotificationType = 'annonce' | 'convocation' | 'incident';
+export type NotificationType = 'annonce' | 'convocation' | 'incident' | 'rappel';
 export type NotificationTargetType = 'parent' | 'class_parents' | 'school_parents';
 export type NotificationResourceType = 'grade' | 'student' | 'attendance' | 'enrollment' | 'other';
 

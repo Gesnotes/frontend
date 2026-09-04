@@ -250,6 +250,13 @@ function NotificationCard({
       borderColor: '#3b82f6',
       bgLight: 'rgba(59, 130, 246, 0.05)',
     },
+    rappel: {
+      icon: <Bell size={20} style={{ color: '#6b7280' }} />,
+      badgeTone: 'neutral' as const,
+      badgeLabel: '🔔 Rappel',
+      borderColor: '#6b7280',
+      bgLight: 'rgba(107, 114, 128, 0.05)',
+    },
   }[item.type];
 
   return (

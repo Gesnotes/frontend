@@ -1,6 +1,7 @@
 import { useState, useMemo, type FormEvent } from 'react';
 import {
   AlertTriangle,
+  Bell,
   CheckCircle2,
   Eye,
   Megaphone,
@@ -150,7 +151,7 @@ export default function AnnoncesIncidentsPage() {
   return (
     <>
       {/* En-tête standard */}
-      <div className="flex items-center justify-between border-b border-gray-100 bg-white px-8 py-6">
+      <div className="flex flex-col gap-4 border-b border-gray-100 bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-8 sm:py-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Annonces & Incidents</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -159,19 +160,19 @@ export default function AnnoncesIncidentsPage() {
               : "Diffusion d'annonces, convocations et incidents aux parents"}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <TermSelect />
-          <Button onClick={() => setIsModalOpen(true)}>
+          <Button data-tour="admin-add-annonce" onClick={() => setIsModalOpen(true)}>
             <Plus size={18} className="mr-2" />
             Créer un envoi
           </Button>
         </div>
       </div>
 
-      <div className="space-y-6 p-8">
+      <div className="space-y-6 p-4 sm:p-8">
         {/* Barre de recherche et filtres */}
-        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-          <label className="relative flex-1 min-w-[220px]">
+        <div className="flex flex-wrap items-center gap-4 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:p-6">
+          <label className="relative min-w-0 flex-1 sm:min-w-[220px]">
             <span className="sr-only">Rechercher une annonce</span>
             <Search
               size={16}
@@ -196,6 +197,7 @@ export default function AnnoncesIncidentsPage() {
             <option value="annonce">📢 Annonces</option>
             <option value="convocation">⚠️ Convocations</option>
             <option value="incident">🚨 Incidents Graves</option>
+            <option value="rappel">🔔 Rappels</option>
           </select>
         </div>
 
@@ -233,6 +235,10 @@ export default function AnnoncesIncidentsPage() {
                             <Chip tone="warning">
                               <AlertTriangle size={14} className="mr-1 inline" /> Convocation
                             </Chip>
+                          ) : item.type === 'rappel' ? (
+                            <Chip tone="neutral">
+                              <Bell size={14} className="mr-1 inline" /> Rappel automatique
+                            </Chip>
                           ) : (
                             <Chip tone="info">
                               <Megaphone size={14} className="mr-1 inline" /> Annonce
@@ -260,12 +266,12 @@ export default function AnnoncesIncidentsPage() {
                       </div>
 
                       {/* Statistique de lecture */}
-                      <div className="mt-2 flex items-center justify-between rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
+                      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-lg bg-gray-50 p-3 text-xs text-gray-600">
                         <span className="flex items-center gap-1.5 font-medium">
                           <Eye size={16} className="text-gray-400" />
                           Statut de lecture par les familles :
                         </span>
-                        <div className="flex items-center gap-3">
+                        <div className="flex flex-wrap items-center gap-3">
                           <span>
                             <strong>{item.stats.readRecipients}</strong> / {item.stats.totalRecipients} parents ont lu
                           </span>
