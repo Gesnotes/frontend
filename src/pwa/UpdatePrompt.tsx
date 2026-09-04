@@ -3,6 +3,12 @@ import { registerSW } from 'virtual:pwa-register';
 
 import { Button } from '../ui';
 
+// Le navigateur ne revérifie le fichier du service worker qu'au chargement du
+// document. Or la navigation interne (React Router) n'en refait jamais un
+// seul — un enseignant qui garde son onglet ouvert toute la journée ne
+// verrait donc jamais passer une mise à jour sans ce sondage périodique.
+const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
+
 /**
  * Invite à recharger quand une nouvelle version est prête.
  *
@@ -15,12 +21,32 @@ export function UpdatePrompt() {
   // Fonction d'activation du nouveau worker : conservée dans une ref, elle
   // n'a aucune raison de déclencher un rendu.
   const updateSW = useRef<((reload: boolean) => Promise<void>) | null>(null);
+  const registration = useRef<ServiceWorkerRegistration | undefined>(undefined);
 
   useEffect(() => {
     updateSW.current = registerSW({
       onNeedRefresh: () => setNeedRefresh(true),
       onOfflineReady: () => setOfflineReady(true),
+      onRegisteredSW: (_url, reg) => {
+        registration.current = reg;
+      },
     });
+  }, []);
+
+  useEffect(() => {
+    // Un onglet masqué (autre appli au premier plan, écran verrouillé) n'a
+    // aucune raison de sonder le réseau ; on revérifie dès qu'il redevient
+    // visible, en plus du sondage régulier.
+    const checkForUpdate = () => {
+      if (document.visibilityState === 'visible') void registration.current?.update();
+    };
+
+    const timer = setInterval(checkForUpdate, UPDATE_CHECK_INTERVAL_MS);
+    document.addEventListener('visibilitychange', checkForUpdate);
+    return () => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', checkForUpdate);
+    };
   }, []);
 
   useEffect(() => {
