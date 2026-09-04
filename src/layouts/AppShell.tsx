@@ -12,7 +12,7 @@ import { OfflineBar } from '../pwa/OfflineBar';
 import { paths } from '../routes/paths';
 import { Avatar, BrandMark } from '../ui';
 
-type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean };
+type AdminNavItem = { to: string; label: string; icon: LucideIcon; end?: boolean; tourId?: string };
 
 const adminNav: AdminNavItem[] = [
   { to: paths.admin.dashboard, label: 'Tableau de bord', icon: LayoutDashboard, end: true },
@@ -68,6 +68,7 @@ export function AppShell() {
                     <NavLink
                       to={item.to}
                       end={item.end}
+                      data-tour={item.tourId}
                       className={({ isActive }) =>
                         `flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors ${
                           isActive

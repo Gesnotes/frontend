@@ -2,7 +2,7 @@ import {
   AlertTriangle, CalendarOff, ChevronDown, ChevronRight, ClipboardCheck, GraduationCap, Mail,
   NotebookPen, Phone, School, TrendingUp, type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { dashboardApi, type AdminDashboard, type ID, type RecentGrade } from '../../api';
@@ -14,8 +14,10 @@ import { personName } from '../../lib/text';
 import { TermSelect } from '../../layouts/TermSelect';
 import { InstallCard } from '../../pwa/InstallCard';
 import { paths } from '../../routes/paths';
+import { TourButton } from '../../tour/TourButton';
+import { useTour } from '../../tour/tour-context';
 import {
-  Button, Skeleton, StatCardIcon, gradeTone, toneClasses,
+  Skeleton, StatCardIcon, gradeTone, toneClasses,
 } from '../../ui';
 import { AbsenceTrendChart } from './AbsenceTrendChart';
 import { ClassBulletinPanel } from './ClassBulletinPanel';
@@ -26,6 +28,14 @@ export default function DashboardPage() {
   const dashboard = dashboardApi.useDashboard(termId);
   const recent = dashboardApi.useRecentGrades(8);
   const absenceTrend = dashboardApi.useAbsenceTrend(14);
+  const { startIfFirstVisit } = useTour();
+
+  // Accueille un nouvel administrateur avec le tutoriel plutôt qu'avec un
+  // tableau de bord vide — la checklist de configuration jouait ce rôle
+  // avant, le tutoriel guidé la remplace (voir TourProvider).
+  useEffect(() => {
+    startIfFirstVisit('admin');
+  }, [startIfFirstVisit]);
 
   return (
     <QueryBoundary
@@ -49,46 +59,40 @@ export default function DashboardPage() {
             <InstallCard compact />
             <SupportCard />
 
-            {isSetupIncomplete(data) ? (
-              <OnboardingChecklist data={data} />
-            ) : (
-              <>
-                <DashboardBody data={data} />
+            <DashboardBody data={data} />
 
-                <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-                  <div className="mb-4 flex items-center gap-2">
-                    <span className="h-5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
-                    <h2 className="text-base font-bold text-gray-900">Absences — 14 derniers jours</h2>
-                  </div>
-                  <QueryBoundary query={absenceTrend} loading={<Skeleton height={200} />}>
-                    {(trend) => <AbsenceTrendChart data={trend} />}
-                  </QueryBoundary>
+            <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="mb-4 flex items-center gap-2">
+                <span className="h-5 w-1.5 rounded-full bg-primary" aria-hidden="true" />
+                <h2 className="text-base font-bold text-gray-900">Absences — 14 derniers jours</h2>
+              </div>
+              <QueryBoundary query={absenceTrend} loading={<Skeleton height={200} />}>
+                {(trend) => <AbsenceTrendChart data={trend} />}
+              </QueryBoundary>
+            </div>
+
+            <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+              <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                <div className="border-b border-gray-100 px-6 py-4">
+                  <h2 className="text-base font-bold text-gray-900">Dernières notes saisies</h2>
                 </div>
+                <QueryBoundary query={recent} loading={<RowsSkeleton />}>
+                  {(grades) => <RecentGrades grades={grades} />}
+                </QueryBoundary>
+              </div>
 
-                <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-                  <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-                    <div className="border-b border-gray-100 px-6 py-4">
-                      <h2 className="text-base font-bold text-gray-900">Dernières notes saisies</h2>
-                    </div>
-                    <QueryBoundary query={recent} loading={<RowsSkeleton />}>
-                      {(grades) => <RecentGrades grades={grades} />}
-                    </QueryBoundary>
-                  </div>
-
-                  <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
-                    <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
-                      <h2 className="text-base font-bold text-gray-900">Moyennes par classe</h2>
-                      <Link to={paths.admin.classes} className="text-sm font-semibold text-primary hover:underline">
-                        Toutes les classes
-                      </Link>
-                    </div>
-                    <div className="p-2">
-                      <ClassAverages data={data} termId={termId} />
-                    </div>
-                  </div>
+              <div className="rounded-xl border border-gray-100 bg-white shadow-sm">
+                <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+                  <h2 className="text-base font-bold text-gray-900">Moyennes par classe</h2>
+                  <Link to={paths.admin.classes} className="text-sm font-semibold text-primary hover:underline">
+                    Toutes les classes
+                  </Link>
                 </div>
-              </>
-            )}
+                <div className="p-2">
+                  <ClassAverages data={data} termId={termId} />
+                </div>
+              </div>
+            </div>
           </div>
         </>
       )}
@@ -103,7 +107,13 @@ function DashHeader({ title, subtitle }: { title: string; subtitle: string }) {
         <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
         <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
       </div>
-      <TermSelect />
+      <div className="flex items-center gap-3">
+        <TourButton
+          space="admin"
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-100 text-gray-500 hover:bg-gray-50 hover:text-gray-900"
+        />
+        <TermSelect />
+      </div>
     </div>
   );
 }
@@ -132,108 +142,6 @@ function SupportCard() {
           <Phone size={16} aria-hidden="true" /> +229 01 60 88 86 68
         </a>
       </div>
-    </div>
-  );
-}
-
-/**
- * Liste de tâches d'accueil (DESIGN.md §6) : remplace un tableau de bord
- * vide à la première connexion, plutôt que d'afficher des moyennes et des
- * effectifs à zéro qui n'apprennent rien à l'administration.
- *
- * Couvre aussi les matières et la période : sans elles, la saisie de notes
- * échoue silencieusement une fois les classes/enseignants/élèves en place —
- * mieux vaut le dire ici que laisser l'administration le découvrir plus tard,
- * bloquée, sans configuration à portée de main.
- */
-/**
- * Les matières ne comptent que si l'école a au moins une classe en mode
- * notes. L'inscription par niveau (`provisionFromLevels` côté backend) crée
- * déjà classes et matières pour les cycles collège/secondaire, mais une
- * école inscrite uniquement en garderie/maternelle/primaire (présence
- * uniquement) n'aura jamais de matière à ajouter — le principe 4 de
- * DESIGN.md (« la valeur par défaut est le cas fréquent ») veut qu'on ne
- * réclame pas une étape qui ne s'applique pas à ce cas-là. Avant la
- * première classe, on ne sait pas encore quel mode elle aura : l'étape
- * reste affichée par défaut.
- */
-function needsSubjectsStep({ effectifs, presence }: AdminDashboard): boolean {
-  return effectifs.classes === 0 || effectifs.classes > presence.classesTotal;
-}
-
-function isSetupIncomplete(data: AdminDashboard): boolean {
-  const { effectifs, periode } = data;
-  return (
-    effectifs.classes === 0 ||
-    (needsSubjectsStep(data) && effectifs.matieres === 0) ||
-    effectifs.enseignants === 0 ||
-    effectifs.eleves === 0 ||
-    periode === null
-  );
-}
-
-function OnboardingChecklist({ data }: { data: AdminDashboard }) {
-  const { effectifs, periode } = data;
-  const steps = [
-    {
-      done: effectifs.classes > 0,
-      label: 'Ajouter vos classes, avec leur mode (notes ou présence)',
-      cta: 'Commencer par les classes',
-      to: paths.admin.classes,
-    },
-    ...(needsSubjectsStep(data)
-      ? [{
-          done: effectifs.matieres > 0,
-          label: 'Ajouter vos matières',
-          cta: 'Ajouter vos matières',
-          to: paths.admin.subjects,
-        }]
-      : []),
-    {
-      done: effectifs.enseignants > 0,
-      label: 'Inviter vos enseignants',
-      cta: 'Inviter vos enseignants',
-      to: paths.admin.teachers,
-    },
-    {
-      done: effectifs.eleves > 0,
-      label: 'Importer la liste de vos élèves',
-      cta: 'Importer vos élèves',
-      to: paths.admin.students,
-    },
-    {
-      done: periode !== null,
-      label: 'Ouvrir une période (trimestre ou semestre)',
-      cta: 'Ouvrir une période',
-      to: `${paths.admin.schoolYears}?tab=periods`,
-    },
-  ];
-  const doneCount = steps.filter((step) => step.done).length;
-  const next = steps.find((step) => !step.done) ?? steps[0]!;
-
-  return (
-    <div className="rounded-xl border border-gray-100 bg-white p-6 shadow-sm">
-      <h2 className="text-base font-bold text-gray-900">Bienvenue, configurons votre école</h2>
-      <p className="mt-1 mb-4 text-sm text-gray-500">{doneCount} sur {steps.length} terminé</p>
-
-      <div className="mb-4 space-y-2">
-        {steps.map((step) => (
-          <div key={step.label} className="flex items-center gap-3 text-sm">
-            <span
-              className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                step.done ? 'bg-emerald-100 text-emerald-600' : 'border border-gray-300 text-transparent'
-              }`}
-            >
-              {step.done ? '✓' : ''}
-            </span>
-            <span className={step.done ? 'text-gray-400 line-through' : 'text-gray-700'}>{step.label}</span>
-          </div>
-        ))}
-      </div>
-
-      <Link to={next.to}>
-        <Button variant="primary">{next.cta}</Button>
-      </Link>
     </div>
   );
 }

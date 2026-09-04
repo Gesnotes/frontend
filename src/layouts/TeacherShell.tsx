@@ -75,6 +75,7 @@ export function TeacherShell() {
                 key={item.to}
                 to={item.to}
                 end={item.end}
+                data-tour={item.tourId}
                 className={({ isActive }) =>
                   `flex max-w-[150px] flex-1 flex-col items-center gap-[3px] rounded-lg py-1.5 text-xs font-semibold ${
                     isActive ? 'bg-[#eff4ff] text-[#1e40af]' : 'text-gray-400'

@@ -31,6 +31,16 @@ les motifs d'interaction (groupe à trois états, carte de choix, étapes,
 liste de tâches d'accueil) à réutiliser pour toute nouvelle fonctionnalité
 plutôt que d'en inventer de nouveaux.
 
+- **Tailwind uniquement pour tout nouveau design** (classes utilitaires
+  directement dans le JSX) — plus de nouvelle classe CSS (`.ui-*`, `page-*`…)
+  ni de `style={{ ... }}` avec des `var(--...)`. Les jetons de couleur restent
+  ceux de `DESIGN.md`, mais via les classes DaisyUI du thème « gesnotes »
+  déclaré dans `src/styles/tailwind.css` (`bg-primary`, `text-primary`,
+  `bg-primary/10`…) plutôt qu'en `var(--...)` inline. L'ancien système de
+  jetons CSS (`tokens.css`/`base.css`) reste tel quel sur les écrans qui
+  l'utilisent déjà (pas de réécriture rétroactive demandée) — cette règle ne
+  s'applique qu'au code neuf.
+
 ## Conventions
 
 - **Français partout**, y compris les commentaires. Les textes visibles par

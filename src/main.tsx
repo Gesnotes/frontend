@@ -17,6 +17,7 @@ import { AuthProvider } from './auth/AuthProvider';
 import { AppErrorBoundary } from './monitoring/AppErrorBoundary';
 import { UpdatePrompt } from './pwa/UpdatePrompt';
 import { StaffAuthProvider } from './staff/StaffAuthProvider';
+import { TourProvider } from './tour/TourProvider';
 import { ToastProvider } from './ui';
 import './index.css';
 
@@ -30,8 +31,10 @@ createRoot(document.getElementById('root')!).render(
           <AuthProvider>
             <StaffAuthProvider>
               <ToastProvider>
-                <App />
-                <UpdatePrompt />
+                <TourProvider>
+                  <App />
+                  <UpdatePrompt />
+                </TourProvider>
               </ToastProvider>
             </StaffAuthProvider>
           </AuthProvider>
