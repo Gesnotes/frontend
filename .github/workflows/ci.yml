@@ -20,8 +20,5 @@ jobs:
       - name: Vérification du code (Linter)
         run: npm run lint
 
-      - name: Installation de Chromium (prérendu SEO du build)
-        run: npx playwright install --with-deps chromium
-
       - name: Validation du build production
         run: npm run build
