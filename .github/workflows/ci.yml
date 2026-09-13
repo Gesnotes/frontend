@@ -20,5 +20,12 @@ jobs:
       - name: Vérification du code (Linter)
         run: npm run lint
 
+      # Ubuntu du runner GitHub : "prebuild" (package.json) n'installe que le
+      # binaire Chromium, sans droits root pour les dépendances système
+      # (incompatible avec des environnements de build comme Render). Ici on
+      # peut se permettre --with-deps, le runner ayant un accès sudo.
+      - name: Installation des dépendances système de Chromium
+        run: sudo npx playwright install-deps chromium
+
       - name: Validation du build production
         run: npm run build
